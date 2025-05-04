@@ -1,0 +1,9 @@
+## NestJS
+node_modules/
+dist/
+
+## TypeORM
+ormconfig.json
+
+## Obfuscation
+app.*.map.json
