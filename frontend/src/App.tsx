@@ -1,34 +1,73 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { Provider as ReduxProvider } from 'react-redux'
+import { BrowserRouter } from 'react-router-dom'
+import { PluginProvider, PluginLoader, IfPlugin } from './core/plugins'
+import { createAppStore } from './core/store'
+import { PluginManager } from './core/components/PluginManager'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+// Import plugins - in a real app, these would be loaded dynamically
+import MalkhanaPlugin from './plugins/malkhana'
+
+// Create the store
+const store = createAppStore()
+
+// List of plugins to load
+const pluginsToLoad = [
+  MalkhanaPlugin,
+  // Add more plugins here
+]
+
+// App Shell handles app layout after plugins are loaded
+function AppShell() {
+  const [pluginsReady, setPluginsReady] = useState(false)
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <PluginLoader 
+      plugins={pluginsToLoad} 
+      onLoaded={() => setPluginsReady(true)}
+      fallback={<div className="loading">Loading SURA plugins...</div>}
+    >
+      <div className="app-shell">
+        <header className="app-header">
+          <h1>SURA Police Management System</h1>
+        </header>
+        
+        <main className="app-content">
+          {pluginsReady ? (
+            <>
+              <p>All plugins loaded successfully!</p>
+              
+              {/* Plugin Manager UI */}
+              <PluginManager />
+              
+              {/* Example of conditional rendering based on plugin availability */}
+              <IfPlugin pluginId="sura-malkhana-plugin">
+                <div className="plugin-feature">
+                  <h2>Malkhana Management</h2>
+                  <p>Malkhana plugin is enabled and ready to use.</p>
+                </div>
+              </IfPlugin>
+            </>
+          ) : (
+            <p>Initializing plugins...</p>
+          )}
+        </main>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </PluginLoader>
+  )
+}
+
+// Root component that provides all context providers
+function App() {
+  return (
+    <ReduxProvider store={store}>
+      <BrowserRouter>
+        <PluginProvider>
+          <AppShell />
+        </PluginProvider>
+      </BrowserRouter>
+    </ReduxProvider>
   )
 }
 

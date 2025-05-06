@@ -40,3 +40,155 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Reset default styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+    'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+  line-height: 1.6;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-header {
+  background-color: #1565c0;
+  color: white;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.app-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  flex-grow: 1;
+}
+
+/* Plugin Management UI */
+.plugin-manager {
+  margin: 2rem 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.plugin-manager h2 {
+  margin-bottom: 1.5rem;
+  color: #1565c0;
+}
+
+.plugin-manager-error {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.plugin-manager-empty {
+  background-color: #e8f5e9;
+  padding: 1rem;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.plugin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.plugin-table th {
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 2px solid #e0e0e0;
+  font-weight: 600;
+}
+
+.plugin-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.plugin-enabled {
+  background-color: #f9fffe;
+}
+
+.plugin-name {
+  font-weight: 500;
+}
+
+.plugin-description {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+.plugin-status {
+  font-weight: 500;
+}
+
+.status-active {
+  color: #2e7d32;
+}
+
+.status-inactive {
+  color: #757575;
+}
+
+.plugin-action-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: #1976d2;
+  color: white;
+}
+
+.plugin-action-button:disabled {
+  background-color: #bbdefb;
+  cursor: not-allowed;
+}
+
+.plugin-action-button:hover:not(:disabled) {
+  background-color: #1565c0;
+}
+
+/* Plugin Features */
+.plugin-feature {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.plugin-feature h2 {
+  color: #1565c0;
+  margin-bottom: 0.75rem;
+}
+
+/* Loading State */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  font-size: 1.2rem;
+  color: #1565c0;
+}
