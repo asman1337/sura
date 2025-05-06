@@ -100,10 +100,10 @@ export class OfficerRank {
 }
 ```
 
-#### 1.3 Unit Entity (New)
+#### 1.3 Unit Entity (Updated)
 ```typescript
 // src/modules/unit/entities/unit.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, ManyToMany, JoinTable, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Department } from '../../department/entities/department.entity';
 import { Officer } from '../../officer/entities/officer.entity';
 import { Organization } from '../../organization/entities/organization.entity';
@@ -136,16 +136,24 @@ export class Unit {
   organization: Organization;
 
   @Column('uuid', { nullable: true })
-  inchargeOfficerId: string;
+  primaryInchargeId: string;
 
   @ManyToOne(() => Officer, { nullable: true })
-  @JoinColumn({ name: 'inchargeOfficerId' })
-  inchargeOfficer: Officer;
+  @JoinColumn({ name: 'primaryInchargeId' })
+  primaryIncharge: Officer;
+
+  @ManyToMany(() => Officer)
+  @JoinTable({
+    name: 'unit_incharge_officers',
+    joinColumn: { name: 'unitId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'officerId', referencedColumnName: 'id' }
+  })
+  inchargeOfficers: Officer[];
 
   @Column('uuid', { nullable: true })
   parentUnitId: string;
 
-  @ManyToOne(() => Unit, unit => unit.parentUnit)
+  @ManyToOne(() => Unit, unit => unit.childUnits, { nullable: true })
   @JoinColumn({ name: 'parentUnitId' })
   parentUnit: Unit;
 
@@ -176,15 +184,68 @@ export class Unit {
   @OneToMany(() => Department, department => department.unit)
   departments: Department[];
 
-  @OneToMany(() => Officer, officer => officer.assignedUnit)
+  @OneToMany(() => Officer, officer => officer.primaryUnit)
   officers: Officer[];
 }
 ```
 
-#### 1.4 Department Entity (Updated)
+#### 1.4 Unit Incharge Officer Entity (New)
+```typescript
+// src/modules/unit/entities/unit-incharge-officer.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Unit } from './unit.entity';
+import { Officer } from '../../officer/entities/officer.entity';
+
+@Entity('unit_incharge_officers')
+export class UnitInchargeOfficer {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column('uuid')
+  unitId: string;
+
+  @ManyToOne(() => Unit, unit => unit.inchargeOfficers)
+  @JoinColumn({ name: 'unitId' })
+  unit: Unit;
+
+  @Column('uuid')
+  officerId: string;
+
+  @ManyToOne(() => Officer)
+  @JoinColumn({ name: 'officerId' })
+  officer: Officer;
+
+  @Column({ 
+    type: 'enum', 
+    enum: ['PRIMARY', 'SECONDARY', 'ACTING', 'SPECIALIZED'],
+    default: 'PRIMARY' 
+  })
+  roleType: string;
+
+  @Column({ type: 'timestamp' })
+  startDate: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  endDate: Date;
+
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  notes: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}
+```
+
+#### 1.5 Department Entity (Updated)
 ```typescript
 // src/modules/department/entities/department.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, ManyToMany, JoinTable, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Officer } from '../../officer/entities/officer.entity';
 import { Unit } from '../../unit/entities/unit.entity';
 
@@ -210,11 +271,19 @@ export class Department {
   unit: Unit;
 
   @Column('uuid', { nullable: true })
-  headOfficerId: string;
+  primaryHeadId: string;
 
   @ManyToOne(() => Officer, { nullable: true })
-  @JoinColumn({ name: 'headOfficerId' })
-  headOfficer: Officer;
+  @JoinColumn({ name: 'primaryHeadId' })
+  primaryHead: Officer;
+
+  @ManyToMany(() => Officer)
+  @JoinTable({
+    name: 'department_manager_officers',
+    joinColumn: { name: 'departmentId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'officerId', referencedColumnName: 'id' }
+  })
+  managerOfficers: Officer[];
 
   @Column({ default: true })
   isActive: boolean;
@@ -225,15 +294,68 @@ export class Department {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => Officer, officer => officer.department)
+  @OneToMany(() => Officer, officer => officer.primaryDepartment)
   officers: Officer[];
 }
 ```
 
-#### 1.5 Officer Entity (Updated)
+#### 1.6 Department Manager Officer Entity (New)
+```typescript
+// src/modules/department/entities/department-manager-officer.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Department } from './department.entity';
+import { Officer } from '../../officer/entities/officer.entity';
+
+@Entity('department_manager_officers')
+export class DepartmentManagerOfficer {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column('uuid')
+  departmentId: string;
+
+  @ManyToOne(() => Department, department => department.managerOfficers)
+  @JoinColumn({ name: 'departmentId' })
+  department: Department;
+
+  @Column('uuid')
+  officerId: string;
+
+  @ManyToOne(() => Officer)
+  @JoinColumn({ name: 'officerId' })
+  officer: Officer;
+
+  @Column({ 
+    type: 'enum', 
+    enum: ['HEAD', 'DEPUTY', 'COORDINATOR', 'SPECIALIST'],
+    default: 'HEAD' 
+  })
+  roleType: string;
+
+  @Column({ type: 'timestamp' })
+  startDate: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  endDate: Date;
+
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  notes: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}
+```
+
+#### 1.7 Officer Entity (Updated)
 ```typescript
 // src/modules/officer/entities/officer.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Department } from '../../department/entities/department.entity';
 import { OfficerRank } from '../../officer-rank/entities/officer-rank.entity';
 import { Organization } from '../../organization/entities/organization.entity';
@@ -265,18 +387,18 @@ export class Officer {
   rank: OfficerRank;
 
   @Column('uuid', { nullable: true })
-  assignedUnitId: string;
+  primaryUnitId: string;
 
   @ManyToOne(() => Unit, unit => unit.officers, { nullable: true })
-  @JoinColumn({ name: 'assignedUnitId' })
-  assignedUnit: Unit;
+  @JoinColumn({ name: 'primaryUnitId' })
+  primaryUnit: Unit;
 
   @Column('uuid', { nullable: true })
-  departmentId: string;
+  primaryDepartmentId: string;
 
   @ManyToOne(() => Department, department => department.officers, { nullable: true })
-  @JoinColumn({ name: 'departmentId' })
-  department: Department;
+  @JoinColumn({ name: 'primaryDepartmentId' })
+  primaryDepartment: Department;
 
   @Column('uuid', { nullable: true })
   reportingToId: string;
@@ -284,6 +406,12 @@ export class Officer {
   @ManyToOne(() => Officer, officer => officer.subordinates, { nullable: true })
   @JoinColumn({ name: 'reportingToId' })
   reportingTo: Officer;
+
+  @ManyToMany(() => Unit, unit => unit.inchargeOfficers)
+  managedUnits: Unit[];
+
+  @ManyToMany(() => Department, department => department.managerOfficers)
+  managedDepartments: Department[];
 
   @Column({ length: 150, nullable: true })
   email: string;
@@ -311,7 +439,7 @@ export class Officer {
 }
 ```
 
-#### 1.6 Role Entity
+#### 1.8 Role Entity
 ```typescript
 // src/modules/role/entities/role.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany, JoinColumn, JoinTable, CreateDateColumn, UpdateDateColumn } from 'typeorm';
@@ -358,7 +486,7 @@ export class Role {
 }
 ```
 
-#### 1.7 Permission Entity
+#### 1.9 Permission Entity
 ```typescript
 // src/modules/permission/entities/permission.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
@@ -402,102 +530,25 @@ npx typeorm migration:generate -n InitialSchema
 npx typeorm migration:run
 ```
 
-## 2. Implementing Organization Module
+## 2. Implementing Unit Module with Multiple Officer Assignments
 
-### Service Implementation
-```typescript
-// src/modules/organization/organization.service.ts
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Organization } from './entities/organization.entity';
-import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
-
-@Injectable()
-export class OrganizationService {
-  constructor(
-    @InjectRepository(Organization)
-    private organizationRepository: Repository<Organization>,
-  ) {}
-
-  async create(createOrganizationDto: CreateOrganizationDto): Promise<Organization> {
-    const organization = this.organizationRepository.create(createOrganizationDto);
-    return this.organizationRepository.save(organization);
-  }
-
-  async findAll(): Promise<Organization[]> {
-    return this.organizationRepository.find();
-  }
-
-  async findOne(id: string): Promise<Organization> {
-    return this.organizationRepository.findOneOrFail({ where: { id } });
-  }
-
-  async update(id: string, updateOrganizationDto: UpdateOrganizationDto): Promise<Organization> {
-    await this.organizationRepository.update(id, updateOrganizationDto);
-    return this.findOne(id);
-  }
-
-  async remove(id: string): Promise<void> {
-    await this.organizationRepository.delete(id);
-  }
-}
-```
-
-### Controller Implementation
-```typescript
-// src/modules/organization/organization.controller.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { OrganizationService } from './organization.service';
-import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
-
-@Controller('organizations')
-export class OrganizationController {
-  constructor(private readonly organizationService: OrganizationService) {}
-
-  @Post()
-  create(@Body() createOrganizationDto: CreateOrganizationDto) {
-    return this.organizationService.create(createOrganizationDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.organizationService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.organizationService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOrganizationDto: UpdateOrganizationDto) {
-    return this.organizationService.update(id, updateOrganizationDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.organizationService.remove(id);
-  }
-}
-```
-
-## 3. Implementing Unit Module (New)
-
-### Service Implementation
+### Unit Service Implementation
 ```typescript
 // src/modules/unit/unit.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Unit } from './entities/unit.entity';
-import { CreateUnitDto, UpdateUnitDto } from './dto';
+import { UnitInchargeOfficer } from './entities/unit-incharge-officer.entity';
+import { CreateUnitDto, UpdateUnitDto, AssignOfficerToUnitDto } from './dto';
 
 @Injectable()
 export class UnitService {
   constructor(
     @InjectRepository(Unit)
     private unitRepository: Repository<Unit>,
+    @InjectRepository(UnitInchargeOfficer)
+    private unitInchargeOfficerRepository: Repository<UnitInchargeOfficer>,
   ) {}
 
   async create(createUnitDto: CreateUnitDto): Promise<Unit> {
@@ -508,8 +559,8 @@ export class UnitService {
   async findAll(organizationId?: string): Promise<Unit[]> {
     let query = this.unitRepository.createQueryBuilder('unit')
       .leftJoinAndSelect('unit.parentUnit', 'parentUnit')
-      .leftJoinAndSelect('unit.inchargeOfficer', 'inchargeOfficer')
-      .leftJoinAndSelect('inchargeOfficer.rank', 'rank');
+      .leftJoinAndSelect('unit.primaryIncharge', 'primaryIncharge')
+      .leftJoinAndSelect('primaryIncharge.rank', 'rank');
     
     if (organizationId) {
       query = query.where('unit.organizationId = :organizationId', { organizationId });
@@ -521,11 +572,19 @@ export class UnitService {
   async findOne(id: string): Promise<Unit> {
     return this.unitRepository.findOne({ 
       where: { id },
-      relations: ['parentUnit', 'childUnits', 'departments', 'inchargeOfficer', 'inchargeOfficer.rank'] 
+      relations: [
+        'parentUnit', 
+        'childUnits', 
+        'departments', 
+        'primaryIncharge', 
+        'primaryIncharge.rank',
+        'inchargeOfficers',
+        'inchargeOfficers.rank'
+      ] 
     });
   }
 
-  async update(id: string, updateUnitDto: UpdateUnitDto): Promise<Unit> {
+  async update(id: string, updateUnitDto: UpdateUnitDto): Promise<Unit> {    
     await this.unitRepository.update(id, updateUnitDto);
     return this.findOne(id);
   }
@@ -551,6 +610,78 @@ export class UnitService {
     return topLevelUnits;
   }
 
+  async getReportingPath(unitId: string): Promise<Unit[]> {
+    // Get the unit
+    const unit = await this.unitRepository.findOne({
+      where: { id: unitId },
+      relations: ['parentUnit']
+    });
+
+    if (!unit) {
+      return [];
+    }
+
+    // Array to store the reporting path (from the unit up to the top)
+    const reportingPath = [unit];
+    
+    // Traverse up the hierarchy
+    let currentUnit = unit;
+    while (currentUnit.parentUnit) {
+      reportingPath.unshift(currentUnit.parentUnit);
+      currentUnit = await this.unitRepository.findOne({
+        where: { id: currentUnit.parentUnit.id },
+        relations: ['parentUnit']
+      });
+    }
+
+    return reportingPath;
+  }
+
+  async assignOfficerToUnit(assignDto: AssignOfficerToUnitDto): Promise<UnitInchargeOfficer> {
+    // If assigning a PRIMARY officer, update the primaryInchargeId in the unit
+    if (assignDto.roleType === 'PRIMARY') {
+      await this.unitRepository.update(assignDto.unitId, {
+        primaryInchargeId: assignDto.officerId
+      });
+      
+      // Set previous PRIMARY officers to inactive
+      await this.unitInchargeOfficerRepository.update(
+        { 
+          unitId: assignDto.unitId, 
+          roleType: 'PRIMARY',
+          isActive: true
+        },
+        { 
+          isActive: false,
+          endDate: new Date()
+        }
+      );
+    }
+    
+    // Create the new assignment
+    const unitInchargeOfficer = this.unitInchargeOfficerRepository.create({
+      ...assignDto,
+      startDate: assignDto.startDate || new Date(),
+      isActive: true
+    });
+    
+    return this.unitInchargeOfficerRepository.save(unitInchargeOfficer);
+  }
+
+  async getUnitOfficers(unitId: string): Promise<UnitInchargeOfficer[]> {
+    return this.unitInchargeOfficerRepository.find({
+      where: { unitId, isActive: true },
+      relations: ['officer', 'officer.rank']
+    });
+  }
+
+  async getOfficerUnits(officerId: string): Promise<UnitInchargeOfficer[]> {
+    return this.unitInchargeOfficerRepository.find({
+      where: { officerId, isActive: true },
+      relations: ['unit']
+    });
+  }
+
   private async loadUnitWithChildren(unit: Unit): Promise<void> {
     // Load child units
     const childUnits = await this.unitRepository.find({
@@ -567,12 +698,12 @@ export class UnitService {
 }
 ```
 
-### Controller Implementation
+### Unit Controller Implementation
 ```typescript
 // src/modules/unit/unit.controller.ts
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { UnitService } from './unit.service';
-import { CreateUnitDto, UpdateUnitDto } from './dto';
+import { CreateUnitDto, UpdateUnitDto, AssignOfficerToUnitDto } from './dto';
 
 @Controller('units')
 export class UnitController {
@@ -593,9 +724,25 @@ export class UnitController {
     return this.unitService.getUnitHierarchy(organizationId);
   }
 
+  @Get(':id/reporting-path')
+  getReportingPath(@Param('id') id: string) {
+    return this.unitService.getReportingPath(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.unitService.findOne(id);
+  }
+
+  @Get(':id/incharge-officers')
+  getUnitOfficers(@Param('id') id: string) {
+    return this.unitService.getUnitOfficers(id);
+  }
+
+  @Post(':id/incharge-officers')
+  assignOfficer(@Param('id') id: string, @Body() assignDto: AssignOfficerToUnitDto) {
+    assignDto.unitId = id;
+    return this.unitService.assignOfficerToUnit(assignDto);
   }
 
   @Patch(':id')
@@ -610,111 +757,25 @@ export class UnitController {
 }
 ```
 
-## 4. Implementing Officer Rank Module
+## 3. Implementing Department Module with Multiple Manager Assignments
 
-### Service Implementation
-```typescript
-// src/modules/officer-rank/officer-rank.service.ts
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { OfficerRank } from './entities/officer-rank.entity';
-import { CreateOfficerRankDto, UpdateOfficerRankDto } from './dto';
-
-@Injectable()
-export class OfficerRankService {
-  constructor(
-    @InjectRepository(OfficerRank)
-    private officerRankRepository: Repository<OfficerRank>,
-  ) {}
-
-  async create(createOfficerRankDto: CreateOfficerRankDto): Promise<OfficerRank> {
-    const officerRank = this.officerRankRepository.create(createOfficerRankDto);
-    return this.officerRankRepository.save(officerRank);
-  }
-
-  async findAll(systemType?: string): Promise<OfficerRank[]> {
-    if (systemType) {
-      return this.officerRankRepository.find({
-        where: [
-          { systemType },
-          { systemType: 'BOTH' }
-        ],
-        order: { level: 'DESC' }
-      });
-    }
-    return this.officerRankRepository.find({ order: { level: 'DESC' } });
-  }
-
-  async findOne(id: string): Promise<OfficerRank> {
-    return this.officerRankRepository.findOneOrFail({ where: { id } });
-  }
-
-  async update(id: string, updateOfficerRankDto: UpdateOfficerRankDto): Promise<OfficerRank> {
-    await this.officerRankRepository.update(id, updateOfficerRankDto);
-    return this.findOne(id);
-  }
-
-  async remove(id: string): Promise<void> {
-    await this.officerRankRepository.delete(id);
-  }
-}
-```
-
-### Controller Implementation
-```typescript
-// src/modules/officer-rank/officer-rank.controller.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
-import { OfficerRankService } from './officer-rank.service';
-import { CreateOfficerRankDto, UpdateOfficerRankDto } from './dto';
-
-@Controller('officer-ranks')
-export class OfficerRankController {
-  constructor(private readonly officerRankService: OfficerRankService) {}
-
-  @Post()
-  create(@Body() createOfficerRankDto: CreateOfficerRankDto) {
-    return this.officerRankService.create(createOfficerRankDto);
-  }
-
-  @Get()
-  findAll(@Query('systemType') systemType?: string) {
-    return this.officerRankService.findAll(systemType);
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.officerRankService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOfficerRankDto: UpdateOfficerRankDto) {
-    return this.officerRankService.update(id, updateOfficerRankDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.officerRankService.remove(id);
-  }
-}
-```
-
-## 5. Implementing Department Module (Updated)
-
-### Service Implementation
+### Department Service Implementation
 ```typescript
 // src/modules/department/department.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Department } from './entities/department.entity';
-import { CreateDepartmentDto, UpdateDepartmentDto } from './dto';
+import { DepartmentManagerOfficer } from './entities/department-manager-officer.entity';
+import { CreateDepartmentDto, UpdateDepartmentDto, AssignOfficerToDepartmentDto } from './dto';
 
 @Injectable()
 export class DepartmentService {
   constructor(
     @InjectRepository(Department)
     private departmentRepository: Repository<Department>,
+    @InjectRepository(DepartmentManagerOfficer)
+    private departmentManagerOfficerRepository: Repository<DepartmentManagerOfficer>,
   ) {}
 
   async create(createDepartmentDto: CreateDepartmentDto): Promise<Department> {
@@ -726,18 +787,26 @@ export class DepartmentService {
     if (unitId) {
       return this.departmentRepository.find({ 
         where: { unitId },
-        relations: ['headOfficer', 'headOfficer.rank'] 
+        relations: ['primaryHead', 'primaryHead.rank'] 
       });
     }
     return this.departmentRepository.find({
-      relations: ['unit', 'headOfficer', 'headOfficer.rank']
+      relations: ['unit', 'primaryHead', 'primaryHead.rank']
     });
   }
 
   async findOne(id: string): Promise<Department> {
     return this.departmentRepository.findOne({ 
       where: { id },
-      relations: ['unit', 'headOfficer', 'headOfficer.rank', 'officers', 'officers.rank'] 
+      relations: [
+        'unit', 
+        'primaryHead', 
+        'primaryHead.rank', 
+        'officers', 
+        'officers.rank',
+        'managerOfficers',
+        'managerOfficers.rank'
+      ] 
     });
   }
 
@@ -749,15 +818,60 @@ export class DepartmentService {
   async remove(id: string): Promise<void> {
     await this.departmentRepository.delete(id);
   }
+
+  async assignOfficerToDepartment(assignDto: AssignOfficerToDepartmentDto): Promise<DepartmentManagerOfficer> {
+    // If assigning a HEAD officer, update the primaryHeadId in the department
+    if (assignDto.roleType === 'HEAD') {
+      await this.departmentRepository.update(assignDto.departmentId, {
+        primaryHeadId: assignDto.officerId
+      });
+      
+      // Set previous HEAD officers to inactive
+      await this.departmentManagerOfficerRepository.update(
+        { 
+          departmentId: assignDto.departmentId, 
+          roleType: 'HEAD',
+          isActive: true
+        },
+        { 
+          isActive: false,
+          endDate: new Date()
+        }
+      );
+    }
+    
+    // Create the new assignment
+    const departmentManagerOfficer = this.departmentManagerOfficerRepository.create({
+      ...assignDto,
+      startDate: assignDto.startDate || new Date(),
+      isActive: true
+    });
+    
+    return this.departmentManagerOfficerRepository.save(departmentManagerOfficer);
+  }
+
+  async getDepartmentManagers(departmentId: string): Promise<DepartmentManagerOfficer[]> {
+    return this.departmentManagerOfficerRepository.find({
+      where: { departmentId, isActive: true },
+      relations: ['officer', 'officer.rank']
+    });
+  }
+
+  async getOfficerDepartments(officerId: string): Promise<DepartmentManagerOfficer[]> {
+    return this.departmentManagerOfficerRepository.find({
+      where: { officerId, isActive: true },
+      relations: ['department', 'department.unit']
+    });
+  }
 }
 ```
 
-### Controller Implementation
+### Department Controller Implementation
 ```typescript
 // src/modules/department/department.controller.ts
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { DepartmentService } from './department.service';
-import { CreateDepartmentDto, UpdateDepartmentDto } from './dto';
+import { CreateDepartmentDto, UpdateDepartmentDto, AssignOfficerToDepartmentDto } from './dto';
 
 @Controller('departments')
 export class DepartmentController {
@@ -778,6 +892,17 @@ export class DepartmentController {
     return this.departmentService.findOne(id);
   }
 
+  @Get(':id/managers')
+  getDepartmentManagers(@Param('id') id: string) {
+    return this.departmentService.getDepartmentManagers(id);
+  }
+
+  @Post(':id/managers')
+  assignOfficer(@Param('id') id: string, @Body() assignDto: AssignOfficerToDepartmentDto) {
+    assignDto.departmentId = id;
+    return this.departmentService.assignOfficerToDepartment(assignDto);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateDepartmentDto: UpdateDepartmentDto) {
     return this.departmentService.update(id, updateDepartmentDto);
@@ -790,241 +915,158 @@ export class DepartmentController {
 }
 ```
 
-## 6. Implementing Multi-Tenant Middleware
+## 4. Implementing Officer Module with Multiple Assignments
 
+### Officer Service Implementation
 ```typescript
-// src/common/middleware/tenant.middleware.ts
-import { Injectable, NestMiddleware } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
-import { JwtService } from '@nestjs/jwt';
+// src/modules/officer/officer.service.ts
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Officer } from './entities/officer.entity';
+import { CreateOfficerDto, UpdateOfficerDto } from './dto';
+import { UnitService } from '../unit/unit.service';
+import { DepartmentService } from '../department/department.service';
 
 @Injectable()
-export class TenantMiddleware implements NestMiddleware {
-  constructor(private readonly jwtService: JwtService) {}
-
-  use(req: Request, res: Response, next: NextFunction) {
-    // Extract JWT token from Authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return next();
-    }
-
-    const token = authHeader.split(' ')[1];
-    try {
-      // Decode JWT token to get organizationId (tenant)
-      const decoded = this.jwtService.verify(token);
-      
-      // Attach organizationId to request object for use in controllers/services
-      req['organizationId'] = decoded.organizationId;
-      
-      // Also attach the complete user info for authorization checks
-      req['user'] = decoded;
-    } catch (error) {
-      // JWT verification failed, continue without tenant context
-      console.error('JWT verification failed:', error.message);
-    }
-    
-    next();
-  }
-}
-```
-
-## 7. Basic Authentication Setup
-
-### AuthModule
-```typescript
-// src/modules/auth/auth.module.ts
-import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { UserModule } from '../user/user.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-
-@Module({
-  imports: [
-    UserModule,
-    PassportModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get('JWT_SECRET'),
-        signOptions: { expiresIn: '8h' },
-      }),
-    }),
-  ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [AuthService],
-})
-export class AuthModule {}
-```
-
-### AuthService
-```typescript
-// src/modules/auth/auth.service.ts
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { UserService } from '../user/user.service';
-import { LoginDto } from './dto/login.dto';
-import * as bcrypt from 'bcrypt';
-
-@Injectable()
-export class AuthService {
+export class OfficerService {
   constructor(
-    private userService: UserService,
-    private jwtService: JwtService,
+    @InjectRepository(Officer)
+    private officerRepository: Repository<Officer>,
+    private unitService: UnitService,
+    private departmentService: DepartmentService
   ) {}
 
-  async validateUser(username: string, password: string): Promise<any> {
-    const user = await this.userService.findByUsername(username);
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const { password: _, ...result } = user;
-    return result;
+  async create(createOfficerDto: CreateOfficerDto): Promise<Officer> {
+    const officer = this.officerRepository.create(createOfficerDto);
+    return this.officerRepository.save(officer);
   }
 
-  async login(loginDto: LoginDto) {
-    const user = await this.validateUser(loginDto.username, loginDto.password);
-    
-    // Get the officer details
-    const officer = await this.userService.getOfficerDetails(user.officerId);
-    
-    const payload = { 
-      sub: user.id,
-      username: user.username,
-      officerId: user.officerId,
-      organizationId: officer.organizationId,
-      unitId: officer.assignedUnitId,
-      departmentId: officer.departmentId,
-      rankId: officer.rankId
-    };
-
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        username: user.username,
-        officer: {
-          id: officer.id,
-          name: officer.name,
-          rank: officer.rank,
-          unit: officer.assignedUnit,
-          department: officer.department
-        }
-      }
-    };
-  }
-}
-```
-
-### JwtStrategy
-```typescript
-// src/modules/auth/strategies/jwt.strategy.ts
-import { Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { ConfigService } from '@nestjs/config';
-
-@Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey: configService.get('JWT_SECRET'),
+  async findAll(organizationId?: string): Promise<Officer[]> {
+    if (organizationId) {
+      return this.officerRepository.find({
+        where: { organizationId },
+        relations: ['rank', 'primaryUnit', 'primaryDepartment', 'reportingTo', 'reportingTo.rank']
+      });
+    }
+    return this.officerRepository.find({
+      relations: ['rank', 'primaryUnit', 'primaryDepartment', 'reportingTo', 'reportingTo.rank']
     });
   }
 
-  async validate(payload: any) {
-    return { 
-      id: payload.sub, 
-      username: payload.username,
-      officerId: payload.officerId,
-      organizationId: payload.organizationId,
-      unitId: payload.unitId,
-      departmentId: payload.departmentId,
-      rankId: payload.rankId
-    };
+  async findOne(id: string): Promise<Officer> {
+    const officer = await this.officerRepository.findOne({
+      where: { id },
+      relations: ['rank', 'primaryUnit', 'primaryDepartment', 'reportingTo', 'reportingTo.rank']
+    });
+    
+    if (!officer) {
+      return null;
+    }
+    
+    // Get all units where this officer is assigned
+    const unitAssignments = await this.unitService.getOfficerUnits(id);
+    
+    // Get all departments where this officer is assigned
+    const departmentAssignments = await this.departmentService.getOfficerDepartments(id);
+    
+    // Load subordinates
+    const subordinates = await this.officerRepository.find({
+      where: { reportingToId: id },
+      relations: ['rank']
+    });
+    
+    officer['unitAssignments'] = unitAssignments;
+    officer['departmentAssignments'] = departmentAssignments;
+    officer.subordinates = subordinates;
+    
+    return officer;
+  }
+
+  async update(id: string, updateOfficerDto: UpdateOfficerDto): Promise<Officer> {
+    await this.officerRepository.update(id, updateOfficerDto);
+    return this.findOne(id);
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.officerRepository.delete(id);
+  }
+
+  async getSubordinates(id: string): Promise<Officer[]> {
+    return this.officerRepository.find({
+      where: { reportingToId: id },
+      relations: ['rank', 'primaryUnit', 'primaryDepartment']
+    });
+  }
+
+  async getManagedUnits(id: string): Promise<any[]> {
+    return this.unitService.getOfficerUnits(id);
+  }
+
+  async getManagedDepartments(id: string): Promise<any[]> {
+    return this.departmentService.getOfficerDepartments(id);
   }
 }
 ```
 
-### JwtAuthGuard
+### Officer Controller Implementation
 ```typescript
-// src/modules/auth/guards/jwt-auth.guard.ts
-import { Injectable } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+// src/modules/officer/officer.controller.ts
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { OfficerService } from './officer.service';
+import { CreateOfficerDto, UpdateOfficerDto } from './dto';
 
-@Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {}
-```
+@Controller('officers')
+export class OfficerController {
+  constructor(private readonly officerService: OfficerService) {}
 
-## 8. Role-Based Access Control (RBAC)
+  @Post()
+  create(@Body() createOfficerDto: CreateOfficerDto) {
+    return this.officerService.create(createOfficerDto);
+  }
 
-### RolesGuard
-```typescript
-// src/modules/auth/guards/roles.guard.ts
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { UserService } from '../../user/user.service';
+  @Get()
+  findAll(@Query('organizationId') organizationId?: string) {
+    return this.officerService.findAll(organizationId);
+  }
 
-@Injectable()
-export class RolesGuard implements CanActivate {
-  constructor(
-    private reflector: Reflector,
-    private userService: UserService
-  ) {}
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.officerService.findOne(id);
+  }
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredPermissions = this.reflector.get<string[]>(
-      'permissions',
-      context.getHandler(),
-    );
-    
-    if (!requiredPermissions) {
-      return true;
-    }
-    
-    const { user } = context.switchToHttp().getRequest();
-    if (!user) {
-      return false;
-    }
-    
-    // Get user's permissions based on their roles
-    const userPermissions = await this.userService.getUserPermissions(user.id);
-    
-    // Check if user has any of the required permissions
-    return requiredPermissions.some(permission => 
-      userPermissions.includes(permission)
-    );
+  @Get(':id/subordinates')
+  getSubordinates(@Param('id') id: string) {
+    return this.officerService.getSubordinates(id);
+  }
+
+  @Get(':id/managed-units')
+  getManagedUnits(@Param('id') id: string) {
+    return this.officerService.getManagedUnits(id);
+  }
+
+  @Get(':id/managed-departments')
+  getManagedDepartments(@Param('id') id: string) {
+    return this.officerService.getManagedDepartments(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateOfficerDto: UpdateOfficerDto) {
+    return this.officerService.update(id, updateOfficerDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.officerService.remove(id);
   }
 }
-```
-
-### Permission Decorator
-```typescript
-// src/modules/auth/decorators/permissions.decorator.ts
-import { SetMetadata } from '@nestjs/common';
-
-export const Permissions = (...permissions: string[]) => SetMetadata('permissions', permissions);
 ```
 
 ## Success Criteria
 
-- The core database structure is implemented with proper relationships between all entities
-- Organization and officer rank modules are completed with functioning CRUD operations
-- Unit and department modules are implemented, allowing for hierarchical structure creation
-- A multi-tenant middleware is in place to handle tenant isolation
-- Basic authentication is set up with JWT tokens
-- Role-based access control foundation is established to build upon 
+- The core database structure is implemented with n-level deep unit hierarchy
+- Multiple officer assignments to units and departments are supported
+- Historical assignment tracking is implemented with start/end dates
+- Different role types for unit and department assignments are supported
+- APIs for managing multiple assignments are available
+- Nested unit structure can be visualized and navigated efficiently 

@@ -7,6 +7,7 @@
   - Create ER diagrams for all relationships
   - Define multi-tenant approach with schema isolation
   - Document all entity attributes and relationships
+  - Design many-to-many relationships for officers in units and departments
 - **Task 1.2**: Set up development environment
   - Configure NestJS backend with TypeORM
   - Set up React frontend with Vite
@@ -16,6 +17,7 @@
   - Implement TypeORM entities for core components
   - Create initial migration scripts
   - Set up seed data for testing
+  - Configure join tables for multiple officer assignments
 
 ### Week 3-4: Authentication and Tenant Management
 - **Task 1.4**: Implement authentication system
@@ -39,25 +41,29 @@
   - Implement hierarchical rank structure
   - Build seed data for standard ranks
 
-### Week 6: Departments and Stations
-- **Task 2.3**: Implement department module
-  - Create department CRUD operations
-  - Build nested department structure
-  - Implement department assignment system
-- **Task 2.4**: Develop stations module
-  - Create station management interfaces
-  - Implement station jurisdiction mapping
-  - Build station hierarchy (main stations and outposts)
+### Week 6: Units and Hierarchy Management
+- **Task 2.3**: Implement unit module
+  - Create unit CRUD operations
+  - Build nested unit structure supporting n-level deep hierarchy
+  - Implement unit assignment system
+  - Develop multiple in-charge officers assignment with role types and history
+- **Task 2.4**: Develop departments module
+  - Create department management interfaces
+  - Implement department-unit relationships
+  - Build department hierarchy and assignment workflows
+  - Develop multiple department managers assignment with role types and history
 
 ### Week 7-8: Officers Management
 - **Task 2.5**: Implement officer profiles
   - Create officer CRUD operations
   - Build officer profile management
   - Implement officer-rank assignment
+  - Develop interfaces for viewing all units/departments managed by an officer
 - **Task 2.6**: Develop reporting structure
   - Create officer hierarchy visualization
   - Implement reporting chain management
   - Build officer transfer workflows
+  - Implement historical assignment tracking for units and departments
 
 ## Phase 3: Access Control (Weeks 9-12)
 
@@ -66,10 +72,12 @@
   - Create system-defined roles
   - Build custom role creation interface
   - Implement role assignment to officers
+  - Configure role inheritance for officer with multiple assignments
 - **Task 3.2**: Develop permission system
   - Create resource-action permissions
   - Build permission assignment to roles
   - Implement conditional permission logic
+  - Configure advanced permission management for officers with multiple roles
 
 ### Week 10: Access Control Guards
 - **Task 3.3**: Implement access control guards
@@ -82,6 +90,7 @@
   - Create jurisdiction-based data filtering
   - Build hierarchical data validation
   - Implement data visibility rules based on rank
+  - Configure access controls respecting the dual reporting paths
 
 ## Phase 4: Functional Roles (Weeks 13-16)
 
@@ -90,6 +99,8 @@
   - Create functional role management interface
   - Build assignment workflows
   - Implement time-based role tracking
+  - Support multiple functional roles per officer across units/departments
+  - Develop conflict resolution for officers with multiple responsibilities
 
 ### Week 15-16: Module-Specific Access
 - **Task 4.2**: Implement Malkhana access module
@@ -107,21 +118,26 @@
 - **Task 5.1**: Develop organization setup wizards
   - Build step-by-step organization creation
   - Implement organization type selection
-  - Create department and station setup flows
+  - Create unit structure creation wizard
+  - Develop multi-officer assignment interface
 - **Task 5.2**: Implement hierarchy management
   - Build officer hierarchy visualization
   - Create drag-and-drop rank assignment
   - Implement reporting structure management
+  - Develop interfaces for managing multiple officers per unit/department
+  - Create history tracking visualization for past assignments
 
 ### Week 19-20: Officer and Access Interfaces
 - **Task 5.3**: Develop officer management interface
   - Build officer profile creation and editing
   - Implement officer search and filtering
   - Create officer transfer interface
+  - Develop comprehensive view of officer's multiple assignments
 - **Task 5.4**: Implement role management interface
   - Build role creation and editing
   - Implement permission assignment interface
   - Create officer-role assignment workflows
+  - Develop interfaces for resolving conflicts between multiple roles
 
 ## Phase 6: Mobile App Development (Weeks 21-24)
 
@@ -152,10 +168,13 @@
   - Test hierarchy management workflows
   - Validate access control mechanisms
   - Verify multi-tenant data isolation
+  - Test multiple officer assignments and transitions
+  - Validate permission resolution for officers with multiple roles
 - **Task 7.2**: Conduct security audits
   - Test authentication and authorization
   - Validate data access restrictions
   - Identify and fix security vulnerabilities
+  - Verify secure handling of role transitions
 
 ### Week 27-28: Performance Optimization
 - **Task 7.3**: Optimize data access
@@ -174,10 +193,12 @@
   - Write administrator guides
   - Create officer user manuals
   - Build help content and tutorials
+  - Document procedures for managing officers with multiple assignments
 - **Task 8.2**: Develop technical documentation
   - Document API endpoints
   - Create system architecture diagrams
   - Write deployment instructions
+  - Document data structure for multi-role assignments
 
 ### Week 31-32: Deployment
 - **Task 8.3**: Prepare production environment
@@ -217,6 +238,7 @@
 
 ### Technical Risks
 - **Complex Hierarchy Implementation**: Start with simplified models and iteratively improve
+- **Dual Reporting Paths Complexity**: Carefully design the database schema to support both IC PS and OC PS structures
 - **Performance Issues with Large Data**: Implement pagination and efficient queries from the beginning
 - **Mobile Offline Sync Challenges**: Begin offline feature development early to allow thorough testing
 
@@ -227,9 +249,11 @@
 
 ## Success Criteria
 
-1. Successfully model both District Police and Commissionerate hierarchies
-2. Proper access control based on officer rank and role
-3. Functional role assignments work correctly at the station level
-4. Multi-tenant isolation prevents cross-organization data access
-5. Mobile app works seamlessly in offline mode with proper synchronization
-6. System can handle the expected user load with good performance 
+1. Successfully model both District Police and Commissionerate hierarchies with n-level depth
+2. Support multiple officers in charge of units with different role types
+3. Support multiple managers for departments with different responsibilities
+4. Properly manage and visualize complex hierarchical relationships
+5. Maintain historical record of officers' assignments across units and departments
+6. Multi-tenant isolation prevents cross-organization data access
+7. Mobile app works seamlessly with complex hierarchy data
+8. System can handle the expected user load with good performance 

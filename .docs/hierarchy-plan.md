@@ -23,16 +23,28 @@ interface Unit {
   name: string;
   code: string;
   type: 'SP_OFFICE' | 'ADDL_SP_OFFICE' | 'DY_SP_OFFICE' | 'CIRCLE_OFFICE' | 
-        'POLICE_STATION' | 'OUTPOST' | 'OTHER';
+        'POLICE_STATION' | 'OUTPOST' | 'CP_OFFICE' | 'DCP_OFFICE' | 'ACP_OFFICE' | 'OTHER';
   organizationId: string;
   jurisdictionArea: string;
-  inchargeOfficerId: string | null;
-  parentUnitId: string | null; // For hierarchical relationships
+  primaryInchargeId: string | null; // Primary officer in charge (for backward compatibility)
+  parentUnitId: string | null; // For hierarchical relationships (supports n-level deep hierarchy)
   address: string | null;
   contactInformation: {
     phone: string;
     email: string;
   };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Unit-Officer Many-to-Many Relationship
+interface UnitInchargeOfficer {
+  id: string;
+  unitId: string;
+  officerId: string;
+  roleType: 'PRIMARY' | 'SECONDARY' | 'ACTING' | 'SPECIALIZED';
+  startDate: Date;
+  endDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,7 +55,19 @@ interface Department {
   name: string;
   description: string;
   unitId: string; // Department belongs to a specific unit
-  inchargeOfficerId: string | null;
+  primaryHeadId: string | null; // Primary manager of the department (for backward compatibility)
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Department-Officer Many-to-Many Relationship
+interface DepartmentManagerOfficer {
+  id: string;
+  departmentId: string;
+  officerId: string;
+  roleType: 'HEAD' | 'DEPUTY' | 'COORDINATOR' | 'SPECIALIST';
+  startDate: Date;
+  endDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,8 +90,8 @@ interface Officer {
   badgeNumber: string;
   rankId: string;
   organizationId: string;
-  unitId: string; // Primary unit assignment (e.g., SP Office, Police Station)
-  departmentId: string | null; // Optional specific department assignment
+  primaryUnitId: string; // Primary unit assignment (e.g., SP Office, Police Station)
+  primaryDepartmentId: string | null; // Optional primary department assignment
   reportingOfficerId: string | null;
   jurisdictionArea: string | null;
   contactInformation: {
@@ -153,6 +177,7 @@ interface FunctionalAssignment {
 1. **Create Database Migrations**:
    - Generate TypeORM entities and migrations for all core schemas
    - Set up multi-tenant architecture with schema isolation
+   - Configure many-to-many relationships for units and officers, departments and officers
 
 2. **Implement Organizations Module**:
    - Create CRUD operations for organizations
@@ -161,8 +186,9 @@ interface FunctionalAssignment {
 
 3. **Implement Units Module**:
    - Create unit management with different types (SP Office, Police Stations, etc.)
-   - Implement hierarchical unit structure
+   - Implement hierarchical unit structure supporting n-level deep hierarchy
    - Develop unit-level configuration
+   - Implement multiple in-charge officers assignment system
 
 4. **Implement Officer Ranks**:
    - Create seed data for standard ranks in both systems
@@ -173,6 +199,7 @@ interface FunctionalAssignment {
    - Create CRUD operations for departments
    - Develop department-unit assignment
    - Set up department-specific configuration
+   - Implement multiple managers assignment system
 
 ### Phase 2: Officer and Unit Management
 
@@ -184,6 +211,9 @@ interface FunctionalAssignment {
 2. **Implement Unit Hierarchy**:
    - Create organizational chart for unit hierarchy
    - Develop jurisdictional mapping
+   - Implement dual reporting paths for police stations
+   - Support IC PS (In-Charge PS) direct reporting to SDPO/Dy. SP
+   - Support OC PS (Officer in Charge PS) reporting through Circle Inspector
    - Implement officer-unit assignments
 
 3. **Implement Unit Departments**:
@@ -236,13 +266,20 @@ interface FunctionalAssignment {
    - Create unit directory with filtering
    - Develop unit hierarchy visualization
    - Implement unit configuration management
+   - Support assignment of multiple in-charge officers with different roles
 
 3. **Officer Management Dashboard**:
    - Create officer directory with filtering
    - Develop reporting structure visualization
    - Implement officer profile management
+   - Support visualization of officer's multiple roles across units/departments
 
-4. **Access Control Interface**:
+4. **Department Management Dashboard**:
+   - Create department directory with filtering
+   - Implement department configuration management
+   - Support assignment of multiple managers with different roles
+
+5. **Access Control Interface**:
    - Create role management screens
    - Develop permission assignment interface
    - Implement user-role-permission visualization
@@ -257,13 +294,18 @@ interface FunctionalAssignment {
 /api/v1/units
 /api/v1/units/:id/departments
 /api/v1/units/:id/officers
+/api/v1/units/:id/incharge-officers // For unit officers with management roles
 /api/v1/units/:id/children  // For subordinate units
+/api/v1/units/:id/reporting-path // To determine reporting structure
 
 /api/v1/departments
 /api/v1/departments/:id/officers
+/api/v1/departments/:id/managers // For department officers with management roles
 
 /api/v1/officers
 /api/v1/officers/:id/subordinates
+/api/v1/officers/:id/managed-units // Units where officer is in-charge
+/api/v1/officers/:id/managed-departments // Departments where officer is manager
 /api/v1/officers/:id/roles
 /api/v1/officers/:id/permissions
 
@@ -305,3 +347,21 @@ interface FunctionalAssignment {
    - Customize mobile UI based on officer role
    - Show/hide features based on permissions
    - Implement function-specific workflows 
+
+## Special Considerations for Police Station Reporting Paths
+
+In the implementation, we need to account for the two different reporting paths that exist in the police hierarchy:
+
+1. **Path 1: Direct Reporting (IC PS)**
+   - These are In-Charge Police Stations that report directly to the Dy.SP/SDPO
+   - No Circle Inspector in between
+   - Unit entity will have `isDirectReporting` flag set to `true`
+   - Direct parent-child relationship between Dy.SP unit and IC PS unit
+
+2. **Path 2: Circle-Level Reporting (OC PS)**
+   - These are Officer in Charge Police Stations that report to Circle Inspector
+   - Circle Inspector then reports to Dy.SP/SDPO
+   - Unit entity will have `isDirectReporting` flag set to `false`
+   - Parent-child relationship chain: Dy.SP unit -> Circle Office unit -> OC PS unit
+
+Both structures need to be properly represented in the database schema and visualized in the user interface. 

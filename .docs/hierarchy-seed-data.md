@@ -153,10 +153,13 @@ const commissionerateRanks = [
 const unitTypes = [
   'SP_OFFICE',         // Superintendent of Police Office
   'ADDL_SP_OFFICE',    // Additional SP Office
-  'DY_SP_OFFICE',      // Deputy SP Office
+  'DY_SP_OFFICE',      // Deputy SP Office / SDPO Office
   'CIRCLE_OFFICE',     // Circle Inspector Office
   'POLICE_STATION',    // Police Station
   'OUTPOST',           // Police Outpost
+  'CP_OFFICE',         // Commissioner of Police Office
+  'DCP_OFFICE',        // Deputy Commissioner of Police Office
+  'ACP_OFFICE',        // Assistant Commissioner of Police Office
   'OTHER'              // Other units
 ];
 ```
@@ -437,6 +440,145 @@ const systemPermissions = [
 ];
 ```
 
+## Multiple Officers in Units and Departments
+
+```typescript
+// Unit In-charge Officer Assignments
+const unitInchargeOfficers = [
+  // SP Office with multiple officers
+  {
+    id: 'unit-officer-001',
+    unitId: 'unit-001', // SP Office, Warangal
+    officerId: 'officer-001', // SP
+    roleType: 'PRIMARY',
+    startDate: new Date('2023-01-01'),
+    endDate: null,
+    isActive: true,
+  },
+  {
+    id: 'unit-officer-002',
+    unitId: 'unit-001', // SP Office, Warangal
+    officerId: 'officer-002', // Addl. SP who also helps manage SP Office
+    roleType: 'SECONDARY',
+    startDate: new Date('2023-01-01'),
+    endDate: null,
+    isActive: true,
+  },
+  {
+    id: 'unit-officer-003',
+    unitId: 'unit-001', // SP Office, Warangal 
+    officerId: 'officer-007', // Administrative officer
+    roleType: 'SPECIALIZED', // Specialized role for administration
+    startDate: new Date('2023-01-01'),
+    endDate: null,
+    isActive: true,
+  },
+  
+  // Police Station with multiple officers (Primary OC and specialists)
+  {
+    id: 'unit-officer-004',
+    unitId: 'unit-005', // Hanamkonda Police Station
+    officerId: 'officer-005', // Inspector (Primary OC)
+    roleType: 'PRIMARY',
+    startDate: new Date('2023-01-01'),
+    endDate: null,
+    isActive: true,
+  },
+  {
+    id: 'unit-officer-005',
+    unitId: 'unit-005', // Hanamkonda Police Station
+    officerId: 'officer-011', // Sub-Inspector (Crime)
+    roleType: 'SPECIALIZED', // Specialized for crime
+    startDate: new Date('2023-01-01'),
+    endDate: null,
+    isActive: true,
+  },
+  {
+    id: 'unit-officer-006',
+    unitId: 'unit-005', // Hanamkonda Police Station
+    officerId: 'officer-012', // Another Sub-Inspector (Law & Order)
+    roleType: 'SPECIALIZED', // Specialized for law & order
+    startDate: new Date('2023-01-01'),
+    endDate: null,
+    isActive: true,
+  },
+  {
+    id: 'unit-officer-007',
+    unitId: 'unit-005', // Hanamkonda Police Station
+    officerId: 'officer-020', // A temporary acting SHO during leave
+    roleType: 'ACTING', // Temporarily in charge
+    startDate: new Date('2023-06-01'),
+    endDate: new Date('2023-06-15'), // Two week assignment
+    isActive: false, // No longer active
+  },
+  
+  // More examples for other units...
+];
+
+// Department Manager Assignments
+const departmentManagerOfficers = [
+  // Cyber Cell with multiple managers
+  {
+    id: 'dept-officer-001',
+    departmentId: 'dept-instance-002', // Cyber Cell in SP Office
+    officerId: 'officer-008', // Primary head
+    roleType: 'HEAD',
+    startDate: new Date('2023-01-01'),
+    endDate: null,
+    isActive: true,
+  },
+  {
+    id: 'dept-officer-002',
+    departmentId: 'dept-instance-002', // Cyber Cell in SP Office
+    officerId: 'officer-025', // Deputy head
+    roleType: 'DEPUTY',
+    startDate: new Date('2023-01-01'),
+    endDate: null,
+    isActive: true,
+  },
+  {
+    id: 'dept-officer-003',
+    departmentId: 'dept-instance-002', // Cyber Cell in SP Office
+    officerId: 'officer-026', // Technical specialist
+    roleType: 'SPECIALIST',
+    startDate: new Date('2023-01-01'),
+    endDate: null,
+    isActive: true,
+  },
+  
+  // Malkhana with multiple managers
+  {
+    id: 'dept-officer-004',
+    departmentId: 'dept-instance-003', // Malkhana in Hanamkonda PS
+    officerId: 'officer-011', // Main manager
+    roleType: 'HEAD',
+    startDate: new Date('2023-01-01'),
+    endDate: null,
+    isActive: true,
+  },
+  {
+    id: 'dept-officer-005',
+    departmentId: 'dept-instance-003', // Malkhana in Hanamkonda PS
+    officerId: 'officer-027', // Assistant
+    roleType: 'DEPUTY',
+    startDate: new Date('2023-01-01'),
+    endDate: null,
+    isActive: true,
+  },
+  {
+    id: 'dept-officer-006',
+    departmentId: 'dept-instance-003', // Malkhana in Hanamkonda PS
+    officerId: 'officer-028', // Evidence coordinator
+    roleType: 'COORDINATOR',
+    startDate: new Date('2023-01-01'),
+    endDate: null,
+    isActive: true,
+  },
+  
+  // More examples for other departments...
+];
+```
+
 ## Sample Organization Hierarchy (District Police)
 
 ```typescript
@@ -460,7 +602,7 @@ const sampleDistrictUnits = [
     type: 'SP_OFFICE',
     organizationId: 'org-001',
     jurisdictionArea: 'Warangal District',
-    inchargeOfficerId: 'officer-001', // SP
+    primaryInchargeId: 'officer-001', // SP as primary in-charge
     parentUnitId: null,
     address: 'SP Office Complex, Warangal',
     contactInformation: {
@@ -477,7 +619,7 @@ const sampleDistrictUnits = [
     type: 'ADDL_SP_OFFICE',
     organizationId: 'org-001',
     jurisdictionArea: 'Warangal North Division',
-    inchargeOfficerId: 'officer-002', // Addl. SP
+    primaryInchargeId: 'officer-002', // Addl. SP as primary in-charge
     parentUnitId: 'unit-001', // Reports to SP Office
     address: 'SP Office Complex, Warangal',
     contactInformation: {
@@ -494,7 +636,7 @@ const sampleDistrictUnits = [
     type: 'DY_SP_OFFICE',
     organizationId: 'org-001',
     jurisdictionArea: 'Hanamkonda Sub-Division',
-    inchargeOfficerId: 'officer-003', // Dy. SP
+    primaryInchargeId: 'officer-003', // Dy. SP as primary in-charge
     parentUnitId: 'unit-002', // Reports to Addl. SP Office
     address: 'Police Complex, Hanamkonda',
     contactInformation: {
@@ -511,7 +653,7 @@ const sampleDistrictUnits = [
     type: 'CIRCLE_OFFICE',
     organizationId: 'org-001',
     jurisdictionArea: 'Hanamkonda Circle',
-    inchargeOfficerId: 'officer-004', // Circle Inspector
+    primaryInchargeId: 'officer-004', // Circle Inspector as primary in-charge
     parentUnitId: 'unit-003', // Reports to Dy. SP Office
     address: 'Circle Office, Hanamkonda',
     contactInformation: {
@@ -520,7 +662,7 @@ const sampleDistrictUnits = [
     },
   },
   
-  // Police Station
+  // Police Station (reports through Circle Inspector)
   {
     id: 'unit-005',
     name: 'Hanamkonda Police Station',
@@ -528,7 +670,7 @@ const sampleDistrictUnits = [
     type: 'POLICE_STATION',
     organizationId: 'org-001',
     jurisdictionArea: 'Hanamkonda Area',
-    inchargeOfficerId: 'officer-005', // Inspector (SHO)
+    primaryInchargeId: 'officer-005', // Inspector as primary in-charge
     parentUnitId: 'unit-004', // Reports to Circle Office
     address: 'Police Station Building, Hanamkonda',
     contactInformation: {
@@ -537,7 +679,24 @@ const sampleDistrictUnits = [
     },
   },
   
-  // Police Outpost
+  // Police Station (reports directly to Dy. SP/SDPO)
+  {
+    id: 'unit-007',
+    name: 'Elkathurthy Police Station',
+    code: 'WGLELK',
+    type: 'POLICE_STATION',
+    organizationId: 'org-001',
+    jurisdictionArea: 'Elkathurthy Area',
+    primaryInchargeId: 'officer-006', // Inspector as primary in-charge
+    parentUnitId: 'unit-003', // Reports directly to Dy. SP Office
+    address: 'Police Station Building, Elkathurthy',
+    contactInformation: {
+      phone: '0870-2429307',
+      email: 'ps-elk-wgl@tgpolice.gov.in',
+    },
+  },
+  
+  // Police Outpost under Police Station
   {
     id: 'unit-006',
     name: 'Bus Stand Outpost, Hanamkonda',
@@ -545,7 +704,7 @@ const sampleDistrictUnits = [
     type: 'OUTPOST',
     organizationId: 'org-001',
     jurisdictionArea: 'Hanamkonda Bus Stand Area',
-    inchargeOfficerId: 'officer-010', // Sub-Inspector
+    primaryInchargeId: 'officer-010', // Sub-Inspector as primary in-charge
     parentUnitId: 'unit-005', // Reports to Hanamkonda PS
     address: 'Bus Stand, Hanamkonda',
     contactInformation: {
@@ -554,22 +713,7 @@ const sampleDistrictUnits = [
     },
   },
   
-  // Another Police Station
-  {
-    id: 'unit-007',
-    name: 'Kazipet Police Station',
-    code: 'WGLKZT',
-    type: 'POLICE_STATION',
-    organizationId: 'org-001',
-    jurisdictionArea: 'Kazipet Area',
-    inchargeOfficerId: 'officer-006', // Inspector (SHO)
-    parentUnitId: 'unit-004', // Reports to same Circle Office
-    address: 'Police Station Building, Kazipet',
-    contactInformation: {
-      phone: '0870-2429307',
-      email: 'ps-kzt-wgl@tgpolice.gov.in',
-    },
-  },
+  // More units...
 ];
 
 // Departments within Units
@@ -579,14 +723,14 @@ const sampleUnitDepartments = [
     id: 'dept-instance-001',
     name: 'Administration',
     unitId: 'unit-001', // SP Office
-    inchargeOfficerId: 'officer-007', // Another officer
+    primaryHeadId: 'officer-007', // Primary head
     description: 'Administrative department handling office matters',
   },
   {
     id: 'dept-instance-002',
     name: 'Cyber Cell',
     unitId: 'unit-001', // SP Office
-    inchargeOfficerId: 'officer-008', // Another officer
+    primaryHeadId: 'officer-008', // Primary head
     description: 'Cyber crime investigation unit',
   },
   
@@ -595,26 +739,21 @@ const sampleUnitDepartments = [
     id: 'dept-instance-003',
     name: 'Malkhana',
     unitId: 'unit-005', // Hanamkonda PS
-    inchargeOfficerId: 'officer-011', // Another Sub-Inspector
+    primaryHeadId: 'officer-011', // Primary head
     description: 'Evidence storage and management',
   },
   {
     id: 'dept-instance-004',
     name: 'Complaints',
     unitId: 'unit-005', // Hanamkonda PS
-    inchargeOfficerId: 'officer-012', // Another officer
+    primaryHeadId: 'officer-012', // Primary head
     description: 'Complaint registration and processing',
   },
-  {
-    id: 'dept-instance-005',
-    name: 'Records',
-    unitId: 'unit-005', // Hanamkonda PS
-    inchargeOfficerId: 'officer-013', // Another officer
-    description: 'Records management and documentation',
-  },
+  
+  // More departments...
 ];
 
-// Sample officers in hierarchy (similar to before but with unit assignments)
+// Sample officers in hierarchy
 const sampleDistrictOfficers = [
   {
     id: 'officer-001',
@@ -664,12 +803,23 @@ const sampleDistrictOfficers = [
     id: 'officer-005',
     name: 'Krishna Reddy',
     badgeNumber: 'IN5678',
-    rankId: 'rank-009', // Inspector (Station House Officer)
+    rankId: 'rank-009', // Inspector (OC - Officer in Charge)
     organizationId: 'org-001',
-    unitId: 'unit-005', // Hanamkonda Police Station
+    unitId: 'unit-005', // Hanamkonda Police Station (OC PS)
     departmentId: null, // Overall incharge, no specific department
     reportingOfficerId: 'officer-004', // Reports to Circle Inspector
     jurisdictionArea: 'Hanamkonda Station Limits',
+  },
+  {
+    id: 'officer-006',
+    name: 'Venkat Rao',
+    badgeNumber: 'IN1234',
+    rankId: 'rank-009', // Inspector (IC - In Charge)
+    organizationId: 'org-001',
+    unitId: 'unit-007', // Elkathurthy Police Station (IC PS)
+    departmentId: null, // Overall incharge, no specific department
+    reportingOfficerId: 'officer-003', // Reports directly to Dy. SP/SDPO
+    jurisdictionArea: 'Elkathurthy Station Limits',
   },
   // More officers with specific department assignments
   {
@@ -678,9 +828,9 @@ const sampleDistrictOfficers = [
     badgeNumber: 'SI1122',
     rankId: 'rank-010', // Sub-Inspector
     organizationId: 'org-001',
-    unitId: 'unit-005', // Hanamkonda Police Station
+    unitId: 'unit-005', // Hanamkonda Police Station (OC PS)
     departmentId: 'dept-instance-003', // Malkhana
-    reportingOfficerId: 'officer-005', // Reports to SHO
+    reportingOfficerId: 'officer-005', // Reports to OC
     jurisdictionArea: 'Hanamkonda Station Limits',
   },
   {
@@ -689,18 +839,54 @@ const sampleDistrictOfficers = [
     badgeNumber: 'SI3344',
     rankId: 'rank-010', // Sub-Inspector
     organizationId: 'org-001',
-    unitId: 'unit-005', // Hanamkonda Police Station
+    unitId: 'unit-005', // Hanamkonda Police Station (OC PS)
     departmentId: 'dept-instance-004', // Complaints
-    reportingOfficerId: 'officer-005', // Reports to SHO
+    reportingOfficerId: 'officer-005', // Reports to OC
     jurisdictionArea: 'Hanamkonda Station Limits',
   },
+  {
+    id: 'officer-015',
+    name: 'Ramesh Babu',
+    badgeNumber: 'SI5566',
+    rankId: 'rank-010', // Sub-Inspector
+    organizationId: 'org-001',
+    unitId: 'unit-008', // Railway Station Outpost (under IC PS)
+    departmentId: null,
+    reportingOfficerId: 'officer-006', // Reports to IC
+    jurisdictionArea: 'Elkathurthy Railway Station Area',
+  },
+  {
+    id: 'officer-016',
+    name: 'Srinivas Rao',
+    badgeNumber: 'SI7788',
+    rankId: 'rank-010', // Sub-Inspector
+    organizationId: 'org-001',
+    unitId: 'unit-007', // Elkathurthy Police Station (IC PS)
+    departmentId: 'dept-instance-006', // Malkhana
+    reportingOfficerId: 'officer-006', // Reports to IC
+    jurisdictionArea: 'Elkathurthy Station Limits',
+  },
+];
+
+// Example of officers with multiple assignments
+const officersWithMultipleRoles = [
+  // Officer 002 (Addl. SP) has multiple roles:
+  // 1. Primary in-charge of Addl. SP Office (unit-002)
+  // 2. Secondary in-charge in SP Office (unit-001)
+  
+  // Officer 011 (Sub-Inspector) has multiple roles:
+  // 1. Specialized role in Hanamkonda PS for crime (unit-005)
+  // 2. Head of Malkhana department (dept-instance-003)
+  
+  // These relationships are established through the unitInchargeOfficers 
+  // and departmentManagerOfficers collections above.
 ];
 
 // Functional assignments for specialized roles
 const sampleFunctionalAssignments = [
   {
     id: 'func-assign-001',
-    officerId: 'officer-011', // Sub-Inspector in Hanamkonda PS
+    officerId: 'officer-011', // Sub-Inspector in Hanamkonda PS (OC PS)
     function: 'MALKHANA',
     unitId: 'unit-005', // Hanamkonda Police Station
     departmentId: 'dept-instance-003', // Malkhana Department
@@ -709,10 +895,19 @@ const sampleFunctionalAssignments = [
   },
   {
     id: 'func-assign-002',
-    officerId: 'officer-012', // Another Sub-Inspector in Hanamkonda PS
+    officerId: 'officer-012', // Another Sub-Inspector in Hanamkonda PS (OC PS)
     function: 'COMPLAINTS',
     unitId: 'unit-005', // Hanamkonda Police Station
     departmentId: 'dept-instance-004', // Complaints Department
+    startDate: new Date('2023-01-01'),
+    isActive: true,
+  },
+  {
+    id: 'func-assign-003',
+    officerId: 'officer-016', // Sub-Inspector in Elkathurthy PS (IC PS)
+    function: 'MALKHANA',
+    unitId: 'unit-007', // Elkathurthy Police Station
+    departmentId: 'dept-instance-006', // Malkhana Department
     startDate: new Date('2023-01-01'),
     isActive: true,
   },
@@ -740,32 +935,16 @@ const sampleCommissionerateUnits = [
     id: 'unit-101',
     name: 'Commissioner of Police Office, Hyderabad',
     code: 'HYDCP',
-    type: 'SP_OFFICE', // Using the same type for consistency, we can consider adding CP_OFFICE
+    type: 'CP_OFFICE', 
     organizationId: 'org-002',
     jurisdictionArea: 'Hyderabad City',
     inchargeOfficerId: 'officer-101', // CP
     parentUnitId: null,
+    isDirectReporting: false, // Not applicable for CP Office
     address: 'CP Office, Basheerbagh, Hyderabad',
     contactInformation: {
       phone: '040-23232323',
       email: 'cp-hyd@tgpolice.gov.in',
-    },
-  },
-  
-  // Jt. CP Office
-  {
-    id: 'unit-102',
-    name: 'Joint CP Office, West Zone, Hyderabad',
-    code: 'HYDJCP1',
-    type: 'ADDL_SP_OFFICE', // Using similar type for consistency
-    organizationId: 'org-002',
-    jurisdictionArea: 'West Zone, Hyderabad',
-    inchargeOfficerId: 'officer-102', // Jt. CP
-    parentUnitId: 'unit-101', // Reports to CP Office
-    address: 'West Zone Office, Hyderabad',
-    contactInformation: {
-      phone: '040-23232324',
-      email: 'jcp-west-hyd@tgpolice.gov.in',
     },
   },
   
@@ -774,11 +953,12 @@ const sampleCommissionerateUnits = [
     id: 'unit-103',
     name: 'DCP Office, Banjara Hills, Hyderabad',
     code: 'HYDDCP1',
-    type: 'DY_SP_OFFICE', // Similar rank equivalent
+    type: 'DCP_OFFICE',
     organizationId: 'org-002',
     jurisdictionArea: 'Banjara Hills Division, Hyderabad',
     inchargeOfficerId: 'officer-103', // DCP
-    parentUnitId: 'unit-102', // Reports to Jt. CP Office
+    parentUnitId: 'unit-101', // Reports to CP Office
+    isDirectReporting: false, // Not applicable for DCP Office
     address: 'DCP Office, Road No. 12, Banjara Hills, Hyderabad',
     contactInformation: {
       phone: '040-23232325',
@@ -791,11 +971,12 @@ const sampleCommissionerateUnits = [
     id: 'unit-104',
     name: 'ACP Office, Banjara Hills, Hyderabad',
     code: 'HYDACP1',
-    type: 'CIRCLE_OFFICE', // Similar rank equivalent
+    type: 'ACP_OFFICE',
     organizationId: 'org-002',
     jurisdictionArea: 'Banjara Hills Sub-Division, Hyderabad',
     inchargeOfficerId: 'officer-104', // ACP
     parentUnitId: 'unit-103', // Reports to DCP Office
+    isDirectReporting: false, // Not applicable for ACP Office
     address: 'ACP Office, Banjara Hills, Hyderabad',
     contactInformation: {
       phone: '040-23232326',
@@ -803,7 +984,7 @@ const sampleCommissionerateUnits = [
     },
   },
   
-  // Police Station
+  // Police Station (IC PS - reports directly to ACP)
   {
     id: 'unit-105',
     name: 'Banjara Hills Police Station',
@@ -811,17 +992,36 @@ const sampleCommissionerateUnits = [
     type: 'POLICE_STATION',
     organizationId: 'org-002',
     jurisdictionArea: 'Banjara Hills Area, Hyderabad',
-    inchargeOfficerId: 'officer-105', // Inspector (SHO)
+    inchargeOfficerId: 'officer-105', // Inspector (IC PS)
     parentUnitId: 'unit-104', // Reports to ACP Office
+    isDirectReporting: true, // Direct reporting to ACP
     address: 'Police Station, Road No. 12, Banjara Hills, Hyderabad',
     contactInformation: {
       phone: '040-23232327',
       email: 'ps-bh-hyd@tgpolice.gov.in',
     },
   },
+  
+  // Police Station (OC PS - reports to Circle Inspector, if present)
+  {
+    id: 'unit-106',
+    name: 'Jubilee Hills Police Station',
+    code: 'HYDJH',
+    type: 'POLICE_STATION',
+    organizationId: 'org-002',
+    jurisdictionArea: 'Jubilee Hills Area, Hyderabad',
+    inchargeOfficerId: 'officer-106', // Inspector (OC PS)
+    parentUnitId: 'unit-104', // Reports to ACP Office
+    isDirectReporting: false, // May go through Circle Inspector in some cases
+    address: 'Police Station, Road No. 36, Jubilee Hills, Hyderabad',
+    contactInformation: {
+      phone: '040-23232328',
+      email: 'ps-jh-hyd@tgpolice.gov.in',
+    },
+  },
 ];
 
-// Sample officers in hierarchy (adapted for units and departments)
+// Sample officers in hierarchy
 const sampleCommissionerateOfficers = [
   {
     id: 'officer-101',
@@ -835,17 +1035,6 @@ const sampleCommissionerateOfficers = [
     jurisdictionArea: 'Hyderabad City',
   },
   {
-    id: 'officer-102',
-    name: 'Sunita Rao',
-    badgeNumber: 'JCP1234',
-    rankId: 'rank-015', // Joint CP
-    organizationId: 'org-002',
-    unitId: 'unit-102', // Jt. CP Office
-    departmentId: null,
-    reportingOfficerId: 'officer-101', // Reports to CP
-    jurisdictionArea: 'West Zone, Hyderabad',
-  },
-  {
     id: 'officer-103',
     name: 'Mohammed Khan',
     badgeNumber: 'DCP5678',
@@ -853,7 +1042,7 @@ const sampleCommissionerateOfficers = [
     organizationId: 'org-002',
     unitId: 'unit-103', // DCP Office
     departmentId: null,
-    reportingOfficerId: 'officer-102', // Reports to Joint CP
+    reportingOfficerId: 'officer-101', // Reports to CP
     jurisdictionArea: 'Banjara Hills Division, Hyderabad',
   },
   {
@@ -871,13 +1060,44 @@ const sampleCommissionerateOfficers = [
     id: 'officer-105',
     name: 'Vikram Singh',
     badgeNumber: 'IN3456',
-    rankId: 'rank-009', // Inspector (Station House Officer)
+    rankId: 'rank-009', // Inspector (IC PS)
     organizationId: 'org-002',
     unitId: 'unit-105', // Banjara Hills Police Station
     departmentId: null,
-    reportingOfficerId: 'officer-104', // Reports to ACP
+    reportingOfficerId: 'officer-104', // Reports directly to ACP
     jurisdictionArea: 'Banjara Hills Station Limits, Hyderabad',
+  },
+  {
+    id: 'officer-106',
+    name: 'Rohit Saxena',
+    badgeNumber: 'IN7890',
+    rankId: 'rank-009', // Inspector (OC PS)
+    organizationId: 'org-002',
+    unitId: 'unit-106', // Jubilee Hills Police Station
+    departmentId: null,
+    reportingOfficerId: 'officer-104', // Reports to ACP, potentially through CI if present
+    jurisdictionArea: 'Jubilee Hills Station Limits, Hyderabad',
   },
   // More officers...
 ];
 ``` 
+
+## Police Station Reporting Paths
+
+Here are the two distinct reporting paths for police stations in the Indian Police system:
+
+### 1. Direct Reporting Path (IC PS - In-Charge Police Station)
+* Reports directly to Dy.SP/SDPO in District Police
+* Reports directly to ACP in Commissionerate
+* Identified by the `isDirectReporting: true` flag in the Unit entity
+* Example in District Police: Elkathurthy Police Station
+* Example in Commissionerate: Banjara Hills Police Station
+
+### 2. Circle-Level Reporting Path (OC PS - Officer in Charge Police Station)
+* Reports to Dy.SP/SDPO through a Circle Inspector in District Police
+* May have a similar intermediary reporting structure in Commissionerate
+* Identified by the `isDirectReporting: false` flag in the Unit entity
+* Example in District Police: Hanamkonda Police Station
+* Example in Commissionerate: Jubilee Hills Police Station (if Circle Inspector is present)
+
+Both types of police stations may have outposts under them, and both have similar department structures internally. 

@@ -38,25 +38,27 @@
         │                 │  │                 │
         ▼                 ▼  ▼                 ▼
   ┌──────────┐     ┌──────────┐     ┌──────────┐
-  │   Dy SP  │     │   Dy SP  │     │   Dy SP  │ ◄── Sub-Division Level (Dy SP Office Units)
+  │   Dy SP  │     │   Dy SP  │     │   Dy SP  │ ◄── Sub-Division Level (Dy SP/SDPO Office Units)
   └─────┬────┘     └─────┬────┘     └─────┬────┘
         │                │                │
-        ▼                ▼                ▼
-  ┌──────────┐     ┌──────────┐     ┌──────────┐
-  │   CI     │     │    CI    │     │    CI    │ ◄── Circle Level (Circle Office Units)
-  └─────┬────┘     └─────┬────┘     └─────┬────┘
-        │                │                │
-    ┌───┴───┐        ┌───┴───┐        ┌───┴───┐
-    │       │        │       │        │       │
-    ▼       ▼        ▼       ▼        ▼       ▼
-┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
-│Inspector│ │Inspector│ │Inspector│ │Inspector│ ◄── Station Level (Police Station Units)
-└────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘
-     │           │           │           │
-     │           │           │           │
-     ▼           ▼           ▼           ▼
+┌───────┴────────┐ ┌─────┴──────┐ ┌──────┴───────┐
+│                │ │            │ │              │
+▼                │ ▼            │ │              ▼
+┌──────────┐     │ ┌──────────┐ │ │        ┌──────────┐
+│   CI     │     │ │   CI     │ │ │        │  IC PS   │ ◄── Direct Reporting Path
+└─────┬────┘     │ └─────┬────┘ │ │        └────┬─────┘    (In-Charge PS)
+      │          │       │      │ │             │
+┌─────┴─────┐    │ ┌─────┴─────┐│ │      ┌─────┴─────┐
+│           │    │ │           ││ │      │           │
+▼           ▼    │ ▼           ▼│ │      ▼           ▼
+┌─────────┐ ┌─────┴───┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
+│ OC PS   │ │ OC PS   │ │ OC PS   │ │Outpost 1│ │Outpost 2│ ◄── Sub-Station Level 
+└────┬────┘ └────┬────┘ └────┬────┘ └─────────┘ └─────────┘    (Outpost Units)
+     │           │           │           
+     │           │           │           
+     ▼           ▼           ▼           
 ┌─────────────────────────────────────────────┐
-│  Sub-Inspectors, ASIs, Head Constables,     │ ◄── Sub-Station Level (Outpost Units)
+│  Sub-Inspectors, ASIs, Head Constables,     │ 
 │  Constables, etc.                           │
 └─────────────────────────────────────────────┘
 ```
@@ -88,38 +90,28 @@
                       │     CP    │ ◄─────── Commissioner Level (CP Office Unit)
                       └─────┬─────┘
                             │
-             ┌──────────────┼──────────────┐
-             │              │              │
-             ▼              ▼              ▼
-      ┌────────────┐ ┌────────────┐ ┌────────────┐
-      │  Joint CP  │ │  Joint CP  │ │  Addl CP   │ ◄── Zone Level (Jt/Addl CP Office Units)
-      └──────┬─────┘ └──────┬─────┘ └──────┬─────┘
-             │              │              │
-       ┌─────┴─────┐  ┌─────┴─────┐  ┌─────┴─────┐
-       │           │  │           │  │           │
-       ▼           ▼  ▼           ▼  ▼           ▼
-  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
-  │   DCP   │ │   DCP   │ │   DCP   │ │   DCP   │ ◄── Division Level (DCP Office Units)
-  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘
-       │           │           │           │
-       ▼           ▼           ▼           ▼
-  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
-  │   ACP   │ │   ACP   │ │   ACP   │ │   ACP   │ ◄── Sub-Division Level (ACP Office Units)
-  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘
-       │           │           │           │
-    ┌──┴──┐     ┌──┴──┐     ┌──┴──┐     ┌──┴──┐
-    │     │     │     │     │     │     │     │
-    ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼
-┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
-│Inspector│ │Inspector│ │Inspector│ │Inspector│ ◄── Station Level (Police Station Units)
-└────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘
-     │           │           │           │
-     │           │           │           │
-     ▼           ▼           ▼           ▼
-┌─────────────────────────────────────────────┐
-│  Sub-Inspectors, ASIs, Head Constables,     │ ◄── Sub-Station Level (Outpost Units)
-│  Constables, etc.                           │
-└─────────────────────────────────────────────┘
+                            ▼
+                      ┌────────────┐ 
+                      │    DCP     │ ◄── Division Level (DCP Office Units)
+                      └──────┬─────┘ 
+                             │        
+                             ▼        
+                      ┌────────────┐  
+                      │    ACP     │ ◄── Sub-Division Level (ACP Office Units)
+                      └──────┬─────┘ 
+                             │        
+                       ┌─────┴─────┐  
+                       │           │  
+                       ▼           ▼  
+                  ┌─────────┐ ┌─────────┐
+                  │  IC PS  │ │  OC PS  │ ◄── Station Level (Police Station Units)
+                  └────┬────┘ └────┬────┘
+                       │           │
+                       │           │
+                       ▼           ▼
+                  ┌─────────┐ ┌─────────┐
+                  │Outpost 1│ │Outpost 2│ ◄── Sub-Station Level (Outpost Units)
+                  └─────────┘ └─────────┘
 ```
 
 ## Units and Departments Structure
@@ -151,6 +143,34 @@
 │                    │────────┘
 └────────────────────┘
       Assigned to
+```
+
+## Reporting Paths for Police Stations
+
+```
+                  ┌──────────────┐
+                  │     Dy SP    │
+                  │    (SDPO)    │
+                  └──────┬───────┘
+                         │
+          ┌──────────────┴───────────────┐
+          │                              │
+          ▼                              ▼
+    ┌───────────┐                  ┌───────────┐
+    │    CI     │                  │   IC PS   │
+    │(Circle IP)│                  │(In-Charge)│
+    └─────┬─────┘                  └─────┬─────┘
+          │                              │
+          ▼                              │
+    ┌───────────┐                        │
+    │   OC PS   │                        │
+    │(Officer IC)│                       │
+    └─────┬─────┘                        │
+          │                              │
+          ▼                              ▼
+    ┌───────────────────────────────────────┐
+    │             Outposts                  │
+    └───────────────────────────────────────┘
 ```
 
 ## Multi-Tenant Architecture
