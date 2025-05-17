@@ -18,8 +18,14 @@ export class AuthService {
   private authToken: string | null = null;
   private refreshTokenValue: string | null = null;
   private tokenInitialized: boolean = false;
+  private apiBaseUrl: string;
   
-  constructor(private storage: StorageClient) {}
+  constructor(
+    private storage: StorageClient,
+    apiBaseUrl: string = 'http://localhost:3000'
+  ) {
+    this.apiBaseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
+  }
   
   /**
    * Initialize tokens from storage
@@ -45,7 +51,7 @@ export class AuthService {
     try {
       // This would be a real API call using fetch in production
       // We don't use ApiClient here to avoid circular dependency
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${this.apiBaseUrl}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +123,7 @@ export class AuthService {
     try {
       // This would be a real API call using fetch in production
       // We don't use ApiClient here to avoid circular dependency
-      const response = await fetch('/api/auth/refresh', {
+      const response = await fetch(`${this.apiBaseUrl}/api/auth/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

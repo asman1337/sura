@@ -61,7 +61,7 @@ export const DataProvider: React.FC<{
   const storage = useMemo(() => new StorageClient(storageProvider), [storageProvider]);
   
   // Create the auth service with storage
-  const auth = useMemo(() => new AuthService(storage), [storage]);
+  const auth = useMemo(() => new AuthService(storage, config.apiBaseUrl), [storage, config.apiBaseUrl]);
   
   // Create the API client with auth service callbacks
   const api = useMemo(() => new ApiClient(

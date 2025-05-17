@@ -22,7 +22,7 @@ const pluginsToLoad = [
 
 // App configuration
 const dataConfig = {
-  apiBaseUrl: '/api',
+  apiBaseUrl: 'http://localhost:3000',
   usePersistentStorage: true,
   useIndexedDb: false,
   syncInterval: 60000 // 1 minute
