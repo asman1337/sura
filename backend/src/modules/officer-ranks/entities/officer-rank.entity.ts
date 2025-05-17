@@ -33,6 +33,6 @@ export class OfficerRank {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => Officer, officer => officer.rankId)
+  @OneToMany(() => Officer, officer => officer.rank)
   officers: Officer[];
 } 

@@ -28,16 +28,16 @@ export class Unit {
   })
   type: string;
 
-  @Column({ length: 36 })
+  @Column({ type: 'uuid' })
   organizationId: string;
 
   @Column({ length: 250, nullable: true })
   jurisdictionArea: string;
 
-  @Column({ length: 36, nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   inchargeOfficerId: string;
 
-  @Column({ length: 36, nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   parentUnitId: string;
 
   @Column({ default: false })

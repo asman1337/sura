@@ -40,21 +40,21 @@ export class Officer {
   userType: 'ADMIN' | 'OFFICER' | 'STAFF' | 'PUBLIC';
 
   // Rank information
-  @Column({ length: 36 })
+  @Column({ type: 'uuid' })
   rankId: string;
   
   // Organization and unit assignments
-  @Column({ length: 36 })
+  @Column({ type: 'uuid' })
   organizationId: string;
   
-  @Column({ length: 36 })
+  @Column({ type: 'uuid' })
   primaryUnitId: string;
   
-  @Column({ length: 36, nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   departmentId: string;
   
   // Reporting structure
-  @Column({ length: 36, nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   reportingOfficerId: string;
 
   // Additional officer details

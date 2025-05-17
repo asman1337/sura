@@ -11,10 +11,10 @@ export class Department {
   @Column({ length: 500, nullable: true })
   description: string;
 
-  @Column({ length: 36 })
+  @Column({ type: 'uuid' })
   unitId: string;
 
-  @Column({ length: 36, nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   primaryHeadId: string;
 
   @Column({ default: true })
