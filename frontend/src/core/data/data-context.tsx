@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { ApiClient } from './api-client';
 import { AuthService } from './auth-service';
 import { StorageClient, LocalStorageProvider, IndexedDBStorageProvider } from './storage-client';
@@ -25,6 +25,7 @@ export interface DataContextValue {
   storage: StorageClient;
   cache: CacheManager;
   sync: SyncManager;
+  isInitialized: boolean;
 }
 
 // Create context with a null default value
@@ -40,11 +41,8 @@ export const DataProvider: React.FC<{
   children: React.ReactNode;
   config: DataContextConfig;
 }> = ({ children, config }) => {
-  // Create the auth service
-  const auth = useMemo(() => new AuthService(), []);
-  
-  // Create the API client with the auth service
-  const api = useMemo(() => new ApiClient(config.apiBaseUrl, auth), [config.apiBaseUrl, auth]);
+  // Track initialization status
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Create the storage provider based on configuration
   const storageProvider = useMemo(() => {
@@ -62,6 +60,20 @@ export const DataProvider: React.FC<{
   // Create the storage client
   const storage = useMemo(() => new StorageClient(storageProvider), [storageProvider]);
   
+  // Create the auth service with storage
+  const auth = useMemo(() => new AuthService(storage), [storage]);
+  
+  // Create the API client with auth service callbacks
+  const api = useMemo(() => new ApiClient(
+    config.apiBaseUrl,
+    // Token provider function
+    () => auth.getToken(),
+    // Token refresher function
+    async () => auth.refreshToken(),
+    // Logout handler function
+    async () => auth.logout()
+  ), [config.apiBaseUrl, auth]);
+  
   // Create the cache manager
   const cache = useMemo(() => new CacheManager(storage), [storage]);
   
@@ -73,9 +85,19 @@ export const DataProvider: React.FC<{
   // Get the plugin registry to register our data service as a plugin
   const { registry, getPlugin } = usePlugins();
   
+  // Initialize auth service on mount
+  useEffect(() => {
+    const initializeAuth = async () => {
+      await auth.initialize();
+      setIsInitialized(true);
+    };
+    
+    initializeAuth();
+  }, [auth]);
+  
   // Register the data services plugin
   useEffect(() => {
-    if (!registry) return;
+    if (!registry || !isInitialized) return;
     
     const registerDataServicesPlugin = async () => {
       // Check if already registered
@@ -107,11 +129,11 @@ export const DataProvider: React.FC<{
     };
     
     registerDataServicesPlugin();
-  }, [registry, getPlugin, api, auth, storage, cache, sync]);
+  }, [registry, getPlugin, api, auth, storage, cache, sync, isInitialized]);
   
   // Register core data services as extension points when the plugin is registered
   useEffect(() => {
-    if (!registry) return;
+    if (!registry || !isInitialized) return;
     
     // Check if our plugin is already registered
     const dataServicesPlugin = getPlugin(DATA_SERVICES_PLUGIN_ID);
@@ -132,7 +154,7 @@ export const DataProvider: React.FC<{
       cache,
       sync
     });
-  }, [registry, getPlugin, api, auth, storage, cache, sync]);
+  }, [registry, getPlugin, api, auth, storage, cache, sync, isInitialized]);
   
   // Create the context value
   const contextValue = useMemo<DataContextValue>(() => ({
@@ -140,8 +162,9 @@ export const DataProvider: React.FC<{
     auth,
     storage,
     cache,
-    sync
-  }), [api, auth, storage, cache, sync]);
+    sync,
+    isInitialized
+  }), [api, auth, storage, cache, sync, isInitialized]);
   
   return (
     <DataContext.Provider value={contextValue}>

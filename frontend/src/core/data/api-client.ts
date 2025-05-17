@@ -1,5 +1,19 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { AuthService } from './auth-service';
+
+/**
+ * Callback for getting authentication token
+ */
+export type TokenProvider = () => string | null;
+
+/**
+ * Callback for refreshing authentication token
+ */
+export type TokenRefresher = () => Promise<boolean>;
+
+/**
+ * Callback for handling logout
+ */
+export type LogoutHandler = () => Promise<void>;
 
 /**
  * Core API client for making HTTP requests
@@ -7,11 +21,20 @@ import { AuthService } from './auth-service';
 export class ApiClient {
   private client: AxiosInstance;
   private baseUrl: string;
-  private authService: AuthService;
+  private tokenProvider: TokenProvider;
+  private tokenRefresher: TokenRefresher;
+  private logoutHandler: LogoutHandler;
   
-  constructor(baseUrl: string, authService: AuthService) {
+  constructor(
+    baseUrl: string, 
+    tokenProvider: TokenProvider,
+    tokenRefresher: TokenRefresher,
+    logoutHandler: LogoutHandler
+  ) {
     this.baseUrl = baseUrl;
-    this.authService = authService;
+    this.tokenProvider = tokenProvider;
+    this.tokenRefresher = tokenRefresher;
+    this.logoutHandler = logoutHandler;
     
     this.client = axios.create({
       baseURL: this.baseUrl,
@@ -23,7 +46,7 @@ export class ApiClient {
     
     // Request interceptor for auth tokens
     this.client.interceptors.request.use(config => {
-      const token = this.authService.getToken();
+      const token = this.tokenProvider();
       if (token) {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
@@ -36,21 +59,26 @@ export class ApiClient {
       response => response,
       async error => {
         // Handle token refresh for 401 errors
-        if (error.response?.status === 401 && this.authService.canRefreshToken()) {
+        if (error.response?.status === 401) {
           try {
             // Try to refresh the token
-            await this.authService.refreshToken();
+            const refreshSuccess = await this.tokenRefresher();
             
-            // Retry the original request with new token
-            const originalRequest = error.config;
-            const token = this.authService.getToken();
-            if (token) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              return this.client(originalRequest);
+            if (refreshSuccess) {
+              // Retry the original request with new token
+              const originalRequest = error.config;
+              const token = this.tokenProvider();
+              if (token) {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                return this.client(originalRequest);
+              }
+            } else {
+              // If refresh fails, logout the user
+              await this.logoutHandler();
             }
           } catch (refreshError) {
-            // If refresh fails, logout the user
-            this.authService.logout();
+            // If refresh throws an error, logout the user
+            await this.logoutHandler();
           }
         }
         
