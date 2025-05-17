@@ -1,4 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Department } from 'src/modules/departments/entities/department.entity';
+import { OfficerRank } from 'src/modules/officer-ranks/entities/officer-rank.entity';
+import { Organization } from 'src/modules/organizations/entities/organization.entity';
+import { Unit } from 'src/modules/units/entities/unit.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
 @Entity('officers')
 export class Officer {
@@ -27,6 +31,9 @@ export class Officer {
   // Officer identification
   @Column({ length: 20, unique: true })
   badgeNumber: string;
+
+  @Column({ type: 'enum', enum: ['MALE', 'FEMALE', 'OTHER'], default: 'OTHER' })
+  gender: 'MALE' | 'FEMALE' | 'OTHER';
 
   // Role information
   @Column({ type: 'enum', enum: ['ADMIN', 'OFFICER', 'STAFF', 'PUBLIC'], default: 'OFFICER' })
@@ -86,26 +93,26 @@ export class Officer {
   updatedAt: Date;
   
   // Relationships will be defined when all entities are created
-  // @ManyToOne(() => OfficerRank)
-  // @JoinColumn({ name: 'rankId' })
-  // rank: OfficerRank;
+  @ManyToOne(() => OfficerRank, { nullable: true })
+  @JoinColumn({ name: 'rankId' })
+  rank: OfficerRank;
   
-  // @ManyToOne(() => Organization)
-  // @JoinColumn({ name: 'organizationId' })
-  // organization: Organization;
+  @ManyToOne(() => Organization)
+  @JoinColumn({ name: 'organizationId' })
+  organization: Organization;
   
-  // @ManyToOne(() => Unit)
-  // @JoinColumn({ name: 'primaryUnitId' })
-  // primaryUnit: Unit;
+  @ManyToOne(() => Unit)
+  @JoinColumn({ name: 'primaryUnitId' })
+  primaryUnit: Unit;
   
-  // @ManyToOne(() => Department, { nullable: true })
-  // @JoinColumn({ name: 'departmentId' })
-  // department: Department;
+  @ManyToOne(() => Department, { nullable: true })
+  @JoinColumn({ name: 'departmentId' })
+  department: Department;
   
-  // @ManyToOne(() => Officer, officer => officer.subordinates)
-  // @JoinColumn({ name: 'reportingOfficerId' })
-  // reportingOfficer: Officer;
+  @ManyToOne(() => Officer, officer => officer.subordinates)
+  @JoinColumn({ name: 'reportingOfficerId' })
+  reportingOfficer: Officer;
   
-  // @OneToMany(() => Officer, officer => officer.reportingOfficer)
-  // subordinates: Officer[];
+  @OneToMany(() => Officer, officer => officer.reportingOfficer)
+  subordinates: Officer[];
 }

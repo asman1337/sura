@@ -1,3 +1,4 @@
+import { Officer } from 'src/modules/officers/entities/officer.entity';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
 @Entity('officer_ranks')
@@ -8,11 +9,14 @@ export class OfficerRank {
   @Column({ length: 100 })
   name: string;
 
-  @Column({ length: 15 })
+  @Column({ length: 15, unique: true })
   abbreviation: string;
 
   @Column()
   level: number; // Lower number = higher rank (1 for DGP, etc.)
+
+  @Column()
+  weight: number;
 
   @Column({ type: 'enum', enum: ['DISTRICT', 'COMMISSIONERATE', 'BOTH'], default: 'BOTH' })
   systemType: 'DISTRICT' | 'COMMISSIONERATE' | 'BOTH';
@@ -29,7 +33,6 @@ export class OfficerRank {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // Relationships will be defined when all entities are created
-  // @OneToMany(() => Officer, officer => officer.rank)
-  // officers: Officer[];
+  @OneToMany(() => Officer, officer => officer.rankId)
+  officers: Officer[];
 } 
