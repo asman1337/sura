@@ -8,6 +8,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { UnitsModule } from './modules/units/units.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { SeederModule } from './modules/seeder/seeder.module';
 
 // Import all entities
 import { Officer } from './modules/officers/entities/officer.entity';
@@ -33,7 +34,8 @@ import { Unit } from './modules/units/entities/unit.entity';
     OrganizationsModule, 
     DepartmentsModule,
     UnitsModule, 
-    AuthModule, 
+    AuthModule,
+    SeederModule,
   ],
   controllers: [AppController],
   providers: [AppService],

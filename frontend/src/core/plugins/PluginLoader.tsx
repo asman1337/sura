@@ -25,9 +25,19 @@ export const PluginLoader: React.FC<PluginLoaderProps> = ({
   useEffect(() => {
     const loadPlugins = async () => {
       try {
+        // Track which plugins we've already registered
+        const registeredPluginIds = new Set<string>();
+        
         // Register all plugins
         for (const plugin of plugins) {
+          // Skip if we've already registered this plugin
+          if (registeredPluginIds.has(plugin.manifest.id)) {
+            console.log(`Skipping duplicate plugin registration: ${plugin.manifest.id}`);
+            continue;
+          }
+          
           await registerPlugin(plugin.manifest);
+          registeredPluginIds.add(plugin.manifest.id);
         }
         
         setLoading(false);

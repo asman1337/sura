@@ -15,7 +15,7 @@ export const MalkhanaPluginManifest: PluginManifest = {
     routes: () => import('./routes'),
     store: () => import('./store'),
     services: () => import('./services'),
-    navigationItems: () => import('./extensions/navigation'),
+    navigation: () => import('./extensions/navigation'),
     dashboardWidgets: () => import('./extensions/widgets.tsx'),
     permissions: () => import('./extensions/permissions'),
   },

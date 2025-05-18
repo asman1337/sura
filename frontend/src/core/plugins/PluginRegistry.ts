@@ -25,9 +25,18 @@ export class PluginRegistry {
   async registerPlugin(manifest: PluginManifest): Promise<void> {
     // Check if plugin is already registered
     if (this.plugins.has(manifest.id)) {
-      console.warn(`Plugin ${manifest.id} is already registered.`);
+      console.warn(`Plugin ${manifest.id} is already registered. This might indicate a duplicate registration attempt.`);
+      
+      // If it's already registered but not enabled, try to enable it
+      if (!this.enabledPlugins.has(manifest.id) && this.shouldEnablePlugin(manifest.id)) {
+        console.log(`Enabling previously registered plugin: ${manifest.id}`);
+        await this.enablePlugin(manifest.id);
+      }
+      
       return;
     }
+
+    console.log(`Registering new plugin: ${manifest.id} (${manifest.name} v${manifest.version})`);
 
     // Check dependencies
     for (const dependency of manifest.dependencies) {
@@ -76,6 +85,7 @@ export class PluginRegistry {
     
     // Skip if already enabled
     if (this.enabledPlugins.has(pluginId)) {
+      console.log(`Plugin ${pluginId} is already enabled, skipping.`);
       return;
     }
     
@@ -103,8 +113,10 @@ export class PluginRegistry {
         await plugin.initialize();
       }
       
-      // Enable the plugin
-      await plugin.enable();
+      // Enable the plugin only if not already enabled
+      if (plugin.status !== 'enabled') {
+        await plugin.enable();
+      }
       
       // Mark as enabled
       this.enabledPlugins.add(pluginId);

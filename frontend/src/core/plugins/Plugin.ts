@@ -45,15 +45,29 @@ export class PluginImpl implements Plugin {
    */
   async initialize(): Promise<void> {
     try {
+      console.log(`Initializing plugin ${this.id}, loaded modules:`, Object.keys(this.loadedModules));
+      
       // Initialize all modules
       for (const [name, module] of Object.entries(this.loadedModules)) {
-        if (module.initialize) {
-          const cleanup = await module.initialize();
+        console.log(`Initializing module ${name} for plugin ${this.id}`, module);
+        
+        if (module.default && typeof module.default.initialize === 'function') {
+          console.log(`Calling initialize on module ${name}.default`);
+          const cleanup = await module.default.initialize(this);
           if (typeof cleanup === 'function') {
             this.cleanupFunctions.push(cleanup);
           }
+        } else if (module.initialize) {
+          console.log(`Calling initialize on module ${name}`);
+          const cleanup = await module.initialize(this);
+          if (typeof cleanup === 'function') {
+            this.cleanupFunctions.push(cleanup);
+          }
+        } else {
+          console.log(`Module ${name} has no initialize method`);
         }
       }
+      
       this.status = 'initialized';
     } catch (error) {
       this.status = 'error';

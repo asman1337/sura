@@ -9,8 +9,6 @@ import {
   CardContent,
   Container,
   Divider,
-  Grid,
-  Link,
   Paper,
   Stack,
   Typography,

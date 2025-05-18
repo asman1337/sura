@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Provider as ReduxProvider } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
 import { PluginProvider, PluginLoader } from './core/plugins'
@@ -26,7 +26,7 @@ const dataConfig = {
   usePersistentStorage: true,
   useIndexedDb: false,
   syncInterval: 60000 // 1 minute
-}
+} 
 
 // App Shell handles app layout after plugins are loaded
 function AppShell() {
