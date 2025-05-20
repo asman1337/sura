@@ -6,41 +6,32 @@ import {
   Breadcrumbs,
   Button,
   Card,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
   Grid,
-  IconButton,
   InputLabel,
   Link,
   MenuItem,
-  Paper,
   Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Tooltip,
   Typography,
   useTheme
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as ViewIcon,
-  QrCode as QrCodeIcon,
-  MoveDown as MoveIcon
-} from '@mui/icons-material';
+  QrCode as QrCodeIcon} from '@mui/icons-material';
+import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 
 import { malkhanaService } from '../services/MalkhanaService';
 import { MalkhanaItem, ShelfInfo } from '../types';
+import MalkhanaDataGrid, { 
+  viewActionRenderer, 
+  qrCodeActionRenderer, 
+  moveActionRenderer
+} from './common/MalkhanaDataGrid';
+import { shelfItemColumns, createActionsColumn } from './common/gridColumns';
 
 const ShelfItems: React.FC = () => {
   const { shelfId } = useParams<{ shelfId: string }>();
@@ -152,6 +143,21 @@ const ShelfItems: React.FC = () => {
     }
   };
   
+  // Create action column for shelf items
+  const actionColumn = createActionsColumn((params: GridRenderCellParams) => {
+    const isActive = params.row.status === 'ACTIVE';
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        {viewActionRenderer(params.row.id)}
+        {qrCodeActionRenderer(() => handleOpenQrDialog(params.row))}
+        {moveActionRenderer(() => handleOpenMoveDialog(params.row), isActive)}
+      </Box>
+    );
+  });
+
+  // Combine the columns with our action column
+  const columns: GridColDef[] = [...shelfItemColumns, actionColumn];
+  
   if (loading) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
@@ -210,7 +216,7 @@ const ShelfItems: React.FC = () => {
       
       <Box sx={{ mb: 2 }}>
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 6}}>
+          <Grid size={{ xs:12, md:6 }}>
             <Card
               elevation={0}
               sx={{ 
@@ -228,7 +234,7 @@ const ShelfItems: React.FC = () => {
               </Box>
             </Card>
           </Grid>
-          <Grid size={{xs: 12, md: 6}}>
+          <Grid size={{ xs:12, md:6 }}>
             <Card
               elevation={0}
               sx={{ 
@@ -246,91 +252,17 @@ const ShelfItems: React.FC = () => {
         </Grid>
       </Box>
       
-      {items.length === 0 ? (
-        <Card
-          elevation={0}
-          sx={{ 
-            borderRadius: 2,
-            border: `1px solid ${theme.palette.divider}`,
-            p: 3,
-            textAlign: 'center'
-          }}
-        >
-          <Typography color="textSecondary">
+      <MalkhanaDataGrid 
+        rows={items}
+        columns={columns}
+        loading={loading}
+        title={`Items on ${shelf.name}`}
+        customEmptyContent={
+          <Typography color="text.secondary">
             No items are currently assigned to this shelf
           </Typography>
-        </Card>
-      ) : (
-        <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2 }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: theme.palette.action.hover }}>
-                <TableCell>Mother #</TableCell>
-                <TableCell>Registry #</TableCell>
-                <TableCell>Case Number</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Registry</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {items.map(item => (
-                <TableRow key={item.id} hover>
-                  <TableCell>{item.motherNumber}</TableCell>
-                  <TableCell>{item.registryNumber}</TableCell>
-                  <TableCell>{item.caseNumber}</TableCell>
-                  <TableCell>{item.description}</TableCell>
-                  <TableCell>{item.registryType === 'BLACK_INK' ? 'Black Ink' : 'Red Ink'}</TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={item.status} 
-                      size="small"
-                      sx={{ 
-                        backgroundColor: `${getStatusColor(item.status)}20`,
-                        color: getStatusColor(item.status),
-                        fontWeight: 500
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                      <Tooltip title="View Details">
-                        <IconButton 
-                          size="small"
-                          component={RouterLink}
-                          to={`/malkhana/item/${item.id}`}
-                        >
-                          <ViewIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Item QR Code">
-                        <IconButton 
-                          size="small"
-                          onClick={() => handleOpenQrDialog(item)}
-                          sx={{ ml: 1 }}
-                        >
-                          <QrCodeIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Move to Another Shelf">
-                        <IconButton 
-                          size="small"
-                          onClick={() => handleOpenMoveDialog(item)}
-                          sx={{ ml: 1 }}
-                          disabled={item.status !== 'ACTIVE'}
-                        >
-                          <MoveIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+        }
+      />
       
       {/* QR Code Dialog */}
       <Dialog open={openQrDialog} onClose={() => setOpenQrDialog(false)} maxWidth="sm">

@@ -4,19 +4,10 @@ import {
   Alert,
   Box,
   Button,
-  Card,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -25,11 +16,14 @@ import {
 import {
   Add as AddIcon,
   QrCode as QrCodeIcon,
-  Edit as EditIcon
+  Visibility as ViewIcon
 } from '@mui/icons-material';
+import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 
 import { malkhanaService } from '../services/MalkhanaService';
 import { ShelfInfo } from '../types';
+import MalkhanaDataGrid, { qrCodeActionRenderer } from './common/MalkhanaDataGrid';
+import { shelfColumns, createActionsColumn } from './common/gridColumns';
 
 const ShelfManagement: React.FC = () => {
   const theme = useTheme();
@@ -119,14 +113,26 @@ const ShelfManagement: React.FC = () => {
   const handleViewShelfItems = (shelfId: string) => {
     navigate(`/malkhana/shelf/${shelfId}`);
   };
-  
-  if (loading) {
+
+  // Create action column
+  const actionColumn = createActionsColumn((params: GridRenderCellParams) => {
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography>Loading shelf data...</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <Tooltip title="View Items">
+          <Button
+            size="small"
+            onClick={() => handleViewShelfItems(params.row.id)}
+          >
+            <ViewIcon fontSize="small" />
+          </Button>
+        </Tooltip>
+        {qrCodeActionRenderer(() => handleOpenQrDialog(params.row))}
       </Box>
     );
-  }
+  });
+
+  // Combine the shelf columns with our action column
+  const columns: GridColDef[] = [...shelfColumns, actionColumn];
   
   return (
     <Box>
@@ -150,57 +156,17 @@ const ShelfManagement: React.FC = () => {
         </Alert>
       )}
       
-      {shelves.length === 0 ? (
-        <Card
-          elevation={0}
-          sx={{ 
-            borderRadius: 2,
-            border: `1px solid ${theme.palette.divider}`,
-            p: 3,
-            textAlign: 'center'
-          }}
-        >
-          <Typography color="textSecondary">
+      <MalkhanaDataGrid 
+        rows={shelves}
+        columns={columns}
+        loading={loading}
+        title={`Shelves (${shelves.length})`}
+        customEmptyContent={
+          <Typography color="text.secondary">
             No shelves have been created yet. Create your first shelf to organize Malkhana items.
           </Typography>
-        </Card>
-      ) : (
-        <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2 }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: theme.palette.action.hover }}>
-                <TableCell>Name</TableCell>
-                <TableCell>Location</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {shelves.map(shelf => (
-                <TableRow key={shelf.id} hover>
-                  <TableCell>{shelf.name}</TableCell>
-                  <TableCell>{shelf.location}</TableCell>
-                  <TableCell>{shelf.category || '-'}</TableCell>
-                  <TableCell align="center">
-                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                      <Tooltip title="View Items">
-                        <IconButton size="small" onClick={() => handleViewShelfItems(shelf.id)}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Generate QR Code">
-                        <IconButton size="small" onClick={() => handleOpenQrDialog(shelf)} sx={{ ml: 1 }}>
-                          <QrCodeIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+        }
+      />
       
       {/* New Shelf Dialog */}
       <Dialog open={openNewShelfDialog} onClose={handleCloseNewShelfDialog} maxWidth="sm" fullWidth>

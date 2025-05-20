@@ -24,7 +24,9 @@ import {
   Inventory as InventoryIcon,
   Delete as DeleteIcon,
   History as HistoryIcon,
-  ViewList as ViewListIcon
+  ViewList as ViewListIcon,
+  Search as SearchIcon,
+  Category as ShelvesIcon
 } from '@mui/icons-material';
 
 import { malkhanaService } from '../services/MalkhanaService';
@@ -89,6 +91,8 @@ const MalkhanaDashboard: React.FC = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card 
+            component={RouterLink}
+            to="/malkhana"
             elevation={0}
             sx={{ 
               height: '100%',
@@ -97,8 +101,11 @@ const MalkhanaDashboard: React.FC = () => {
               transition: 'transform 0.3s, box-shadow 0.3s',
               '&:hover': {
                 transform: 'translateY(-4px)',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
-              }
+                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                borderColor: theme.palette.primary.main,
+              },
+              textDecoration: 'none',
+              color: 'text.primary'
             }}
           >
             <CardContent>
@@ -130,6 +137,8 @@ const MalkhanaDashboard: React.FC = () => {
         
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card 
+            component={RouterLink}
+            to="/malkhana/black-ink"
             elevation={0}
             sx={{ 
               height: '100%',
@@ -138,8 +147,11 @@ const MalkhanaDashboard: React.FC = () => {
               transition: 'transform 0.3s, box-shadow 0.3s',
               '&:hover': {
                 transform: 'translateY(-4px)',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
-              }
+                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                borderColor: theme.palette.success.main,
+              },
+              textDecoration: 'none',
+              color: 'text.primary'
             }}
           >
             <CardContent>
@@ -171,6 +183,8 @@ const MalkhanaDashboard: React.FC = () => {
         
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card 
+            component={RouterLink}
+            to="/malkhana/red-ink"
             elevation={0}
             sx={{ 
               height: '100%',
@@ -179,8 +193,11 @@ const MalkhanaDashboard: React.FC = () => {
               transition: 'transform 0.3s, box-shadow 0.3s',
               '&:hover': {
                 transform: 'translateY(-4px)',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
-              }
+                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                borderColor: theme.palette.warning.main,
+              },
+              textDecoration: 'none',
+              color: 'text.primary'
             }}
           >
             <CardContent>
@@ -212,6 +229,8 @@ const MalkhanaDashboard: React.FC = () => {
         
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card 
+            component={RouterLink}
+            to="/malkhana/black-ink" 
             elevation={0}
             sx={{ 
               height: '100%',
@@ -220,8 +239,11 @@ const MalkhanaDashboard: React.FC = () => {
               transition: 'transform 0.3s, box-shadow 0.3s',
               '&:hover': {
                 transform: 'translateY(-4px)',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
-              }
+                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                borderColor: theme.palette.error.main,
+              },
+              textDecoration: 'none',
+              color: 'text.primary'
             }}
           >
             <CardContent>
@@ -355,7 +377,7 @@ const MalkhanaDashboard: React.FC = () => {
             <Divider />
             <CardContent>
               <Grid container spacing={2}>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 6, md: 4 }}>
                   <Paper
                     elevation={0}
                     sx={{
@@ -397,7 +419,7 @@ const MalkhanaDashboard: React.FC = () => {
                   </Paper>
                 </Grid>
                 
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 6, md: 4 }}>
                   <Paper
                     elevation={0}
                     sx={{
@@ -439,7 +461,7 @@ const MalkhanaDashboard: React.FC = () => {
                   </Paper>
                 </Grid>
                 
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 6, md: 4 }}>
                   <Paper
                     elevation={0}
                     sx={{
@@ -481,7 +503,7 @@ const MalkhanaDashboard: React.FC = () => {
                   </Paper>
                 </Grid>
                 
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 6, md: 4 }}>
                   <Paper
                     elevation={0}
                     sx={{
@@ -515,10 +537,93 @@ const MalkhanaDashboard: React.FC = () => {
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}>
-                      <ArrowForwardIcon />
+                      <SearchIcon />
                     </Box>
                     <Typography variant="subtitle2" align="center">
                       Search Items
+                    </Typography>
+                  </Paper>
+                </Grid>
+                
+                <Grid size={{ xs: 6, md: 4 }}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: 120,
+                      borderRadius: 2,
+                      border: `1px solid ${theme.palette.divider}`,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                        borderColor: theme.palette.primary.main,
+                        transform: 'translateY(-2px)'
+                      }
+                    }}
+                    component={RouterLink}
+                    to="/malkhana/shelves"
+                  >
+                    <Box sx={{
+                      mb: 1,
+                      bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                      color: theme.palette.secondary.main,
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <ShelvesIcon />
+                    </Box>
+                    <Typography variant="subtitle2" align="center">
+                      Shelf Management
+                    </Typography>
+                  </Paper>
+                </Grid>
+                
+                <Grid size={{ xs: 6, md: 4 }}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: 120,
+                      borderRadius: 2,
+                      border: `1px solid ${theme.palette.divider}`,
+                      cursor: 'pointer',
+                      opacity: 0.6,
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                        borderColor: theme.palette.primary.main,
+                        transform: 'translateY(-2px)'
+                      }
+                    }}
+                  >
+                    <Box sx={{
+                      mb: 1,
+                      bgcolor: alpha(theme.palette.error.main, 0.1),
+                      color: theme.palette.error.main,
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <DeleteIcon />
+                    </Box>
+                    <Typography variant="subtitle2" align="center">
+                      Disposed Items
                     </Typography>
                   </Paper>
                 </Grid>

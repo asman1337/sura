@@ -3,42 +3,28 @@ import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Button,
-  Card,
-  Chip,
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TextField,
-  Tooltip,
   Typography,
   useTheme
 } from '@mui/material';
-import {
-  Visibility as ViewIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon
-} from '@mui/icons-material';
 
 import { malkhanaService } from '../services/MalkhanaService';
 import { MalkhanaItem } from '../types';
+import MalkhanaDataGrid, { 
+  viewActionRenderer,
+  disposeActionRenderer
+} from './common/MalkhanaDataGrid';
+import { redInkColumns, createActionsColumn } from './common/gridColumns';
+import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 
 const RedInkRegistry: React.FC = () => {
   const theme = useTheme();
   const [items, setItems] = useState<MalkhanaItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   
   useEffect(() => {
     const loadRedInkRegistry = async () => {
       try {
+        setLoading(true);
         const redInk = await malkhanaService.getRedInkRegistry();
         setItems(redInk.items);
       } catch (error) {
@@ -51,62 +37,19 @@ const RedInkRegistry: React.FC = () => {
     loadRedInkRegistry();
   }, []);
   
-  // Handle search
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-    setPage(0); // Reset to first page when searching
-  };
-  
-  // Handle pagination
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-  
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-  
-  // Filter items by search query
-  const filteredItems = items.filter((item) => {
-    const lowerQuery = searchQuery.toLowerCase();
+  // Create action column
+  const actionColumn = createActionsColumn((params: GridRenderCellParams) => {
+    const isActive = params.row.status === 'ACTIVE';
     return (
-      item.description.toLowerCase().includes(lowerQuery) ||
-      item.caseNumber.toLowerCase().includes(lowerQuery) ||
-      item.receivedFrom.toLowerCase().includes(lowerQuery) ||
-      item.category.toLowerCase().includes(lowerQuery)
-    );
-  });
-  
-  // Paginate items
-  const paginatedItems = filteredItems.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
-  
-  // Get status chip color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return theme.palette.success.main;
-      case 'DISPOSED':
-        return theme.palette.error.main;
-      case 'TRANSFERRED':
-        return theme.palette.warning.main;
-      case 'RELEASED':
-        return theme.palette.info.main;
-      default:
-        return theme.palette.grey[500];
-    }
-  };
-  
-  if (loading) {
-    return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography>Loading Red Ink Registry...</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        {viewActionRenderer(params.row.id)}
+        {disposeActionRenderer(params.row.id, isActive)}
       </Box>
     );
-  }
+  });
+
+  // Combine the columns with our action column
+  const columns: GridColDef[] = [...redInkColumns, actionColumn];
   
   return (
     <Box>
@@ -116,113 +59,18 @@ const RedInkRegistry: React.FC = () => {
         </Typography>
       </Box>
       
-      <Card
-        elevation={0}
-        sx={{ 
-          borderRadius: 2,
-          border: `1px solid ${theme.palette.divider}`,
-          mb: 3
-        }}
-      >
-        <Box sx={{ p: 2 }}>
-          <TextField
-            fullWidth
-            placeholder="Search by case number, description, category..."
-            variant="outlined"
-            size="small"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />
-            }}
-          />
-        </Box>
-        
-        <TableContainer component={Paper} elevation={0}>
-          <Table sx={{ minWidth: 650 }} size="medium">
-            <TableHead>
-              <TableRow sx={{ backgroundColor: theme.palette.action.hover }}>
-                <TableCell>Registry #</TableCell>
-                <TableCell>Year</TableCell>
-                <TableCell>Case Number</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell>Received From</TableCell>
-                <TableCell>Date Received</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedItems.length > 0 ? (
-                paginatedItems.map((item) => (
-                  <TableRow key={item.id} hover>
-                    <TableCell>{item.registryNumber}</TableCell>
-                    <TableCell>{item.registryYear}</TableCell>
-                    <TableCell>{item.caseNumber}</TableCell>
-                    <TableCell>{item.description}</TableCell>
-                    <TableCell>{item.category}</TableCell>
-                    <TableCell>{item.receivedFrom}</TableCell>
-                    <TableCell>{new Date(item.dateReceived).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={item.status} 
-                        size="small"
-                        sx={{ 
-                          backgroundColor: `${getStatusColor(item.status)}20`,
-                          color: getStatusColor(item.status),
-                          fontWeight: 500
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                        <Tooltip title="View Details">
-                          <IconButton 
-                            size="small"
-                            component={RouterLink}
-                            to={`/malkhana/item/${item.id}`}
-                          >
-                            <ViewIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        
-                        <Tooltip title="Dispose Item">
-                          <IconButton 
-                            size="small"
-                            component={RouterLink}
-                            to={`/malkhana/dispose/${item.id}`}
-                            sx={{ ml: 1 }}
-                            disabled={item.status !== 'ACTIVE'}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
-                    {searchQuery ? 'No matching items found' : 'No items in Red Ink Registry'}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={filteredItems.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Card>
+      <MalkhanaDataGrid 
+        rows={items}
+        columns={columns}
+        loading={loading}
+        title={`Red Ink Registry Items (${items.length})`}
+        checkboxSelection
+        customEmptyContent={
+          <Typography color="text.secondary">
+            No items found in the Red Ink Registry
+          </Typography>
+        }
+      />
       
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
         <Button
