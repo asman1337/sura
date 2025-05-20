@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { OfficersModule } from './modules/officers/officers.module';
@@ -9,25 +10,22 @@ import { DepartmentsModule } from './modules/departments/departments.module';
 import { UnitsModule } from './modules/units/units.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { SeederModule } from './modules/seeder/seeder.module';
-
-// Import all entities
-import { Officer } from './modules/officers/entities/officer.entity';
-import { OfficerRank } from './modules/officer-ranks/entities/officer-rank.entity';
-import { Organization } from './modules/organizations/entities/organization.entity';
-import { Department } from './modules/departments/entities/department.entity';
-import { Unit } from './modules/units/entities/unit.entity';
-
+import { MalkhanaModule } from './modules/malkhana/malkhana.module';
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      database: process.env.DB_NAME || 'sura',
-      entities: [Officer, OfficerRank, Organization, Department, Unit],
-      synchronize: process.env.NODE_ENV !== 'production', // Auto-create database schema (disable in production)
+      host: process.env.DATABASE_HOST || 'localhost',
+      port: process.env.DATABASE_PORT ? parseInt(process.env.DATABASE_PORT, 10) : 5432,
+      username: process.env.DATABASE_USER || 'postgres',
+      password: process.env.DATABASE_PASSWORD || 'postgres',
+      database: process.env.DATABASE_NAME || 'sura',
+      synchronize: process.env.NODE_ENV !== 'production',
+      entities: [__dirname + '/**/*.entity.{js,ts}'],
+      logging: process.env.NODE_ENV !== 'production'
     }),
     OfficersModule, 
     OfficerRanksModule,
@@ -36,6 +34,7 @@ import { Unit } from './modules/units/entities/unit.entity';
     UnitsModule, 
     AuthModule,
     SeederModule,
+    MalkhanaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
