@@ -7,7 +7,8 @@ import {
   Body,
   Param,
   HttpStatus,
-  HttpCode
+  HttpCode,
+  UseGuards
 } from '@nestjs/common';
 import { ShelvesService } from '../services/shelves.service';
 import { CreateShelfDto } from '../dto/create-shelf.dto';
@@ -15,8 +16,10 @@ import { UpdateShelfDto } from '../dto/update-shelf.dto';
 import { Shelf } from '../entities/shelf.entity';
 import { MalkhanaItem } from '../entities/malkhana-item.entity';
 import { ShelfResponseDto } from '../dto/shelf.response.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @Controller('malkhana/shelves')
+@UseGuards(JwtAuthGuard)
 export class ShelvesController {
   constructor(private readonly shelvesService: ShelvesService) {}
 
