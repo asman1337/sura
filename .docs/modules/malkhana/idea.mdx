@@ -8,3 +8,7 @@ black ink registry means current year(for exmaple 2024), if it is not disponsed/
 
 red ink is a historic record and it's possible we have 100 item in red ink, then for example item 50 go disposed disposed then 51 wil moved to 50, 52 to 51 and so on.
 and think in 2024 black register we have 10 item then when 2025 starts, that 10 black will be moved to red and will be 99 + 10 
+
+when a item is first time registered, it gets a motherNumber (eg: 2024-00012) which stays as primary number through out it's lifetime, but when goes to red ink it get a red-ink id, which changes every year, and we need to keep track of all historic red ink id as well.
+Plus we can arrange id based on shelf, differnt shelf will have differnet items, it could be category wise or number wise and we also might generate qr code for quick retrival of item.
+shelf, you can consider as a group, it will have it's own qr to check all items inside, and item will have it's own qr to fetch item details.

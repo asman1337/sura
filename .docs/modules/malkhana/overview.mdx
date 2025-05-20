@@ -1,0 +1,96 @@
+# Malkhana Evidence Management System
+
+## Overview
+
+Malkhana is the evidence storage and management system used by police departments in India. It serves as the official repository for all physical evidence, seized property, and case-related items. The Malkhana system employs a dual-registry approach to track items throughout their lifecycle - from initial seizure to final disposal.
+
+## Key Concepts
+
+### Registry Types
+
+#### 1. Black Ink Registry
+
+- **Purpose**: Records all items registered in the current calendar year
+- **Lifespan**: Items remain in Black Ink registry only for the current year
+- **Characteristics**: Active registry that receives new items and manages current cases
+
+#### 2. Red Ink Registry
+
+- **Purpose**: Maintains historical records of items from previous years
+- **Lifespan**: Long-term storage of items spanning multiple years
+- **Characteristics**: Archive registry that preserves chain of custody for older items
+
+### Item Lifecycle
+
+1. **Initial Registration**: 
+   - Items are first registered in the Black Ink registry of the current year
+   - Each item receives a permanent "motherNumber" (e.g., 2024-00012)
+   - This motherNumber remains the primary identifier throughout the item's lifetime
+
+2. **Annual Transition**:
+   - At the beginning of a new year, all unresolved items from the previous year's Black Ink move to Red Ink
+   - Example: When 2025 begins, all 2024 Black Ink items transfer to Red Ink
+
+3. **Status Changes**:
+   - **Disposal**: Items can be disposed of from either registry following court orders
+   - **Movement**: Items may be temporarily removed for court proceedings or examination
+
+### Numbering System
+
+#### MotherNumber
+- Permanent identifier assigned at first registration
+- Format: `YYYY-NNNNN` (e.g., 2024-00012)
+- Remains unchanged throughout the item's existence
+
+#### Red Ink ID
+- Sequential number assigned when an item enters the Red Ink registry
+- Changes each year as the registry adjusts
+- When items are disposed of, all subsequent Red Ink IDs are renumbered
+
+Example:
+- Red Ink has 100 items
+- Item #50 is disposed
+- Item #51 becomes #50, item #52 becomes #51, and so on
+
+### Physical Organization
+
+#### Shelf System
+- Items are organized on shelves by category or sequential numbering
+- Each shelf can be considered a logical grouping
+- Shelves have their own identifiers and can contain multiple items
+
+#### QR Code Integration
+- **Shelf QR**: Scanning reveals all items stored on that shelf
+- **Item QR**: Scanning provides detailed information about a specific item
+- QR codes enable quick retrieval and inventory management
+
+## Yearly Transition Process
+
+The transition from Black Ink to Red Ink at year-end follows a specific procedure:
+
+1. All undisposed items from current year's Black Ink are identified
+2. These items retain their motherNumber but receive a new Red Ink ID
+3. The items are physically moved to the Red Ink storage area
+4. New Black Ink registry begins for the new year
+
+Example:
+- End of 2024: Black Ink has 10 items remaining
+- Beginning of 2025: These 10 items move to Red Ink
+- If Red Ink already had 99 items, these new items would be numbered #100-109
+
+## Benefits of the Dual Registry System
+
+1. **Clear Delineation**: Separates current and historical items
+2. **Efficient Processing**: Focuses resources on current year items
+3. **Comprehensive Tracking**: Maintains complete chain of custody
+4. **Simplified Auditing**: Facilitates yearly inventory reconciliation
+
+## Digital Implementation Considerations
+
+For digital systems implementing Malkhana management:
+
+1. **Automated Transitions**: Schedule year-end processing to move items between registries
+2. **History Tracking**: Maintain all historical Red Ink IDs for each item
+3. **QR Generation**: Automatically generate QR codes for new items and shelves
+4. **Search Capabilities**: Enable search by motherNumber, current ID, or case details
+5. **Disposal Workflow**: Implement proper authorization and documentation for item disposal

@@ -9,6 +9,8 @@ import AddItemForm from './components/AddItemForm';
 import DisposeItemForm from './components/DisposeItemForm';
 import ItemDetail from './components/ItemDetail';
 import EditItemForm from './components/EditItemForm';
+import ShelfManagement from './components/ShelfManagement';
+import ShelfItems from './components/ShelfItems';
 
 /**
  * Route extension point data interface
@@ -49,6 +51,14 @@ const MalkhanaRoutes: RouteObject[] = [
   {
     path: '/malkhana/dispose/:id',
     element: <DisposeItemForm />
+  },
+  {
+    path: '/malkhana/shelves',
+    element: <ShelfManagement />
+  },
+  {
+    path: '/malkhana/shelf/:shelfId',
+    element: <ShelfItems />
   }
 ];
 

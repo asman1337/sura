@@ -3,8 +3,10 @@ import {
   MalkhanaItem, 
   BlackInkRegistry, 
   RedInkRegistry, 
-  MalkhanaItemStatus,
-  MalkhanaStats
+  MalkhanaStats,
+  ShelfInfo,
+  ShelfRegistry,
+  RedInkHistoryEntry
 } from '../types';
 
 /**
@@ -13,6 +15,7 @@ import {
 class MalkhanaService {
   private blackInkKey = 'malkhana_black_ink';
   private redInkKey = 'malkhana_red_ink';
+  private shelfRegistryKey = 'malkhana_shelves';
   
   /**
    * Get the current year's Black Ink registry
@@ -67,19 +70,30 @@ class MalkhanaService {
   /**
    * Add a new item to the Black Ink registry
    */
-  async addItem(item: Omit<MalkhanaItem, 'id' | 'registryNumber' | 'registryType' | 'registryYear'>): Promise<MalkhanaItem> {
+  async addItem(item: Omit<MalkhanaItem, 'id' | 'registryNumber' | 'registryType' | 'registryYear' | 'motherNumber' | 'redInkHistory'>): Promise<MalkhanaItem> {
     const blackInk = await this.getBlackInkRegistry();
     const currentYear = new Date().getFullYear();
+    const newRegistryNumber = blackInk.lastRegistryNumber + 1;
+    
+    // Generate motherNumber - format: YYYY-NNNNN (zero-padded)
+    const motherNumber = `${currentYear}-${newRegistryNumber.toString().padStart(5, '0')}`;
     
     // Create new item
     const newItem: MalkhanaItem = {
       ...item,
       id: uuidv4(),
-      registryNumber: blackInk.lastRegistryNumber + 1,
+      registryNumber: newRegistryNumber,
+      motherNumber: motherNumber,
       registryType: 'BLACK_INK',
       registryYear: currentYear,
-      status: 'ACTIVE'
+      status: 'ACTIVE',
+      redInkHistory: [], // Initialize empty history for new item
     };
+    
+    // Generate QR code URL if needed
+    if (!newItem.qrCodeUrl) {
+      newItem.qrCodeUrl = await this.generateQRCode(newItem);
+    }
     
     // Update registry
     blackInk.items.push(newItem);
@@ -170,16 +184,13 @@ class MalkhanaService {
       
       // Remove the disposed item
       const index = redInk.items.findIndex(i => i.id === itemId);
-      redInk.items.splice(index, 1);
+      redInk.items[index] = updatedItem; // Keep the item but mark as disposed
       
-      // Renumber remaining items
-      for (let i = index; i < redInk.items.length; i++) {
-        redInk.items[i].registryNumber = i + 1;
-      }
+      // Save the current state before renumbering
+      const disposedYear = new Date().getFullYear();
       
-      // Update last registry number
-      redInk.lastRegistryNumber = redInk.items.length;
-      
+      // For disposed Red Ink items, we don't remove them but keep them marked as disposed
+      // This preserves the item's history while still showing it's been disposed
       localStorage.setItem(this.redInkKey, JSON.stringify(redInk));
     }
     
@@ -198,27 +209,46 @@ class MalkhanaService {
     const activeItems = blackInk.items.filter(item => item.status === 'ACTIVE');
     
     // Add these items to Red Ink with updated registry numbers
-    activeItems.forEach(item => {
-      redInk.lastRegistryNumber++;
+    let nextRegistryNumber = redInk.lastRegistryNumber + 1;
+    
+    for (const item of activeItems) {
+      // Store previous red ink id in history if it's not the first transition
+      if (item.registryType === 'RED_INK') {
+        // Initialize history array if not exists
+        if (!item.redInkHistory) {
+          item.redInkHistory = [];
+        }
+        
+        // Add previous ID to history
+        const historyEntry: RedInkHistoryEntry = {
+          year: item.registryYear,
+          redInkId: item.registryNumber
+        };
+        
+        item.redInkHistory.push(historyEntry);
+      }
       
-      const updatedItem: MalkhanaItem = {
+      // Update item for Red Ink
+      const redInkItem: MalkhanaItem = {
         ...item,
-        registryNumber: redInk.lastRegistryNumber,
-        registryType: 'RED_INK'
+        registryNumber: nextRegistryNumber++,
+        registryType: 'RED_INK',
+        registryYear: blackInk.year // Previous year (the year it was in black ink)
       };
       
-      redInk.items.push(updatedItem);
-    });
+      redInk.items.push(redInkItem);
+    }
     
-    // Create new Black Ink registry for the new year
+    // Update Red Ink registry
+    redInk.lastRegistryNumber = nextRegistryNumber - 1;
+    localStorage.setItem(this.redInkKey, JSON.stringify(redInk));
+    
+    // Create new Black Ink registry for new year
     const newBlackInk: BlackInkRegistry = {
       year: newYear,
       items: [],
       lastRegistryNumber: 0
     };
-    
-    // Save both registries
-    localStorage.setItem(this.redInkKey, JSON.stringify(redInk));
     localStorage.setItem(this.blackInkKey, JSON.stringify(newBlackInk));
   }
   
@@ -233,8 +263,10 @@ class MalkhanaService {
     const redInkItems = redInk.items.length;
     
     // Count disposed items in both registries
-    const disposedItems = 
-      blackInk.items.filter(item => item.status === 'DISPOSED').length;
+    const disposedItems = [
+      ...blackInk.items.filter(item => item.status === 'DISPOSED'),
+      ...redInk.items.filter(item => item.status === 'DISPOSED')
+    ].length;
     
     // Count recently added items (last 30 days)
     const thirtyDaysAgo = new Date();
@@ -267,8 +299,116 @@ class MalkhanaService {
     return allItems.filter(item => 
       item.caseNumber.toLowerCase().includes(lowerQuery) ||
       item.description.toLowerCase().includes(lowerQuery) ||
-      item.receivedFrom.toLowerCase().includes(lowerQuery)
+      item.receivedFrom.toLowerCase().includes(lowerQuery) ||
+      (item.motherNumber && item.motherNumber.toLowerCase().includes(lowerQuery))
     );
+  }
+
+  /**
+   * Find an item by motherNumber
+   */
+  async findByMotherNumber(motherNumber: string): Promise<MalkhanaItem | null> {
+    const blackInk = await this.getBlackInkRegistry();
+    const redInk = await this.getRedInkRegistry();
+    
+    // First check Black Ink
+    let item = blackInk.items.find(i => i.motherNumber === motherNumber);
+    
+    // If not found, check Red Ink
+    if (!item) {
+      item = redInk.items.find(i => i.motherNumber === motherNumber);
+    }
+    
+    return item || null;
+  }
+
+  /**
+   * Get shelf registry
+   */
+  async getShelfRegistry(): Promise<ShelfRegistry> {
+    const storedRegistry = localStorage.getItem(this.shelfRegistryKey);
+    
+    if (storedRegistry) {
+      return JSON.parse(storedRegistry) as ShelfRegistry;
+    }
+    
+    // Initialize new shelf registry
+    const newRegistry: ShelfRegistry = {
+      shelves: []
+    };
+    
+    localStorage.setItem(this.shelfRegistryKey, JSON.stringify(newRegistry));
+    return newRegistry;
+  }
+  
+  /**
+   * Add a new shelf
+   */
+  async addShelf(shelf: Omit<ShelfInfo, 'id'>): Promise<ShelfInfo> {
+    const registry = await this.getShelfRegistry();
+    
+    const newShelf: ShelfInfo = {
+      ...shelf,
+      id: uuidv4()
+    };
+    
+    registry.shelves.push(newShelf);
+    localStorage.setItem(this.shelfRegistryKey, JSON.stringify(registry));
+    
+    return newShelf;
+  }
+  
+  /**
+   * Get items by shelf ID
+   */
+  async getItemsByShelf(shelfId: string): Promise<MalkhanaItem[]> {
+    const blackInk = await this.getBlackInkRegistry();
+    const redInk = await this.getRedInkRegistry();
+    
+    const items = [
+      ...blackInk.items,
+      ...redInk.items
+    ].filter(item => item.shelfId === shelfId);
+    
+    return items;
+  }
+  
+  /**
+   * Generate QR code for an item
+   * In a real implementation, this would call an API to generate a QR code
+   * For this example, we'll just return a mock URL
+   */
+  async generateQRCode(item: Partial<MalkhanaItem>): Promise<string> {
+    // In a real implementation, call an API to generate QR code
+    // For now, return a mock URL that encodes the motherNumber or ID
+    const identifier = item.motherNumber || item.id;
+    return `https://api.example.com/qr/malkhana/${identifier}`;
+  }
+
+  /**
+   * Generate QR code for a shelf
+   */
+  async generateShelfQRCode(shelfId: string): Promise<string> {
+    return `https://api.example.com/qr/shelf/${shelfId}`;
+  }
+
+  /**
+   * Assign an item to a shelf
+   */
+  async assignItemToShelf(itemId: string, shelfId: string): Promise<MalkhanaItem> {
+    // Get shelf info
+    const shelfRegistry = await this.getShelfRegistry();
+    const shelf = shelfRegistry.shelves.find(s => s.id === shelfId);
+    
+    if (!shelf) {
+      throw new Error(`Shelf with ID ${shelfId} not found`);
+    }
+    
+    // Update item with shelf info
+    return this.updateItem(itemId, {
+      shelfId: shelfId,
+      shelfLocation: shelf.location
+    });
   }
 }
 
