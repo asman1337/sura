@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Provider as ReduxProvider } from 'react-redux'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { PluginProvider, PluginLoader } from './core/plugins'
 import { DataProvider } from './core/data'
 import { ThemeProvider } from './core/theme'
@@ -14,7 +14,7 @@ import MalkhanaPlugin from './plugins/malkhana'
 // Create the store
 const store = createAppStore()
 
-// List of plugins to load
+// List of plugins to load - ensure each plugin is included only once
 const pluginsToLoad = [
   MalkhanaPlugin,
   // Add more plugins here
@@ -28,15 +28,29 @@ const dataConfig = {
   syncInterval: 60000 // 1 minute
 } 
 
+// React Router future flags
+const routerOptions = {
+  future: {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true
+  }
+};
+
 // App Shell handles app layout after plugins are loaded
 function AppShell() {
   const [pluginsReady, setPluginsReady] = useState(false)
+
+  // Handler for when plugins are loaded
+  const handlePluginsLoaded = () => {
+    console.log('All plugins have been loaded and initialized');
+    setPluginsReady(true);
+  };
 
   return (
     <div className="app-shell">
       <PluginLoader 
         plugins={pluginsToLoad} 
-        onLoaded={() => setPluginsReady(true)}
+        onLoaded={handlePluginsLoaded}
         fallback={<div className="loading">Loading SURA plugins...</div>}
       >
         {pluginsReady ? (
@@ -57,7 +71,7 @@ function AppShell() {
 function App() {
   return (
     <ReduxProvider store={store}>
-      <BrowserRouter>
+      <BrowserRouter {...routerOptions}>
         <ThemeProvider>
           <PluginProvider>
             <DataProvider config={dataConfig}>

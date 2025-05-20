@@ -12,7 +12,7 @@ export const MalkhanaPluginManifest: PluginManifest = {
   
   // Module entry points
   entryPoints: {
-    routes: () => import('./routes'),
+    routes: () => import('./routes.tsx'),
     store: () => import('./store'),
     services: () => import('./services'),
     navigation: () => import('./extensions/navigation'),

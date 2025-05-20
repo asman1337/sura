@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { Navigate, Route, Routes as RouterRoutes } from 'react-router-dom';
 import { useData } from '../data';
 import { usePlugins } from '../plugins';
@@ -13,6 +13,7 @@ const NotFoundPage = lazy(() => import('../pages/error/NotFoundPage'));
 // Define plugin route type
 interface PluginRoute {
   id: string;
+  pluginId: string;
   data: {
     path: string;
     element: React.ReactNode;
@@ -21,21 +22,51 @@ interface PluginRoute {
 
 const Routes: React.FC = () => {
   const { auth } = useData();
-  const { enabledPlugins } = usePlugins();
+  const { enabledPlugins, getExtensionPoints } = usePlugins();
+  const [pluginRoutes, setPluginRoutes] = useState<PluginRoute[]>([]);
   
   // Check if user is authenticated
   const isAuthenticated = !!auth.getToken();
   
   // Collect plugin routes
-  const pluginRoutes = enabledPlugins.flatMap(plugin => {
-    const routes = plugin.getExtensionPoints<{
+  useEffect(() => {
+    // Log enabled plugins for debugging
+    console.log('Enabled plugins in Routes component:', enabledPlugins);
+    
+    // Check each plugin for routes
+    enabledPlugins.forEach(plugin => {
+      console.log(`Checking routes for plugin: ${plugin.id}`);
+      const pluginRoutesExtPoints = plugin.getExtensionPoints('routes');
+      console.log(`Plugin ${plugin.id} has ${pluginRoutesExtPoints.length} routes`);
+    });
+    
+    // Directly use the getExtensionPoints hook to get all routes
+    const routes = getExtensionPoints<{
       path: string;
       element: React.ReactNode;
-    }>('routes') || [];
-    return routes as PluginRoute[];
-  });
+    }>('routes');
+    
+    console.log(`Found ${routes.length} routes from all plugins`);
+    setPluginRoutes(routes as PluginRoute[]);
+    
+    if (routes.length > 0) {
+      routes.forEach(route => {
+        console.log(`Found route: ${route.data.path} from plugin ${route.pluginId} (ID: ${route.id})`);
+      });
+    } else {
+      console.warn("No plugin routes found. Check plugin initialization.");
+    }
+  }, [getExtensionPoints, enabledPlugins.length]);
   
-  console.log("Plugin routes:", pluginRoutes);
+  // Process plugin routes to ensure correct path format
+  const processedPluginRoutes = pluginRoutes.map(route => {
+    // Remove leading slash for nested routes
+    const processedPath = route.data.path.replace(/^\//, '');
+    return {
+      ...route,
+      processedPath
+    };
+  });
   
   return (
     <Suspense fallback={<LoadingScreen />}>
@@ -52,11 +83,11 @@ const Routes: React.FC = () => {
                 <Route path="profile" element={<div>Profile Page</div>} />
                 <Route path="settings" element={<div>Settings Page</div>} />
                 
-                {/* Plugin routes */}
-                {pluginRoutes.map((routeExt) => (
+                {/* Plugin routes - if any were found */}
+                {processedPluginRoutes.map((routeExt) => (
                   <Route 
                     key={routeExt.id}
-                    path={routeExt.data.path.replace(/^\//, '')} // Remove leading slash if present
+                    path={routeExt.processedPath}
                     element={routeExt.data.element}
                   />
                 ))}
