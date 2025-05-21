@@ -9,6 +9,7 @@ import LoadingScreen from '../components/LoadingScreen';
 const DashboardPage = lazy(() => import('../pages/dashboard/DashboardPage'));
 const LoginPage = lazy(() => import('../pages/auth/LoginPage'));
 const NotFoundPage = lazy(() => import('../pages/error/NotFoundPage'));
+const ProfilePage = lazy(() => import('../pages/profile/ProfilePage'));
 
 // Define plugin route type
 interface PluginRoute {
@@ -80,7 +81,7 @@ const Routes: React.FC = () => {
             <Suspense fallback={<LoadingScreen />}>
               <RouterRoutes>
                 <Route path="dashboard" element={<DashboardPage />} />
-                <Route path="profile" element={<div>Profile Page</div>} />
+                <Route path="profile" element={<ProfilePage />} />
                 <Route path="settings" element={<div>Settings Page</div>} />
                 
                 {/* Plugin routes - if any were found */}

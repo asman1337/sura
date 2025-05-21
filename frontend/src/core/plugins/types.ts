@@ -58,6 +58,7 @@ export interface NavigationItem {
   icon?: React.ReactNode;
   badgeCount?: number;
   children?: NavigationChildItem[];
+  group?: string;
 }
 
 // Child navigation item

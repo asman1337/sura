@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { useData } from '../../data';
+import { OfficerInfo } from '../../data/auth-service';
 import { usePlugins } from '../../plugins';
 import { Plugin, NavigationItem, NavigationChildItem } from '../../plugins/types';
 import {
-  AppBar,
-  Avatar,
   Box,
-  Button,
   Collapse,
   CssBaseline,
   Divider,
@@ -18,13 +16,10 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Menu,
-  MenuItem,
-  Toolbar,
-  Tooltip,
   Typography,
   useMediaQuery,
-  useTheme
+  useTheme,
+  Avatar
 } from '@mui/material';
 import { 
   Menu as MenuIcon,
@@ -37,14 +32,12 @@ import {
   ExpandMore as ExpandMoreIcon,
   Home as HomeIcon,
   Login as LoginIcon,
-  NotificationsOutlined as NotificationIcon,
-  Search as SearchIcon,
-  Help as HelpIcon,
   Inventory as InventoryIcon
 } from '@mui/icons-material';
 
 // Sidebar width
 const drawerWidth = 260;
+const collapsedDrawerWidth = 68; // Width when collapsed
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -56,21 +49,39 @@ interface CoreNavItem {
   path: string;
   icon: React.ReactNode;
   requiresAuth?: boolean;
+  group?: string;
 }
 
 const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { auth } = useData();
+  const { auth, isInitialized } = useData();
   const { enabledPlugins } = usePlugins();
   const navigate = useNavigate();
   const location = useLocation();
   
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  const [profileMenuAnchor, setProfileMenuAnchor] = useState<null | HTMLElement>(null);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [userProfile, setUserProfile] = useState<OfficerInfo | null>(null);
   
   const isLoggedIn = !!auth.getToken();
+  
+  // Load user profile
+  useEffect(() => {
+    if (isInitialized && isLoggedIn) {
+      const profile = auth.getCurrentUser();
+      if (profile) {
+        setUserProfile(profile);
+      } else {
+        // If not in memory, try to fetch from API
+        auth.fetchUserProfile().then(profile => {
+          if (profile) {
+            setUserProfile(profile);
+          }
+        });
+      }
+    }
+  }, [auth, isInitialized, isLoggedIn]);
   
   // Handle sidebar toggle
   const toggleSidebar = () => {
@@ -81,15 +92,6 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
   const handleLogout = async () => {
     await auth.logout();
     navigate('/login');
-  };
-  
-  // Handle profile menu
-  const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setProfileMenuAnchor(event.currentTarget);
-  };
-  
-  const handleProfileMenuClose = () => {
-    setProfileMenuAnchor(null);
   };
   
   // Toggle nested menu items
@@ -105,25 +107,28 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
   
-  // Core navigation items
+  // Core navigation items with groups
   const coreNavItems: CoreNavItem[] = [
     { 
       title: 'Dashboard', 
       path: '/dashboard', 
       icon: <DashboardIcon />, 
-      requiresAuth: true 
+      requiresAuth: true,
+      group: 'Core'
     },
     { 
       title: 'Profile', 
       path: '/profile', 
       icon: <PersonIcon />, 
-      requiresAuth: true 
+      requiresAuth: true,
+      group: 'Core'
     },
     { 
       title: 'Settings', 
       path: '/settings', 
       icon: <SettingsIcon />, 
-      requiresAuth: true 
+      requiresAuth: true,
+      group: 'Core'
     }
   ];
   
@@ -137,21 +142,25 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
   const navItems = isLoggedIn 
     ? coreNavItems.filter(item => !item.requiresAuth || isLoggedIn)
     : publicNavItems;
-  
-  // Add this after the enabledPlugins line
-  console.log("Enabled plugins:", enabledPlugins);
+    
+  // Group navigation items
+  const groupedNavItems = navItems.reduce<Record<string, CoreNavItem[]>>((acc, item) => {
+    const group = item.group || 'Other';
+    if (!acc[group]) {
+      acc[group] = [];
+    }
+    acc[group].push(item);
+    return acc;
+  }, {});
   
   // Plugin navigation items
   const pluginNavItems: NavigationItem[] = [];
   
   // Collect navigation items from plugins
   enabledPlugins.forEach((plugin: Plugin) => {
-    console.log(`Checking plugin ${plugin.id} for navigation items`);
     const navExtensions = plugin.getExtensionPoints<NavigationItem>('navigation:main');
-    console.log(`Plugin ${plugin.id} navigation extensions:`, navExtensions);
     if (navExtensions && navExtensions.length > 0) {
       navExtensions.forEach(ext => {
-        console.log(`Adding navigation item from plugin ${plugin.id}:`, ext.data);
         pluginNavItems.push({
           ...ext.data,
           id: ext.id
@@ -160,19 +169,15 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
     }
   });
   
-  // Deduplicate navigation items based on path
-  const uniquePluginNavItems = pluginNavItems.reduce((acc: NavigationItem[], item: NavigationItem) => {
-    // Check if we already have an item with this path
-    const existingItem = acc.find(i => i.path === item.path);
-    if (!existingItem) {
-      acc.push(item);
-    } else {
-      console.log(`Skipping duplicate navigation item for path: ${item.path}`);
+  // Group plugin nav items
+  const pluginNavItemsByGroup = pluginNavItems.reduce<Record<string, NavigationItem[]>>((acc, item) => {
+    const group = item.group || 'Plugins';
+    if (!acc[group]) {
+      acc[group] = [];
     }
+    acc[group].push(item);
     return acc;
-  }, []);
-  
-  console.log(`Processed ${uniquePluginNavItems.length} unique navigation items from plugins`);
+  }, {});
   
   // Add this function to render icons from string names
   const renderIcon = (icon: React.ReactNode | string) => {
@@ -202,7 +207,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
   // Sidebar content
   const sidebarContent = (
     <Box sx={{ overflow: 'auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Logo and brand */}
+      {/* Logo and brand with toggle */}
       <Box 
         sx={{ 
           display: 'flex', 
@@ -213,38 +218,38 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
           color: theme.palette.primary.contrastText
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Typography 
-            variant="h6" 
-            component={RouterLink} 
-            to="/"
-            sx={{ 
-              fontWeight: 700, 
-              textDecoration: 'none', 
-              color: 'inherit',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            SURA
-          </Typography>
-        </Box>
-        
-        {isMobile && (
-          <IconButton 
-            onClick={toggleSidebar} 
-            sx={{ color: 'inherit' }}
-            size="small"
-          >
-            <ChevronLeftIcon />
-          </IconButton>
+        {sidebarOpen && (
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography 
+              variant="h6" 
+              component={RouterLink} 
+              to="/"
+              sx={{ 
+                fontWeight: 700, 
+                textDecoration: 'none', 
+                color: 'inherit',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              SURA
+            </Typography>
+          </Box>
         )}
+        
+        <IconButton 
+          onClick={toggleSidebar} 
+          sx={{ color: 'inherit' }}
+          size="small"
+        >
+          {sidebarOpen ? <ChevronLeftIcon /> : <MenuIcon />}
+        </IconButton>
       </Box>
       
       <Divider />
       
       {/* User profile section (if logged in) */}
-      {isLoggedIn && (
+      {isLoggedIn && sidebarOpen && (
         <>
           <Box 
             sx={{ 
@@ -255,415 +260,329 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
             }}
           >
             <Avatar 
+              src={userProfile?.profilePhotoUrl} 
+              alt={userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'User'}
               sx={{ 
                 width: 40, 
                 height: 40,
-                bgcolor: theme.palette.secondary.main
+                bgcolor: theme.palette.primary.main
               }}
             >
-              U
+              {userProfile?.firstName?.charAt(0) || 'U'}
             </Avatar>
-            <Box sx={{ ml: 2, overflow: 'hidden' }}>
-              <Typography 
-                variant="subtitle1" 
-                noWrap 
-                sx={{ fontWeight: 600 }}
-              >
-                User Name
+            
+            <Box sx={{ ml: 1.5, overflow: 'hidden' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                {userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Loading...'}
               </Typography>
-              <Typography 
-                variant="body2" 
-                color="text.secondary" 
-                noWrap
-              >
-                Officer
+              
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                {userProfile?.rank?.name || userProfile?.userType || 'Officer'}
+                {userProfile?.primaryUnit && ` • ${userProfile.primaryUnit.name}`}
               </Typography>
             </Box>
           </Box>
+          
           <Divider />
         </>
       )}
       
-      {/* Core navigation items */}
-      <List sx={{ pt: 0, flexGrow: 1 }}>
-        {navItems.map((item) => (
-          <ListItem key={item.path} disablePadding>
-            <ListItemButton
-              component={RouterLink}
-              to={item.path}
-              selected={isPathActive(item.path)}
-              sx={{
-                py: 1,
-                minHeight: 48,
-                px: 2.5,
-                '&.Mui-selected': {
-                  backgroundColor: theme.palette.action.selected,
-                  borderRight: `3px solid ${theme.palette.primary.main}`,
-                  '&:hover': {
-                    backgroundColor: theme.palette.action.hover,
-                  }
-                },
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                {renderIcon(item.icon)}
-              </ListItemIcon>
-              <ListItemText 
-                primary={item.title} 
-                primaryTypographyProps={{ 
-                  fontSize: 14,
-                  fontWeight: isPathActive(item.path) ? 600 : 400
-                }} 
-              />
-            </ListItemButton>
-          </ListItem>
-        ))}
-        
-        {/* Plugin navigation items */}
-        {isLoggedIn && uniquePluginNavItems.length > 0 && (
-          <>
-            <Divider sx={{ my: 1 }} />
-            <ListItem>
-              <Typography 
-                variant="overline" 
-                color="text.secondary"
-                sx={{ 
-                  fontSize: 11, 
-                  fontWeight: 500,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  pl: 1
-                }}
-              >
-                Modules
-              </Typography>
-            </ListItem>
-            
-            {uniquePluginNavItems.map((item) => (
-              <React.Fragment key={item.id}>
-                <ListItem disablePadding>
+      {/* Icons-only view when collapsed */}
+      {!sidebarOpen && isLoggedIn && (
+        <Box sx={{ pt: 2, pb: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Avatar 
+            src={userProfile?.profilePhotoUrl} 
+            alt={userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'User'}
+            sx={{ 
+              width: 40, 
+              height: 40,
+              mb: 1,
+              bgcolor: theme.palette.primary.main
+            }}
+          >
+            {userProfile?.firstName?.charAt(0) || 'U'}
+          </Avatar>
+          <Divider sx={{ width: '100%', mt: 1 }} />
+        </Box>
+      )}
+      
+      {/* Navigation items */}
+      <List sx={{ px: 1, flex: 1 }}>
+        {/* Core navigation items by group */}
+        {Object.entries(groupedNavItems).map(([group, items]) => (
+          items.length > 0 && (
+            <React.Fragment key={group}>
+              {/* Group header - only show in expanded mode */}
+              {sidebarOpen && (
+                <Typography 
+                  variant="overline" 
+                  sx={{ 
+                    px: 2, 
+                    pt: 2, 
+                    pb: 1, 
+                    display: 'block', 
+                    color: 'text.secondary',
+                    fontWeight: 500
+                  }}
+                >
+                  {group}
+                </Typography>
+              )}
+              
+              {/* Group items */}
+              {items.map((item) => (
+                <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
                   <ListItemButton
-                    component={item.children ? 'div' : RouterLink}
-                    to={item.children ? undefined : item.path}
-                    onClick={item.children ? () => toggleNestedItem(item.id) : undefined}
-                    selected={!item.children && isPathActive(item.path)}
+                    component={RouterLink}
+                    to={item.path}
+                    selected={isPathActive(item.path)}
                     sx={{
-                      py: 1,
-                      minHeight: 48,
-                      px: 2.5,
-                      '&.Mui-selected': {
-                        backgroundColor: theme.palette.action.selected,
-                        borderRight: `3px solid ${theme.palette.primary.main}`,
-                        '&:hover': {
-                          backgroundColor: theme.palette.action.hover,
-                        }
-                      },
-                      transition: 'all 0.2s ease'
+                      borderRadius: 1,
+                      justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                      px: sidebarOpen ? 2 : 0,
+                      color: isPathActive(item.path) ? 'primary.main' : 'text.primary',
+                      backgroundColor: isPathActive(item.path) ? 'action.selected' : 'transparent',
+                      '&:hover': {
+                        backgroundColor: 'action.hover',
+                      }
                     }}
                   >
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      {renderIcon(item.icon)}
+                    <ListItemIcon 
+                      sx={{ 
+                        color: isPathActive(item.path) ? 'primary.main' : 'inherit',
+                        minWidth: sidebarOpen ? 36 : 'auto',
+                        mr: sidebarOpen ? 2 : 0
+                      }}
+                    >
+                      {item.icon}
                     </ListItemIcon>
-                    <ListItemText 
-                      primary={item.title} 
-                      primaryTypographyProps={{ 
-                        fontSize: 14,
-                        fontWeight: isPathActive(item.path) ? 600 : 400
-                      }} 
-                    />
-                    {item.children && (
-                      expandedItems[item.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />
-                    )}
+                    {sidebarOpen && <ListItemText primary={item.title} />}
                   </ListItemButton>
                 </ListItem>
-                
-                {/* Nested menu items */}
-                {item.children && (
-                  <Collapse 
-                    in={expandedItems[item.id]} 
-                    timeout="auto" 
-                    unmountOnExit
-                  >
-                    <List component="div" disablePadding>
-                      {item.children.map((child: NavigationChildItem) => (
+              ))}
+            </React.Fragment>
+          )
+        ))}
+        
+        {/* Plugin navigation items by group */}
+        {isLoggedIn && Object.entries(pluginNavItemsByGroup).map(([group, items]) => (
+          items.length > 0 && (
+            <React.Fragment key={group}>
+              <Divider sx={{ my: 1 }} />
+              
+              {/* Group header - only show in expanded mode */}
+              {sidebarOpen && (
+                <Typography 
+                  variant="overline" 
+                  sx={{ 
+                    px: 2, 
+                    pt: 2, 
+                    pb: 1, 
+                    display: 'block', 
+                    color: 'text.secondary',
+                    fontWeight: 500
+                  }}
+                >
+                  {group}
+                </Typography>
+              )}
+              
+              {/* Group items */}
+              {items.map((item) => (
+                <React.Fragment key={item.id}>
+                  {item.children?.length && sidebarOpen ? (
+                    // Parent item with children - only show in expanded mode
+                    <>
+                      <ListItem disablePadding sx={{ mb: 0.5 }}>
                         <ListItemButton
-                          key={child.path}
-                          component={RouterLink}
-                          to={child.path}
-                          selected={isPathActive(child.path)}
+                          onClick={() => toggleNestedItem(item.id)}
                           sx={{
-                            py: 0.5,
-                            minHeight: 40,
-                            pl: 6,
-                            '&.Mui-selected': {
-                              backgroundColor: theme.palette.action.selected,
-                              borderRight: `3px solid ${theme.palette.primary.main}`,
-                              '&:hover': {
-                                backgroundColor: theme.palette.action.hover,
-                              }
+                            borderRadius: 1,
+                            color: isPathActive(item.path) ? 'primary.main' : 'text.primary',
+                            backgroundColor: isPathActive(item.path) ? 'action.selected' : 'transparent',
+                            '&:hover': {
+                              backgroundColor: 'action.hover',
                             }
                           }}
                         >
-                          <ListItemText 
-                            primary={child.title} 
-                            primaryTypographyProps={{ 
-                              fontSize: 13,
-                              fontWeight: isPathActive(child.path) ? 600 : 400
-                            }} 
-                          />
+                          <ListItemIcon sx={{ color: isPathActive(item.path) ? 'primary.main' : 'inherit' }}>
+                            {renderIcon(item.icon)}
+                          </ListItemIcon>
+                          <ListItemText primary={item.title} />
+                          {expandedItems[item.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                         </ListItemButton>
-                      ))}
-                    </List>
-                  </Collapse>
-                )}
-              </React.Fragment>
-            ))}
-          </>
-        )}
+                      </ListItem>
+                      
+                      <Collapse in={expandedItems[item.id]} timeout="auto" unmountOnExit>
+                        <List component="div" disablePadding>
+                          {item.children.map((child: NavigationChildItem) => (
+                            <ListItem key={child.path} disablePadding sx={{ mb: 0.5 }}>
+                              <ListItemButton 
+                                component={RouterLink}
+                                to={child.path}
+                                selected={isPathActive(child.path)}
+                                sx={{ 
+                                  pl: 4,
+                                  borderRadius: 1,
+                                  color: isPathActive(child.path) ? 'primary.main' : 'text.primary',
+                                  backgroundColor: isPathActive(child.path) ? 'action.selected' : 'transparent',
+                                  '&:hover': {
+                                    backgroundColor: 'action.hover',
+                                  }
+                                }}
+                              >
+                                <ListItemIcon sx={{ color: isPathActive(child.path) ? 'primary.main' : 'inherit' }}>
+                                  {renderIcon(child.icon)}
+                                </ListItemIcon>
+                                <ListItemText primary={child.title} />
+                              </ListItemButton>
+                            </ListItem>
+                          ))}
+                        </List>
+                      </Collapse>
+                    </>
+                  ) : (
+                    // Single item - show with or without text depending on sidebar state
+                    <ListItem disablePadding sx={{ mb: 0.5 }}>
+                      <ListItemButton
+                        component={RouterLink}
+                        to={item.path}
+                        selected={isPathActive(item.path)}
+                        sx={{
+                          borderRadius: 1,
+                          justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                          px: sidebarOpen ? 2 : 0,
+                          color: isPathActive(item.path) ? 'primary.main' : 'text.primary',
+                          backgroundColor: isPathActive(item.path) ? 'action.selected' : 'transparent',
+                          '&:hover': {
+                            backgroundColor: 'action.hover',
+                          }
+                        }}
+                      >
+                        <ListItemIcon 
+                          sx={{ 
+                            color: isPathActive(item.path) ? 'primary.main' : 'inherit',
+                            minWidth: sidebarOpen ? 36 : 'auto',
+                            mr: sidebarOpen ? 2 : 0
+                          }}
+                        >
+                          {renderIcon(item.icon)}
+                        </ListItemIcon>
+                        {sidebarOpen && <ListItemText primary={item.title} />}
+                      </ListItemButton>
+                    </ListItem>
+                  )}
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          )
+        ))}
       </List>
       
       {/* Bottom actions */}
       {isLoggedIn && (
-        <Box sx={{ p: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
-          <Button
-            variant="outlined"
-            fullWidth
-            startIcon={<LogoutIcon />}
-            onClick={handleLogout}
-            sx={{ textTransform: 'none' }}
-          >
-            Logout
-          </Button>
-        </Box>
+        <>
+          <Divider />
+          <List sx={{ px: 1 }}>
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                onClick={handleLogout}
+                sx={{
+                  borderRadius: 1,
+                  justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                  px: sidebarOpen ? 2 : 0,
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                  }
+                }}
+              >
+                <ListItemIcon 
+                  sx={{ 
+                    color: 'error.main',
+                    minWidth: sidebarOpen ? 36 : 'auto',
+                    mr: sidebarOpen ? 2 : 0
+                  }}
+                >
+                  <LogoutIcon />
+                </ListItemIcon>
+                {sidebarOpen && <ListItemText primary="Logout" sx={{ color: 'error.main' }} />}
+              </ListItemButton>
+            </ListItem>
+          </List>
+        </>
       )}
     </Box>
   );
-
+  
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      height: '100vh',
-      overflow: 'hidden' // Prevent any overflow that might cause scrollbars
-    }}>
+    <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      
-      {/* Top AppBar */}
-      <AppBar 
-        position="fixed" 
-        color="default"
-        elevation={0}
-        sx={{
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          backgroundColor: 'background.paper',
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          width: '100%',
-          ml: 0,
-          transition: theme.transitions.create(['width', 'margin'], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-          }),
-        }}
-      >
-        <Toolbar sx={{ height: 64 }}>
-          {/* Mobile menu button */}
-          {isMobile && (
-            <IconButton
-              edge="start"
-              color="inherit"
-              aria-label="open drawer"
-              onClick={toggleSidebar}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-          )}
-          
-          {/* Desktop menu button (when sidebar is closed) */}
-          {!isMobile && !sidebarOpen && (
-            <IconButton
-              edge="start"
-              color="inherit"
-              aria-label="open drawer"
-              onClick={toggleSidebar}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-          )}
-          
-          {/* Page title - can be dynamic based on current route */}
-          <Typography 
-            variant="h6" 
-            noWrap 
-            component="div"
-            sx={{ flexGrow: 1 }}
-          >
-            Dashboard
-          </Typography>
-          
-          {/* Search button */}
-          <Tooltip title="Search">
-            <IconButton color="inherit" sx={{ mx: 1 }}>
-              <SearchIcon />
-            </IconButton>
-          </Tooltip>
-          
-          {/* Help button */}
-          <Tooltip title="Help">
-            <IconButton color="inherit" sx={{ mx: 1 }}>
-              <HelpIcon />
-            </IconButton>
-          </Tooltip>
-          
-          {/* Notifications */}
-          <Tooltip title="Notifications">
-            <IconButton color="inherit" sx={{ mx: 1 }}>
-              <NotificationIcon />
-            </IconButton>
-          </Tooltip>
-          
-          {/* Profile menu */}
-          {isLoggedIn && (
-            <>
-              <Tooltip title="Account settings">
-                <IconButton
-                  onClick={handleProfileMenuOpen}
-                  size="small"
-                  sx={{ ml: 2 }}
-                  aria-controls={Boolean(profileMenuAnchor) ? 'account-menu' : undefined}
-                  aria-haspopup="true"
-                  aria-expanded={Boolean(profileMenuAnchor) ? 'true' : undefined}
-                >
-                  <Avatar sx={{ width: 32, height: 32, bgcolor: theme.palette.primary.main }}>U</Avatar>
-                </IconButton>
-              </Tooltip>
-              <Menu
-                anchorEl={profileMenuAnchor}
-                id="account-menu"
-                open={Boolean(profileMenuAnchor)}
-                onClose={handleProfileMenuClose}
-                onClick={handleProfileMenuClose}
-                PaperProps={{
-                  elevation: 0,
-                  sx: {
-                    overflow: 'visible',
-                    filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
-                    mt: 1.5,
-                    width: 200,
-                    '& .MuiAvatar-root': {
-                      width: 32,
-                      height: 32,
-                      ml: -0.5,
-                      mr: 1,
-                    },
-                  },
-                }}
-                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-              >
-                <MenuItem component={RouterLink} to="/profile">
-                  <ListItemIcon>
-                    <PersonIcon fontSize="small" />
-                  </ListItemIcon>
-                  Profile
-                </MenuItem>
-                <MenuItem component={RouterLink} to="/settings">
-                  <ListItemIcon>
-                    <SettingsIcon fontSize="small" />
-                  </ListItemIcon>
-                  Settings
-                </MenuItem>
-                <Divider />
-                <MenuItem onClick={handleLogout}>
-                  <ListItemIcon>
-                    <LogoutIcon fontSize="small" />
-                  </ListItemIcon>
-                  Logout
-                </MenuItem>
-              </Menu>
-            </>
-          )}
-        </Toolbar>
-      </AppBar>
       
       {/* Sidebar */}
       <Box
         component="nav"
-        sx={{
-          width: { md: sidebarOpen ? drawerWidth : 0 },
-          flexShrink: { md: 0 },
-          m: 0,
-          p: 0,
-          display: 'flex'
+        sx={{ 
+          width: { md: sidebarOpen ? drawerWidth : collapsedDrawerWidth }, 
+          flexShrink: { md: 0 } 
         }}
       >
         {/* Mobile drawer */}
-        {isMobile && (
-          <Drawer
-            variant="temporary"
-            open={sidebarOpen}
-            onClose={toggleSidebar}
-            ModalProps={{
-              keepMounted: true, // Better mobile performance
-            }}
-            sx={{
-              '& .MuiDrawer-paper': { 
-                boxSizing: 'border-box', 
-                width: drawerWidth,
-                borderRight: `1px solid ${theme.palette.divider}`
-              },
-            }}
-          >
-            {sidebarContent}
-          </Drawer>
-        )}
+        <Drawer
+          variant="temporary"
+          open={isMobile && sidebarOpen}
+          onClose={toggleSidebar}
+          ModalProps={{
+            keepMounted: true, // Better performance on mobile
+          }}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          }}
+        >
+          {sidebarContent}
+        </Drawer>
         
         {/* Desktop drawer */}
-        {!isMobile && (
-          <Drawer
-            variant="permanent"
-            open={sidebarOpen}
-            sx={{
-              '& .MuiDrawer-paper': { 
-                position: 'relative',
-                boxSizing: 'border-box', 
-                width: drawerWidth,
-                borderRight: `1px solid ${theme.palette.divider}`,
-                transition: theme.transitions.create('width', {
-                  easing: theme.transitions.easing.sharp,
-                  duration: theme.transitions.duration.enteringScreen,
-                }),
-              },
-              width: sidebarOpen ? drawerWidth : 0,
-              flexShrink: 0,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {sidebarContent}
-          </Drawer>
-        )}
+        <Drawer
+          variant="permanent"
+          open={sidebarOpen}
+          sx={{
+            display: { xs: 'none', md: 'block' },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: sidebarOpen ? drawerWidth : collapsedDrawerWidth,
+              borderRight: `1px solid ${theme.palette.divider}`,
+              overflowX: 'hidden',
+              transition: theme.transitions.create('width', {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.enteringScreen,
+              }),
+            },
+          }}
+        >
+          {sidebarContent}
+        </Drawer>
       </Box>
       
       {/* Main content */}
-      <Box 
-        component="main" 
-        sx={{ 
-          flexGrow: 1, 
-          display: 'flex',
-          flexDirection: 'column',
-          p: 0,
-          m: 0,
-          overflow: 'auto',
-          pt: '64px', // Account for AppBar height
-          height: '100vh',
-          backgroundColor: theme.palette.background.default
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { 
+            xs: '100%', 
+            md: sidebarOpen 
+              ? `calc(100% - ${drawerWidth}px)` 
+              : `calc(100% - ${collapsedDrawerWidth}px)` 
+          },
+          transition: theme.transitions.create(['width', 'margin'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen,
+          }),
         }}
       >
-        <Box sx={{ p: 3, flexGrow: 1 }}>
-          {children}
-        </Box>
+        {children}
       </Box>
     </Box>
   );

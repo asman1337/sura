@@ -28,7 +28,6 @@ const HomePage: React.FC = () => {
   const { auth } = useData();
   const theme = useTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('md'));
-  const isMediumScreen = useMediaQuery(theme.breakpoints.up('sm'));
   const isLoggedIn = !!auth.getToken();
   
   return (
