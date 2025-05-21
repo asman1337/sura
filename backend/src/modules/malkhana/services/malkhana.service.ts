@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, LessThan } from 'typeorm';
+import { Repository, Between, LessThan, IsNull } from 'typeorm';
 import { MalkhanaItem, MalkhanaItemStatus, RegistryType } from '../entities/malkhana-item.entity';
 import { RedInkHistory } from '../entities/red-ink-history.entity';
 import { Shelf } from '../entities/shelf.entity';
@@ -28,12 +28,20 @@ export class MalkhanaService {
   /**
    * Create a new item in the Black Ink registry
    */
-  async createItem(createItemDto: CreateMalkhanaItemDto, userId?: string): Promise<MalkhanaItem> {
+  async createItem(createItemDto: CreateMalkhanaItemDto, unitId: string | null, userId?: string): Promise<MalkhanaItem> {
+    // For admin users without a unit, use the unitId from the DTO
+    const effectiveUnitId = unitId || createItemDto.unitId;
+    
+    if (!effectiveUnitId) {
+      throw new BadRequestException('Unit ID is required');
+    }
+    
     const currentYear = new Date().getFullYear();
     
-    // Get the last registry number used for Black Ink in the current year
+    // Get the last registry number used for Black Ink in the current year for THIS UNIT
     const lastItem = await this.malkhanaItemRepository.findOne({
       where: {
+        unitId: effectiveUnitId,
         registryType: RegistryType.BLACK_INK,
         registryYear: currentYear
       },
@@ -43,12 +51,13 @@ export class MalkhanaService {
     const newRegistryNumber = lastItem ? lastItem.registryNumber + 1 : 1;
     
     // Generate motherNumber (permanent ID)
-    // Format: YYYY-NNNNN (zero-padded to 5 digits)
+    // Format: YYYY-UNITCODE-NNNNN (where UNITCODE is extracted from the unit)
     const motherNumber = `${currentYear}-${newRegistryNumber.toString().padStart(5, '0')}`;
     
     // Create new item
     const newItem = this.malkhanaItemRepository.create({
       ...createItemDto,
+      unitId: effectiveUnitId, // Set the unitId from the parameter or DTO
       motherNumber,
       registryNumber: newRegistryNumber,
       registryType: RegistryType.BLACK_INK,
@@ -57,7 +66,7 @@ export class MalkhanaService {
       createdBy: userId
     });
     
-    // If shelf ID is provided, verify it exists
+    // If shelf ID is provided, verify it exists and belongs to this unit
     if (createItemDto.shelfId) {
       const shelf = await this.shelfRepository.findOne({
         where: { id: createItemDto.shelfId }
@@ -66,6 +75,11 @@ export class MalkhanaService {
       if (!shelf) {
         throw new NotFoundException(`Shelf with ID ${createItemDto.shelfId} not found`);
       }
+      
+      // Ensure shelf belongs to the same unit (skip for admin users)
+      if (unitId !== null && shelf.unitId !== effectiveUnitId) {
+        throw new ForbiddenException(`Shelf with ID ${createItemDto.shelfId} does not belong to your unit`);
+      }
     }
     
     // Save the new item
@@ -73,13 +87,28 @@ export class MalkhanaService {
   }
 
   /**
-   * Get all items in the Black Ink registry
+   * Get all items in the Black Ink registry for a specific unit
+   * For admin users, can return items across all units
    */
-  async getBlackInkItems(): Promise<MalkhanaItem[]> {
+  async getBlackInkItems(unitId: string | null): Promise<MalkhanaItem[]> {
     const currentYear = new Date().getFullYear();
     
+    // Admin user without unit sees all items
+    if (unitId === null) {
+      return this.malkhanaItemRepository.find({
+        where: {
+          registryType: RegistryType.BLACK_INK,
+          registryYear: currentYear
+        },
+        relations: ['shelf', 'redInkHistory', 'unit'],
+        order: { registryNumber: 'ASC' }
+      });
+    }
+    
+    // Regular user sees only their unit's items
     return this.malkhanaItemRepository.find({
       where: {
+        unitId,
         registryType: RegistryType.BLACK_INK,
         registryYear: currentYear
       },
@@ -89,11 +118,25 @@ export class MalkhanaService {
   }
 
   /**
-   * Get all items in the Red Ink registry
+   * Get all items in the Red Ink registry for a specific unit
+   * For admin users, can return items across all units
    */
-  async getRedInkItems(): Promise<MalkhanaItem[]> {
+  async getRedInkItems(unitId: string | null): Promise<MalkhanaItem[]> {
+    // Admin user without unit sees all items
+    if (unitId === null) {
+      return this.malkhanaItemRepository.find({
+        where: {
+          registryType: RegistryType.RED_INK
+        },
+        relations: ['shelf', 'redInkHistory', 'unit'],
+        order: { registryNumber: 'ASC' }
+      });
+    }
+    
+    // Regular user sees only their unit's items
     return this.malkhanaItemRepository.find({
       where: {
+        unitId,
         registryType: RegistryType.RED_INK
       },
       relations: ['shelf', 'redInkHistory'],
@@ -102,43 +145,63 @@ export class MalkhanaService {
   }
 
   /**
-   * Get an item by ID
+   * Get an item by ID and verify it belongs to the user's unit
+   * For admin users, can return any item
    */
-  async getItemById(id: string): Promise<MalkhanaItem> {
+  async getItemById(id: string, unitId: string | null): Promise<MalkhanaItem> {
     const item = await this.malkhanaItemRepository.findOne({
       where: { id },
-      relations: ['shelf', 'redInkHistory']
+      relations: ['shelf', 'redInkHistory', 'unit']
     });
     
     if (!item) {
       throw new NotFoundException(`Item with ID ${id} not found`);
     }
     
+    // Verify item belongs to the user's unit (skip for admin users)
+    if (unitId !== null && item.unitId !== unitId) {
+      throw new ForbiddenException('You do not have access to this item');
+    }
+    
     return item;
   }
 
   /**
-   * Find an item by motherNumber (permanent ID)
+   * Find an item by motherNumber (permanent ID) for a specific unit
+   * For admin users, can find any item
    */
-  async findByMotherNumber(motherNumber: string): Promise<MalkhanaItem | null> {
+  async findByMotherNumber(motherNumber: string, unitId: string | null): Promise<MalkhanaItem | null> {
+    // Admin user without unit can find any item
+    if (unitId === null) {
+      return this.malkhanaItemRepository.findOne({
+        where: { motherNumber },
+        relations: ['shelf', 'redInkHistory', 'unit']
+      });
+    }
+    
+    // Regular user can only find items in their unit
     return this.malkhanaItemRepository.findOne({
-      where: { motherNumber },
+      where: { 
+        motherNumber,
+        unitId
+      },
       relations: ['shelf', 'redInkHistory']
     });
   }
 
   /**
    * Update an item by ID
+   * For admin users, can update any item
    */
-  async updateItem(id: string, updateItemDto: UpdateMalkhanaItemDto, userId?: string): Promise<MalkhanaItem> {
-    const item = await this.getItemById(id);
+  async updateItem(id: string, updateItemDto: UpdateMalkhanaItemDto, unitId: string | null, userId?: string): Promise<MalkhanaItem> {
+    const item = await this.getItemById(id, unitId);
     
     // If status is being changed to DISPOSED, don't allow through normal update
     if (updateItemDto.status === MalkhanaItemStatus.DISPOSED) {
       throw new BadRequestException('Use the disposeItem endpoint to dispose of an item');
     }
     
-    // If shelf ID is provided, verify it exists
+    // If shelf ID is provided, verify it exists and belongs to the same unit
     if (updateItemDto.shelfId) {
       const shelf = await this.shelfRepository.findOne({
         where: { id: updateItemDto.shelfId }
@@ -146,6 +209,11 @@ export class MalkhanaService {
       
       if (!shelf) {
         throw new NotFoundException(`Shelf with ID ${updateItemDto.shelfId} not found`);
+      }
+      
+      // Ensure shelf belongs to the same unit (skip for admin users)
+      if (unitId !== null && shelf.unitId !== item.unitId) {
+        throw new ForbiddenException(`Shelf with ID ${updateItemDto.shelfId} does not belong to the item's unit`);
       }
     }
     
@@ -161,8 +229,8 @@ export class MalkhanaService {
   /**
    * Dispose an item
    */
-  async disposeItem(id: string, disposeItemDto: DisposeItemDto, userId?: string): Promise<MalkhanaItem> {
-    const item = await this.getItemById(id);
+  async disposeItem(id: string, disposeItemDto: DisposeItemDto, unitId: string, userId?: string): Promise<MalkhanaItem> {
+    const item = await this.getItemById(id, unitId);
     
     // Check if item is already disposed
     if (item.status === MalkhanaItemStatus.DISPOSED) {
@@ -181,7 +249,7 @@ export class MalkhanaService {
     
     // If this is a Red Ink item, renumber all subsequent items
     if (item.registryType === RegistryType.RED_INK) {
-      await this.renumberRedInkAfterDisposal(item.registryNumber);
+      await this.renumberRedInkAfterDisposal(item.registryNumber, unitId);
     }
     
     return disposedItem;
@@ -191,10 +259,11 @@ export class MalkhanaService {
    * Renumber Red Ink items after a disposal
    * When a Red Ink item is disposed, all subsequent items should be renumbered
    */
-  private async renumberRedInkAfterDisposal(disposedItemNumber: number): Promise<void> {
-    // Find all Red Ink items with higher registry numbers
+  private async renumberRedInkAfterDisposal(disposedItemNumber: number, unitId: string): Promise<void> {
+    // Find all Red Ink items with higher registry numbers IN THE SAME UNIT
     const itemsToRenumber = await this.malkhanaItemRepository.find({
       where: {
+        unitId,
         registryType: RegistryType.RED_INK,
         registryNumber: LessThan(disposedItemNumber),
         status: MalkhanaItemStatus.ACTIVE
@@ -228,14 +297,19 @@ export class MalkhanaService {
   /**
    * Assign an item to a shelf
    */
-  async assignToShelf(id: string, assignDto: AssignToShelfDto, userId: string): Promise<MalkhanaItem> {
-    const item = await this.getItemById(id);
+  async assignToShelf(id: string, assignDto: AssignToShelfDto, unitId: string, userId: string): Promise<MalkhanaItem> {
+    const item = await this.getItemById(id, unitId);
     const shelf = await this.shelfRepository.findOne({
       where: { id: assignDto.shelfId }
     });
     
     if (!shelf) {
       throw new NotFoundException(`Shelf with ID ${assignDto.shelfId} not found`);
+    }
+    
+    // Ensure shelf belongs to the same unit
+    if (shelf.unitId !== unitId) {
+      throw new ForbiddenException(`Shelf with ID ${assignDto.shelfId} does not belong to your unit`);
     }
     
     // Update the item
@@ -246,10 +320,10 @@ export class MalkhanaService {
   }
 
   /**
-   * Perform the year-end transition from Black Ink to Red Ink
+   * Perform the year-end transition from Black Ink to Red Ink for a specific unit
    * This will be manually triggered rather than automatic
    */
-  async performYearTransition(newYear: number, userId?: string): Promise<YearTransitionResponseDto> {
+  async performYearTransition(unitId: string, newYear: number, userId?: string): Promise<YearTransitionResponseDto> {
     const currentYear = new Date().getFullYear();
     
     // Validate the new year
@@ -257,9 +331,10 @@ export class MalkhanaService {
       throw new BadRequestException('New year must be greater than the current year');
     }
     
-    // Find all active items in the Black Ink registry
+    // Find all active items in the Black Ink registry FOR THIS UNIT
     const blackInkItems = await this.malkhanaItemRepository.find({
       where: {
+        unitId,
         registryType: RegistryType.BLACK_INK,
         status: MalkhanaItemStatus.ACTIVE
       }
@@ -275,9 +350,12 @@ export class MalkhanaService {
       };
     }
     
-    // Find the highest Red Ink registry number
+    // Find the highest Red Ink registry number FOR THIS UNIT
     const lastRedInkItem = await this.malkhanaItemRepository.findOne({
-      where: { registryType: RegistryType.RED_INK },
+      where: { 
+        unitId,
+        registryType: RegistryType.RED_INK 
+      },
       order: { registryNumber: 'DESC' }
     });
     
@@ -312,30 +390,37 @@ export class MalkhanaService {
   }
 
   /**
-   * Search for items across both registries
+   * Search for items across both registries within a specific unit
    */
-  async searchItems(query: string): Promise<MalkhanaItem[]> {
+  async searchItems(query: string, unitId: string): Promise<MalkhanaItem[]> {
     return this.malkhanaItemRepository
       .createQueryBuilder('item')
       .leftJoinAndSelect('item.shelf', 'shelf')
       .leftJoinAndSelect('item.redInkHistory', 'history')
-      .where('item.motherNumber ILIKE :query', { query: `%${query}%` })
-      .orWhere('item.caseNumber ILIKE :query', { query: `%${query}%` })
-      .orWhere('item.description ILIKE :query', { query: `%${query}%` })
-      .orWhere('item.category ILIKE :query', { query: `%${query}%` })
-      .orWhere('item.receivedFrom ILIKE :query', { query: `%${query}%` })
+      .where('item.unitId = :unitId', { unitId })
+      .andWhere(
+        '(item.motherNumber ILIKE :query OR ' +
+        'item.caseNumber ILIKE :query OR ' +
+        'item.description ILIKE :query OR ' +
+        'item.category ILIKE :query OR ' +
+        'item.receivedFrom ILIKE :query)',
+        { query: `%${query}%` }
+      )
       .getMany();
   }
 
   /**
    * Get Malkhana statistics
+   * For admin users, can get stats across all units
    */
-  async getStats(): Promise<MalkhanaStatsDto> {
+  async getStats(unitId: string | null): Promise<MalkhanaStatsDto> {
     const currentYear = new Date().getFullYear();
+    const whereClause = unitId ? { unitId } : {};
     
     // Count Black Ink items
     const blackInkItems = await this.malkhanaItemRepository.count({
       where: {
+        ...whereClause,
         registryType: RegistryType.BLACK_INK,
         registryYear: currentYear
       }
@@ -344,6 +429,7 @@ export class MalkhanaService {
     // Count Red Ink items
     const redInkItems = await this.malkhanaItemRepository.count({
       where: {
+        ...whereClause,
         registryType: RegistryType.RED_INK
       }
     });
@@ -351,6 +437,7 @@ export class MalkhanaService {
     // Count disposed items
     const disposedItems = await this.malkhanaItemRepository.count({
       where: {
+        ...whereClause,
         status: MalkhanaItemStatus.DISPOSED
       }
     });
@@ -361,6 +448,7 @@ export class MalkhanaService {
     
     const recentlyAddedItems = await this.malkhanaItemRepository.count({
       where: {
+        ...whereClause,
         createdAt: Between(thirtyDaysAgo, new Date())
       }
     });
@@ -371,7 +459,8 @@ export class MalkhanaService {
       redInkItems,
       disposedItems,
       recentlyAddedItems,
-      currentYear
+      currentYear,
+      unitId
     };
   }
 } 

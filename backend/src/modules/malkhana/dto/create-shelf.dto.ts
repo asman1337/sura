@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateShelfDto {
   @IsNotEmpty()
@@ -12,4 +12,8 @@ export class CreateShelfDto {
   @IsOptional()
   @IsString()
   category?: string;
+
+  @IsNotEmpty()
+  @IsUUID()
+  unitId: string;
 } 

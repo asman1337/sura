@@ -17,6 +17,7 @@ import { Shelf } from '../entities/shelf.entity';
 import { MalkhanaItem } from '../entities/malkhana-item.entity';
 import { ShelfResponseDto } from '../dto/shelf.response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { UnitId } from '../../../common/decorators';
 
 @Controller('malkhana/shelves')
 @UseGuards(JwtAuthGuard)
@@ -24,36 +25,50 @@ export class ShelvesController {
   constructor(private readonly shelvesService: ShelvesService) {}
 
   @Get()
-  async getAllShelves(): Promise<ShelfResponseDto[]> {
-    return this.shelvesService.getAllShelves();
+  async getAllShelves(
+    @UnitId() unitId: string
+  ): Promise<ShelfResponseDto[]> {
+    return this.shelvesService.getAllShelves(unitId);
   }
 
   @Get(':id')
-  async getShelfById(@Param('id') id: string): Promise<ShelfResponseDto> {
-    return this.shelvesService.getShelfById(id);
+  async getShelfById(
+    @Param('id') id: string,
+    @UnitId() unitId: string
+  ): Promise<ShelfResponseDto> {
+    return this.shelvesService.getShelfById(id, unitId);
   }
 
   @Post()
-  async createShelf(@Body() createShelfDto: CreateShelfDto): Promise<Shelf> {
+  async createShelf(
+    @Body() createShelfDto: CreateShelfDto
+  ): Promise<Shelf> {
     return this.shelvesService.createShelf(createShelfDto);
   }
 
   @Put(':id')
   async updateShelf(
     @Param('id') id: string,
-    @Body() updateShelfDto: UpdateShelfDto
+    @Body() updateShelfDto: UpdateShelfDto,
+    @UnitId() unitId: string
   ): Promise<Shelf> {
-    return this.shelvesService.updateShelf(id, updateShelfDto);
+    return this.shelvesService.updateShelf(id, updateShelfDto, unitId);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteShelf(@Param('id') id: string): Promise<void> {
-    return this.shelvesService.deleteShelf(id);
+  async deleteShelf(
+    @Param('id') id: string,
+    @UnitId() unitId: string
+  ): Promise<void> {
+    return this.shelvesService.deleteShelf(id, unitId);
   }
 
   @Get(':id/items')
-  async getShelfItems(@Param('id') id: string): Promise<MalkhanaItem[]> {
-    return this.shelvesService.getShelfItems(id);
+  async getShelfItems(
+    @Param('id') id: string,
+    @UnitId() unitId: string
+  ): Promise<MalkhanaItem[]> {
+    return this.shelvesService.getShelfItems(id, unitId);
   }
 } 

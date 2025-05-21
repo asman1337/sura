@@ -5,4 +5,5 @@ export class MalkhanaStatsDto {
   disposedItems: number;
   recentlyAddedItems: number;
   currentYear: number;
+  unitId: string | null;
 } 

@@ -58,8 +58,13 @@ export class AuthService {
       throw new UnauthorizedException('Officer not found');
     }
 
-    // Generate JWT token
-    const payload = { sub: officer.id, email: officer.email, type: officer.userType };
+    // Generate JWT token with primary unit ID
+    const payload = { 
+      sub: officer.id, 
+      email: officer.email, 
+      type: officer.userType,
+      primaryUnitId: officer.primaryUnitId 
+    };
     
     return {
       accessToken: this.jwtService.sign(payload),

@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { Shelf } from './shelf.entity';
 import { RedInkHistory } from './red-ink-history.entity';
+import { Unit } from 'src/modules/units/entities/unit.entity';
 
 // Status of a Malkhana item
 export enum MalkhanaItemStatus {
@@ -28,6 +29,14 @@ export class MalkhanaItem {
   // The permanent mother number that never changes (format: YYYY-NNNNN)
   @Column({ length: 20, unique: true })
   motherNumber: string;
+
+  // Unit (Police Station) that owns this item
+  @Column({ type: 'uuid' })
+  unitId: string;
+
+  @ManyToOne(() => Unit)
+  @JoinColumn({ name: 'unitId' })
+  unit: Unit;
 
   @Column({ length: 100, nullable: true })
   caseNumber: string;

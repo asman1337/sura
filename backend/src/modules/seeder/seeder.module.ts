@@ -6,6 +6,7 @@ import { OfficerRank } from '../officer-ranks/entities/officer-rank.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { Unit } from '../units/entities/unit.entity';
 import { Department } from '../departments/entities/department.entity';
+import { Shelf } from '../malkhana/entities/shelf.entity';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { Department } from '../departments/entities/department.entity';
       OfficerRank,
       Organization,
       Unit,
-      Department
+      Department,
+      Shelf
     ])
   ],
   providers: [SeederService],
