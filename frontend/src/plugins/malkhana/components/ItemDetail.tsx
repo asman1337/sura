@@ -24,7 +24,8 @@ import {
   Edit as EditIcon,
   DeleteOutline as DeleteIcon,
   Refresh as RefreshIcon,
-  QrCode as QrCodeIcon
+  QrCode as QrCodeIcon,
+  Print as PrintIcon
 } from '@mui/icons-material';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -32,6 +33,7 @@ import { MalkhanaItem } from '../types';
 import { useMalkhanaApi } from '../hooks';
 import { useData } from '../../../core/data';
 import { setGlobalApiInstance } from '../services';
+import { printQrCode } from '../utils';
 
 /**
  * Component to display details for a single Malkhana item
@@ -73,21 +75,17 @@ const ItemDetail: React.FC = () => {
     
     fetchItem();
   }, [id, malkhanaApi.isReady]);
-  
-  // Generate QR code data as JSON string
-  const getQrCodeData = (item: MalkhanaItem) => {
-    // Create a data structure that's useful for both web and mobile apps
+
+  // Generate compact QR code data as JSON string
+  const getCompactQrCodeData = (item: MalkhanaItem) => {
+    // Create a minimal data structure with only the essential fields
     const qrData = {
-      type: 'malkhana_item',
+      type: 'item',
       id: item.id,
-      motherNumber: item.motherNumber,
-      registryNumber: item.registryNumber,
-      registryType: item.registryType,
-      registryYear: item.registryYear,
       timestamp: new Date().toISOString()
     };
     
-    // Return JSON string of the data
+    // Return compact JSON string
     return JSON.stringify(qrData);
   };
   
@@ -121,6 +119,32 @@ const ItemDetail: React.FC = () => {
       setError('Failed to refresh item data. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+  
+  // Handle printing QR code
+  const handlePrintQrCode = () => {
+    if (!item) return;
+    
+    try {
+      // Generate a simplified QR code data with only essential information
+      const qrData = {
+        type: 'item',
+        id: item.id,
+        timestamp: new Date().toISOString()
+      };
+      
+      const title = `Evidence Item: ${item.motherNumber}`;
+      const subtitle = item.description || `Registry #${item.registryNumber}`;
+      
+      // Convert to compact JSON string with minimal whitespace
+      const qrValue = JSON.stringify(qrData);
+      
+      // Call the print function with the prepared data
+      printQrCode(title, subtitle, qrValue);
+    } catch (error) {
+      console.error('Error preparing QR code data for printing:', error);
+      alert('Failed to print QR code. Please try again.');
     }
   };
   
@@ -254,6 +278,17 @@ const ItemDetail: React.FC = () => {
           
           <Button
             variant="outlined"
+            startIcon={<QrCodeIcon />}
+            onClick={handleGenerateQrCode}
+            color="primary"
+            aria-label="qr code"
+            sx={{ mr: 1 }}
+          >
+            QR Code
+          </Button>
+          
+          <Button
+            variant="outlined"
             startIcon={<EditIcon />}
             onClick={handleEdit}
             sx={{ mr: 1 }}
@@ -261,7 +296,7 @@ const ItemDetail: React.FC = () => {
             Edit
           </Button>
           
-          {item.status === 'ACTIVE' && (
+          {item?.status === 'ACTIVE' && (
             <Button
               variant="outlined"
               color="error"
@@ -511,34 +546,45 @@ const ItemDetail: React.FC = () => {
           </Typography>
           <Divider sx={{ mb: 2 }} />
           
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3 }}>
             {item && (
               <>
                 <Box 
                   sx={{ 
-                    width: 200,
-                    height: 200,
+                    width: 240,
+                    height: 240,
                     mb: 2,
                     border: `1px solid ${theme.palette.divider}`,
                     borderRadius: 1,
-                    p: 2,
+                    p: 3,
                     display: 'flex',
                     justifyContent: 'center',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    backgroundColor: '#fff'
                   }}
                 >
                   <QRCodeSVG 
-                    value={getQrCodeData(item)}
-                    size={180}
-                    level="M"
+                    value={getCompactQrCodeData(item)}
+                    size={200}
+                    level="H"
                     includeMargin={false}
                     bgColor="#ffffff"
                     fgColor="#000000"
                   />
                 </Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 2 }}>
                   Scan this QR code to quickly access this item's details
                 </Typography>
+                <Button 
+                  variant="contained" 
+                  startIcon={<PrintIcon />}
+                  onClick={handlePrintQrCode}
+                  size="medium"
+                  color="primary"
+                  sx={{ px: 3 }}
+                >
+                  Print QR Code
+                </Button>
               </>
             )}
           </Box>
@@ -546,7 +592,12 @@ const ItemDetail: React.FC = () => {
       </Card>
       
       {/* QR Code Dialog */}
-      <Dialog open={openQrDialog} onClose={() => setOpenQrDialog(false)}>
+      <Dialog 
+        open={openQrDialog} 
+        onClose={() => setOpenQrDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Item QR Code</DialogTitle>
         <DialogContent>
           <Box sx={{ p: 2, textAlign: 'center' }}>
@@ -558,11 +609,19 @@ const ItemDetail: React.FC = () => {
             </Typography>
             
             {item && (
-              <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
+              <Box sx={{ 
+                my: 3, 
+                p: 3, 
+                border: `1px solid ${theme.palette.divider}`,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'column'
+              }}>
                 <QRCodeSVG 
-                  value={getQrCodeData(item)}
-                  size={250}
-                  level="M"
+                  value={getCompactQrCodeData(item)}
+                  size={280}
+                  level="H"
                   includeMargin
                   bgColor="#ffffff"
                   fgColor="#000000"
@@ -570,7 +629,14 @@ const ItemDetail: React.FC = () => {
               </Box>
             )}
             
-            <Button variant="outlined" fullWidth>
+            <Button 
+              variant="contained" 
+              fullWidth
+              startIcon={<PrintIcon />}
+              onClick={handlePrintQrCode}
+              size="large"
+              sx={{ mt: 2 }}
+            >
               Print QR Code
             </Button>
           </Box>

@@ -16,18 +16,20 @@ import {
 } from '@mui/material';
 import {
   Add as AddIcon,
-  QrCode as QrCodeIcon,
-  Visibility as ViewIcon
+  Visibility as ViewIcon,
+  Print as PrintIcon
 } from '@mui/icons-material';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { QRCodeSVG } from 'qrcode.react';
 
 import { ShelfInfo } from '../types';
 import MalkhanaDataGrid, { qrCodeActionRenderer } from './common/MalkhanaDataGrid';
+import { PageContainer } from './common';
 import { shelfColumns, createActionsColumn } from './common/gridColumns';
 import { useMalkhanaApi } from '../hooks';
 import { useData } from '../../../core/data';
 import { setGlobalApiInstance } from '../services';
+import { printQrCode } from '../utils';
 
 const ShelfManagement: React.FC = () => {
   const theme = useTheme();
@@ -77,19 +79,16 @@ const ShelfManagement: React.FC = () => {
     loadShelves();
   }, [malkhanaApi.isReady]);
   
-  // Generate QR code data for shelf as JSON string
-  const getShelfQrCodeData = (shelf: ShelfInfo) => {
-    // Create a data structure that's useful for both web and mobile apps
+  // Generate compact QR code data for shelf
+  const getCompactShelfQrCodeData = (shelf: ShelfInfo) => {
+    // Create a minimal data structure with only the essential fields
     const qrData = {
-      type: 'malkhana_shelf',
+      type: 'shelf',
       id: shelf.id,
-      name: shelf.name,
-      location: shelf.location,
-      category: shelf.category,
       timestamp: new Date().toISOString()
     };
     
-    // Return JSON string of the data
+    // Return compact JSON string
     return JSON.stringify(qrData);
   };
   
@@ -147,6 +146,23 @@ const ShelfManagement: React.FC = () => {
     navigate(`/malkhana/shelf/${shelfId}`);
   };
 
+  // Handle printing QR code
+  const handlePrintQrCode = () => {
+    if (!selectedShelf) return;
+    
+    try {
+      // Generate a clean QR code data string
+      const title = `Shelf: ${selectedShelf.name}`;
+      const subtitle = `Location: ${selectedShelf.location}${selectedShelf.category ? ` • Category: ${selectedShelf.category}` : ''}`;
+      
+      // Call the print function with the compact data
+      printQrCode(title, subtitle, getCompactShelfQrCodeData(selectedShelf));
+    } catch (error) {
+      console.error('Error preparing QR code data for printing:', error);
+      alert('Failed to print QR code. Please try again.');
+    }
+  };
+
   // Create action column
   const actionColumn = createActionsColumn((params: GridRenderCellParams) => {
     return (
@@ -192,7 +208,7 @@ const ShelfManagement: React.FC = () => {
   }
   
   return (
-    <Box>
+    <PageContainer>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" fontWeight="500">
           Malkhana Shelf Management
@@ -301,7 +317,12 @@ const ShelfManagement: React.FC = () => {
       </Dialog>
       
       {/* QR Code Dialog */}
-      <Dialog open={openQrDialog} onClose={() => setOpenQrDialog(false)}>
+      <Dialog 
+        open={openQrDialog} 
+        onClose={() => setOpenQrDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Shelf QR Code</DialogTitle>
         <DialogContent>
           <Box sx={{ p: 2, textAlign: 'center' }}>
@@ -314,18 +335,31 @@ const ShelfManagement: React.FC = () => {
                   Location: {selectedShelf.location}
                 </Typography>
                 
-                <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
+                <Box sx={{ 
+                  my: 3, 
+                  p: 3, 
+                  border: `1px solid ${theme.palette.divider}`,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}>
                   <QRCodeSVG 
-                    value={getShelfQrCodeData(selectedShelf)}
-                    size={250}
-                    level="M"
+                    value={getCompactShelfQrCodeData(selectedShelf)}
+                    size={280}
+                    level="H"
                     includeMargin
                     bgColor="#ffffff"
                     fgColor="#000000"
                   />
                 </Box>
                 
-                <Button variant="outlined" fullWidth>
+                <Button 
+                  variant="contained" 
+                  fullWidth
+                  startIcon={<PrintIcon />}
+                  onClick={handlePrintQrCode}
+                  size="large"
+                >
                   Print QR Code
                 </Button>
               </>
@@ -336,7 +370,7 @@ const ShelfManagement: React.FC = () => {
           <Button onClick={() => setOpenQrDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

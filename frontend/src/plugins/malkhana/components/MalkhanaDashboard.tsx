@@ -34,6 +34,7 @@ import { useMalkhanaApi } from '../hooks';
 import { useData } from '../../../core/data';
 import { setGlobalApiInstance } from '../services';
 import { MalkhanaItem, MalkhanaStats } from '../types';
+import { PageContainer } from './common';
 
 /**
  * Dashboard component for the Malkhana plugin
@@ -143,7 +144,7 @@ const MalkhanaDashboard: React.FC = () => {
   }
   
   return (
-    <Box>
+    <PageContainer>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" fontWeight="500">
           Malkhana Management
@@ -742,7 +743,7 @@ const MalkhanaDashboard: React.FC = () => {
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </PageContainer>
   );
 };
 

@@ -12,6 +12,7 @@ import MalkhanaDataGrid, {
   viewActionRenderer,
   disposeActionRenderer
 } from './common/MalkhanaDataGrid';
+import { PageContainer } from './common';
 import { redInkColumns, createActionsColumn } from './common/gridColumns';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useMalkhanaApi } from '../hooks';
@@ -91,7 +92,7 @@ const RedInkRegistry: React.FC = () => {
   }
   
   return (
-    <Box>
+    <PageContainer>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" fontWeight="500">
           Red Ink Registry (Historical)
@@ -145,7 +146,7 @@ const RedInkRegistry: React.FC = () => {
           If an item in the Red Ink Registry is disposed of, all subsequent items are automatically renumbered.
         </Typography>
       </Box>
-    </Box>
+    </PageContainer>
   );
 };
 

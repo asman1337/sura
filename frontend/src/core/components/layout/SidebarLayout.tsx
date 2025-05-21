@@ -553,7 +553,18 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
   );
   
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ 
+      display: 'flex',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      width: '100%',
+      height: '100%',
+      overflow: 'hidden',
+      zIndex: 1000
+    }}>
       <CssBaseline />
       
       {/* Mobile toggle button */}
@@ -564,7 +575,8 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
         component="nav"
         sx={{ 
           width: { md: sidebarOpen ? drawerWidth : collapsedDrawerWidth }, 
-          flexShrink: { md: 0 } 
+          flexShrink: { md: 0 },
+          height: '100%'
         }}
       >
         {/* Mobile drawer */}
@@ -617,10 +629,8 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
               ? `calc(100% - ${drawerWidth}px)` 
               : `calc(100% - ${collapsedDrawerWidth}px)` 
           },
-          transition: theme.transitions.create(['width', 'margin'], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
+          overflow: 'auto',
+          height: '100%'
         }}
       >
         {children}

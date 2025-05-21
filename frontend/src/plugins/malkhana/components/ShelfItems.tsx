@@ -20,7 +20,8 @@ import {
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
-  QrCode as QrCodeIcon} from '@mui/icons-material';
+  Print as PrintIcon
+} from '@mui/icons-material';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -30,10 +31,12 @@ import MalkhanaDataGrid, {
   qrCodeActionRenderer, 
   moveActionRenderer
 } from './common/MalkhanaDataGrid';
+import { PageContainer } from './common';
 import { shelfItemColumns, createActionsColumn } from './common/gridColumns';
 import { useMalkhanaApi } from '../hooks';
 import { useData } from '../../../core/data';
 import { setGlobalApiInstance } from '../services';
+import { printQrCode } from '../utils';
 
 const ShelfItems: React.FC = () => {
   const { shelfId } = useParams<{ shelfId: string }>();
@@ -99,20 +102,15 @@ const ShelfItems: React.FC = () => {
   }, [shelfId, malkhanaApi.isReady]);
   
   // Generate QR code data as JSON string
-  const getQrCodeData = (item: MalkhanaItem) => {
-    // Create a data structure that's useful for both web and mobile apps
+  const getCompactQrCodeData = (item: MalkhanaItem) => {
+    // Create a minimal data structure with only the essential fields
     const qrData = {
-      type: 'malkhana_item',
+      type: 'item',
       id: item.id,
-      motherNumber: item.motherNumber,
-      registryNumber: item.registryNumber,
-      registryType: item.registryType,
-      registryYear: item.registryYear,
-      shelfId: item.shelfId,
       timestamp: new Date().toISOString()
     };
     
-    // Return JSON string of the data
+    // Return compact JSON string
     return JSON.stringify(qrData);
   };
   
@@ -152,20 +150,6 @@ const ShelfItems: React.FC = () => {
     }
   };
   
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return theme.palette.success.main;
-      case 'DISPOSED':
-        return theme.palette.error.main;
-      case 'TRANSFERRED':
-        return theme.palette.warning.main;
-      case 'RELEASED':
-        return theme.palette.info.main;
-      default:
-        return theme.palette.grey[500];
-    }
-  };
   
   // Create action column for shelf items
   const actionColumn = createActionsColumn((params: GridRenderCellParams) => {
@@ -181,6 +165,32 @@ const ShelfItems: React.FC = () => {
 
   // Combine the columns with our action column
   const columns: GridColDef[] = [...shelfItemColumns, actionColumn];
+  
+  // Handle printing QR code
+  const handlePrintQrCode = () => {
+    if (!selectedItem) return;
+    
+    try {
+      // Generate a simplified QR code data with only essential information
+      const qrData = {
+        type: 'item',
+        id: selectedItem.id,
+        timestamp: new Date().toISOString()
+      };
+      
+      const title = `Evidence Item: ${selectedItem.motherNumber}`;
+      const subtitle = selectedItem.description || `Registry #${selectedItem.registryNumber}`;
+      
+      // Convert to compact JSON string with minimal whitespace
+      const qrValue = JSON.stringify(qrData);
+      
+      // Call the print function with the prepared data
+      printQrCode(title, subtitle, qrValue);
+    } catch (error) {
+      console.error('Error preparing QR code data for printing:', error);
+      alert('Failed to print QR code. Please try again.');
+    }
+  };
   
   // Show initialization progress
   if (!api) {
@@ -226,7 +236,7 @@ const ShelfItems: React.FC = () => {
   }
   
   return (
-    <Box>
+    <PageContainer>
       <Box sx={{ mb: 3 }}>
         <Breadcrumbs aria-label="breadcrumb">
           <Link component={RouterLink} to="/malkhana" color="inherit">
@@ -280,7 +290,12 @@ const ShelfItems: React.FC = () => {
       />
       
       {/* QR Code Dialog */}
-      <Dialog open={openQrDialog} onClose={() => setOpenQrDialog(false)}>
+      <Dialog 
+        open={openQrDialog} 
+        onClose={() => setOpenQrDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Item QR Code</DialogTitle>
         <DialogContent>
           {selectedItem && (
@@ -292,18 +307,31 @@ const ShelfItems: React.FC = () => {
                 {selectedItem.description}
               </Typography>
               
-              <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
+              <Box sx={{ 
+                my: 3, 
+                p: 3, 
+                border: `1px solid ${theme.palette.divider}`,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}>
                 <QRCodeSVG 
-                  value={getQrCodeData(selectedItem)}
-                  size={250}
-                  level="M"
+                  value={getCompactQrCodeData(selectedItem)}
+                  size={280}
+                  level="H"
                   includeMargin
                   bgColor="#ffffff"
                   fgColor="#000000"
                 />
               </Box>
               
-              <Button variant="outlined" fullWidth>
+              <Button 
+                variant="contained" 
+                fullWidth
+                startIcon={<PrintIcon />}
+                onClick={handlePrintQrCode}
+                size="large"
+              >
                 Print QR Code
               </Button>
             </Box>
@@ -352,7 +380,7 @@ const ShelfItems: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

@@ -16,6 +16,7 @@ import MalkhanaDataGrid, {
   editActionRenderer, 
   disposeActionRenderer
 } from './common/MalkhanaDataGrid';
+import { PageContainer } from './common';
 import { blackInkColumns, createActionsColumn } from './common/gridColumns';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useMalkhanaApi } from '../hooks';
@@ -97,7 +98,7 @@ const BlackInkRegistry: React.FC = () => {
   }
   
   return (
-    <Box>
+    <PageContainer>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" fontWeight="500">
           Black Ink Registry ({currentYear})
@@ -163,7 +164,7 @@ const BlackInkRegistry: React.FC = () => {
           Items can be edited, disposed of, or assigned to storage shelves for proper organization.
         </Typography>
       </Box>
-    </Box>
+    </PageContainer>
   );
 };
 
