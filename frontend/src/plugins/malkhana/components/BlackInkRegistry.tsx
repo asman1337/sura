@@ -4,10 +4,12 @@ import {
   Box,
   Button,
   Typography,
-  CircularProgress
+  CircularProgress,
+  Tooltip
 } from '@mui/material';
 import {
   Add as AddIcon,
+  QrCode as QrCodeIcon,
 } from '@mui/icons-material';
 
 import { MalkhanaItem } from '../types';
@@ -18,10 +20,11 @@ import MalkhanaDataGrid, {
 } from './common/MalkhanaDataGrid';
 import { PageContainer } from './common';
 import { blackInkColumns, createActionsColumn } from './common/gridColumns';
-import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { GridColDef, GridRenderCellParams, GridRowSelectionModel } from '@mui/x-data-grid';
 import { useMalkhanaApi } from '../hooks';
 import { useData } from '../../../core/data';
 import { setGlobalApiInstance } from '../services';
+import { printMultipleQrCodes } from '../utils';
 
 const BlackInkRegistry: React.FC = () => {
   const { api } = useData();
@@ -30,6 +33,7 @@ const BlackInkRegistry: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentYear, _] = useState(new Date().getFullYear());
+  const [selectedItems, setSelectedItems] = useState<MalkhanaItem[]>([]);
   
   // Set global API instance on component mount
   useEffect(() => {
@@ -57,6 +61,46 @@ const BlackInkRegistry: React.FC = () => {
     
     loadBlackInkRegistry();
   }, [malkhanaApi.isReady]);
+  
+  // Handle selection change
+  const handleSelectionChange = (selectionModel: GridRowSelectionModel) => {
+    // MUI X DataGrid v8.3.1+ has GridRowSelectionModel as an object with a Set of ids
+    const selectedItemsList = items.filter(item => 
+      selectionModel.type === 'include' 
+        ? selectionModel.ids.has(item.id) 
+        : !selectionModel.ids.has(item.id)
+    );
+    setSelectedItems(selectedItemsList);
+  };
+
+  // Handle multi-print
+  const handleMultiPrint = () => {
+    if (selectedItems.length === 0) return;
+    
+    try {
+      // Prepare items for grid printing
+      const qrItems = selectedItems.map(item => {
+        // Generate a simplified QR code data with only essential information
+        const qrData = {
+          type: 'item',
+          id: item.id,
+          timestamp: new Date().toISOString()
+        };
+        
+        return {
+          title: `Item: ${item.motherNumber}`,
+          subtitle: item.description || `Registry #${item.registryNumber}`,
+          value: JSON.stringify(qrData)
+        };
+      });
+      
+      // Print all QR codes in a grid layout
+      printMultipleQrCodes(qrItems);
+    } catch (error) {
+      console.error('Error preparing QR codes for multi-print:', error);
+      setError('Failed to print QR codes. Please try again.');
+    }
+  };
   
   // Create action column
   const actionColumn = createActionsColumn((params: GridRenderCellParams) => {
@@ -104,14 +148,29 @@ const BlackInkRegistry: React.FC = () => {
           Black Ink Registry ({currentYear})
         </Typography>
         
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          component={RouterLink}
-          to="/malkhana/add-item"
-        >
-          Add New Item
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {selectedItems.length > 0 && (
+            <Tooltip title={`Print QR codes for ${selectedItems.length} selected items`}>
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<QrCodeIcon />}
+                onClick={handleMultiPrint}
+              >
+                Print {selectedItems.length} QR Code{selectedItems.length > 1 ? 's' : ''}
+              </Button>
+            </Tooltip>
+          )}
+          
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            component={RouterLink}
+            to="/malkhana/add-item"
+          >
+            Add New Item
+          </Button>
+        </Box>
       </Box>
       
       {error && (
@@ -126,6 +185,9 @@ const BlackInkRegistry: React.FC = () => {
         loading={loading}
         title={`Black Ink Registry Items (${items.length})`}
         checkboxSelection
+        dataGridProps={{
+          onRowSelectionModelChange: handleSelectionChange
+        }}
         customEmptyContent={
           <Typography color="text.secondary">
             No items found in the Black Ink Registry
