@@ -1,16 +1,18 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { AppController } from './app.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { AppService } from './app.service';
+import { AppController } from './app.controller';
+import { AuthModule } from './modules/auth/auth.module';
+import { UnitsModule } from './modules/units/units.module';
+import { SeederModule } from './modules/seeder/seeder.module';
 import { OfficersModule } from './modules/officers/officers.module';
+import { MalkhanaModule } from './modules/malkhana/malkhana.module';
+import { DepartmentsModule } from './modules/departments/departments.module';
 import { OfficerRanksModule } from './modules/officer-ranks/officer-ranks.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
-import { DepartmentsModule } from './modules/departments/departments.module';
-import { UnitsModule } from './modules/units/units.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { SeederModule } from './modules/seeder/seeder.module';
-import { MalkhanaModule } from './modules/malkhana/malkhana.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
