@@ -1,9 +1,9 @@
 import { IsNotEmpty, IsString, IsOptional, IsArray, IsUUID } from 'class-validator';
 
 export class CreateMalkhanaItemDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID()
-  unitId: string;
+  unitId?: string;
   
   @IsOptional()
   @IsString()

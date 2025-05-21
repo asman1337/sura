@@ -41,8 +41,12 @@ export class ShelvesController {
 
   @Post()
   async createShelf(
-    @Body() createShelfDto: CreateShelfDto
+    @Body() createShelfDto: CreateShelfDto,
+    @UnitId() unitId: string
   ): Promise<Shelf> {
+    if (!createShelfDto.unitId && unitId) {
+      createShelfDto.unitId = unitId;
+    }
     return this.shelvesService.createShelf(createShelfDto);
   }
 

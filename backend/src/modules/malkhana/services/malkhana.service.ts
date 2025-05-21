@@ -30,10 +30,11 @@ export class MalkhanaService {
    */
   async createItem(createItemDto: CreateMalkhanaItemDto, unitId: string | null, userId?: string): Promise<MalkhanaItem> {
     // For admin users without a unit, use the unitId from the DTO
+    // For regular users, use their unitId
     const effectiveUnitId = unitId || createItemDto.unitId;
     
     if (!effectiveUnitId) {
-      throw new BadRequestException('Unit ID is required');
+      throw new BadRequestException('Unit ID is required. For admin users, please specify a unitId in the request.');
     }
     
     const currentYear = new Date().getFullYear();

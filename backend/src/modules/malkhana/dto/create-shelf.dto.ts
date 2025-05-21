@@ -13,7 +13,7 @@ export class CreateShelfDto {
   @IsString()
   category?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID()
-  unitId: string;
+  unitId?: string;
 } 
