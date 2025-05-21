@@ -124,29 +124,4 @@ export class ShelvesService {
       relations: ['redInkHistory']
     });
   }
-
-  /**
-   * Generate a QR code for a shelf
-   * In a real implementation, this would call an API to generate a QR code
-   * For this example, we'll just return a mock URL
-   */
-  async generateQRCode(id: string): Promise<string> {
-    const shelf = await this.shelfRepository.findOne({
-      where: { id }
-    });
-    
-    if (!shelf) {
-      throw new NotFoundException(`Shelf with ID ${id} not found`);
-    }
-    
-    // In a real implementation, call an API to generate QR code
-    // For now, return a mock URL that encodes the shelf ID
-    const qrCodeUrl = `https://api.example.com/qr/shelf/${id}`;
-    
-    // Update the shelf with the QR code URL
-    shelf.qrCodeUrl = qrCodeUrl;
-    await this.shelfRepository.save(shelf);
-    
-    return qrCodeUrl;
-  }
 } 

@@ -12,8 +12,4 @@ export class UpdateShelfDto {
   @IsOptional()
   @IsString()
   category?: string;
-  
-  @IsOptional()
-  @IsString()
-  qrCodeUrl?: string;
 } 

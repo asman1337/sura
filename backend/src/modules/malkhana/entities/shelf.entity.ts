@@ -15,10 +15,6 @@ export class Shelf {
   @Column({ length: 100, nullable: true })
   category: string;
 
-  // QR code for the shelf
-  @Column({ length: 255, nullable: true })
-  qrCodeUrl: string;
-
   @OneToMany(() => MalkhanaItem, item => item.shelf)
   items: MalkhanaItem[];
 

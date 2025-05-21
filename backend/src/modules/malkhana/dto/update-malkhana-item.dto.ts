@@ -40,8 +40,4 @@ export class UpdateMalkhanaItemDto {
   @IsOptional()
   @IsString()
   shelfId?: string;
-  
-  @IsOptional()
-  @IsString()
-  qrCodeUrl?: string;
 }

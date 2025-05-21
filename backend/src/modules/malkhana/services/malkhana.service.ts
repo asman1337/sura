@@ -226,25 +226,6 @@ export class MalkhanaService {
   }
 
   /**
-   * Generate a QR code for an item
-   * In a real implementation, this would call an API to generate a QR code
-   * For this example, we'll just return a mock URL
-   */
-  async generateQRCode(id: string): Promise<string> {
-    const item = await this.getItemById(id);
-    
-    // In a real implementation, call an API to generate QR code
-    // For now, return a mock URL that encodes the motherNumber
-    const qrCodeUrl = `https://api.example.com/qr/malkhana/${item.motherNumber}`;
-    
-    // Update the item with the QR code URL
-    item.qrCodeUrl = qrCodeUrl;
-    await this.malkhanaItemRepository.save(item);
-    
-    return qrCodeUrl;
-  }
-
-  /**
    * Assign an item to a shelf
    */
   async assignToShelf(id: string, assignDto: AssignToShelfDto, userId: string): Promise<MalkhanaItem> {

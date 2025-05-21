@@ -56,11 +56,4 @@ export class ShelvesController {
   async getShelfItems(@Param('id') id: string): Promise<MalkhanaItem[]> {
     return this.shelvesService.getShelfItems(id);
   }
-
-  @Post(':id/qr-code')
-  @HttpCode(HttpStatus.OK)
-  async generateQRCode(@Param('id') id: string): Promise<{ qrCodeUrl: string }> {
-    const qrCodeUrl = await this.shelvesService.generateQRCode(id);
-    return { qrCodeUrl };
-  }
 } 

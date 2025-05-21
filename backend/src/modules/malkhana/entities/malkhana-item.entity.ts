@@ -87,10 +87,6 @@ export class MalkhanaItem {
   @JoinColumn({ name: 'shelfId' })
   shelf: Shelf;
 
-  // QR code for the item
-  @Column({ length: 255, nullable: true })
-  qrCodeUrl: string;
-
   // History of red ink IDs for this item
   @OneToMany(() => RedInkHistory, history => history.item, { cascade: true })
   redInkHistory: RedInkHistory[];

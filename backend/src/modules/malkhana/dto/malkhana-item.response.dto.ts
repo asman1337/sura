@@ -27,7 +27,6 @@ export class MalkhanaItemResponseDto {
   photos?: string[];
   shelfId?: string;
   shelf?: ShelfResponseDto;
-  qrCodeUrl?: string;
   redInkHistory?: RedInkHistoryDto[];
   createdBy?: string;
   updatedBy?: string;

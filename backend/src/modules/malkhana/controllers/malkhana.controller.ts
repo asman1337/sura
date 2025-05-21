@@ -95,13 +95,6 @@ export class MalkhanaController {
     return this.malkhanaService.disposeItem(id, disposeItemDto, userId);
   }
 
-  @Post('items/:id/qr-code')
-  @HttpCode(HttpStatus.OK)
-  async generateQRCode(@Param('id') id: string): Promise<{ qrCodeUrl: string }> {
-    const qrCodeUrl = await this.malkhanaService.generateQRCode(id);
-    return { qrCodeUrl };
-  }
-
   @Post('items/:id/assign-shelf')
   @HttpCode(HttpStatus.OK)
   async assignToShelf(

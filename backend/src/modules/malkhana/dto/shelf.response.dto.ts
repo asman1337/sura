@@ -3,7 +3,6 @@ export class ShelfResponseDto {
   name: string;
   location: string;
   category?: string;
-  qrCodeUrl?: string;
   itemCount?: number;
   createdAt: Date;
   updatedAt: Date;
