@@ -88,6 +88,13 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
     setSidebarOpen(!sidebarOpen);
   };
   
+  // Close sidebar on navigation change when on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
+  
   // Handle logout
   const handleLogout = async () => {
     await auth.logout();
@@ -514,9 +521,43 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
     </Box>
   );
   
+  // Mobile toggle button that appears when sidebar is collapsed
+  const mobileToggleButton = isMobile && !sidebarOpen && (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: theme.spacing(2),
+        left: theme.spacing(2),
+        zIndex: theme.zIndex.drawer + 2, // Higher than drawer
+        backgroundColor: theme.palette.primary.main,
+        color: theme.palette.primary.contrastText,
+        boxShadow: 3,
+        borderRadius: '50%',
+        width: 48,
+        height: 48,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        cursor: 'pointer',
+        '&:hover': {
+          backgroundColor: theme.palette.primary.dark,
+        }
+      }}
+      onClick={toggleSidebar}
+      role="button"
+      aria-label="Open menu"
+      tabIndex={0}
+    >
+      <MenuIcon fontSize="medium" />
+    </Box>
+  );
+  
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
+      
+      {/* Mobile toggle button */}
+      {mobileToggleButton}
       
       {/* Sidebar */}
       <Box
