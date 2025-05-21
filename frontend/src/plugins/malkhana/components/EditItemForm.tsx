@@ -19,7 +19,7 @@ import {
 import { DatePicker } from '@mui/x-date-pickers';
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from '@mui/icons-material';
 
-import { MalkhanaItem } from '../types';
+import { MalkhanaItem, UpdateMalkhanaItemDto } from '../types';
 import { useMalkhanaApi } from '../hooks';
 import { useData } from '../../../core/data';
 import { setGlobalApiInstance } from '../services';
@@ -206,7 +206,21 @@ const EditItemForm: React.FC = () => {
       }
       
       // Update the item
-      const result = await malkhanaApi.updateItem(id, formData);
+      const updateData: UpdateMalkhanaItemDto = {
+        caseNumber: formData.caseNumber,
+        description: formData.description,
+        category: formData.category,
+        receivedFrom: formData.receivedFrom,
+        condition: formData.condition,
+        notes: formData.notes,
+      };
+      
+      // Convert string date to Date object if it exists
+      if (formData.dateReceived) {
+        updateData.dateReceived = new Date(formData.dateReceived);
+      }
+      
+      const result = await malkhanaApi.updateItem(id, updateData);
       
       if (result) {
         setSuccess(true);

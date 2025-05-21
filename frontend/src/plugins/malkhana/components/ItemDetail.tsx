@@ -3,16 +3,29 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
+  Card,
+  CardContent,
+  Chip,
   CircularProgress,
-  Typography,
+  Container,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  Divider,
+  Grid,
+  IconButton,
+  Paper,
+  Typography,
   useTheme
 } from '@mui/material';
 import {
-  QrCode as QrCodeIcon} from '@mui/icons-material';
+  ArrowBack as ArrowBackIcon,
+  Edit as EditIcon,
+  DeleteOutline as DeleteIcon,
+  Refresh as RefreshIcon,
+  QrCode as QrCodeIcon
+} from '@mui/icons-material';
 
 import { MalkhanaItem } from '../types';
 import { useMalkhanaApi } from '../hooks';
@@ -73,7 +86,7 @@ const ItemDetail: React.FC = () => {
             qrCodeUrl: qrCode.qrCodeUrl 
           });
           if (updatedItem) {
-        setItem(updatedItem);
+            setItem(updatedItem);
           }
         }
       }
@@ -115,55 +128,67 @@ const ItemDetail: React.FC = () => {
   // Show initialization progress
   if (!api) {
     return (
-      <div className="loading-container">
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
         <CircularProgress />
         <Typography variant="body1" sx={{ mt: 2 }}>
           Initializing API services...
         </Typography>
-      </div>
+      </Box>
     );
   }
   
   // Show loading state while Malkhana API initializes
   if (!malkhanaApi.isReady) {
     return (
-      <div className="loading-container">
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
         <CircularProgress />
         <Typography variant="body1" sx={{ mt: 2 }}>
           Initializing Malkhana module...
         </Typography>
-      </div>
+      </Box>
     );
   }
   
   if (loading && !item) {
     return (
-      <div className="loading-container">
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
         <CircularProgress />
         <Typography variant="body1" sx={{ mt: 2 }}>
           Loading item details...
         </Typography>
-      </div>
+      </Box>
     );
   }
   
   if (error && !item) {
     return (
-      <div className="error-container">
-        <h2>Error</h2>
-        <p>{error}</p>
-        <button onClick={handleBack}>Go Back</button>
-      </div>
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h5" color="error" gutterBottom>
+          Error
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          {error}
+        </Typography>
+        <Button variant="outlined" onClick={handleBack} sx={{ mt: 2 }}>
+          Go Back
+        </Button>
+      </Box>
     );
   }
   
   if (!item) {
     return (
-      <div className="error-container">
-        <h2>Item Not Found</h2>
-        <p>The requested item could not be found.</p>
-        <button onClick={handleBack}>Go Back</button>
-      </div>
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h5" color="error" gutterBottom>
+          Item Not Found
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          The requested item could not be found.
+        </Typography>
+        <Button variant="outlined" onClick={handleBack} sx={{ mt: 2 }}>
+          Go Back
+        </Button>
+      </Box>
     );
   }
   
@@ -183,169 +208,344 @@ const ItemDetail: React.FC = () => {
   };
   
   return (
-    <div className="item-detail">
-      {loading && <div className="loading-overlay">Refreshing...</div>}
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      {loading && (
+        <Box 
+          sx={{ 
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: 'rgba(255, 255, 255, 0.7)',
+            zIndex: 9999
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      )}
       
-      <div className="detail-header">
-        <button className="back-btn" onClick={handleBack}>Back</button>
-        <h1>Evidence Item Details</h1>
-        <div className="action-buttons">
-          <button className="refresh-btn" onClick={handleRefresh} disabled={loading}>
-            Refresh
-          </button>
-          <button className="edit-btn" onClick={handleEdit}>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <IconButton 
+            onClick={handleBack} 
+            sx={{ mr: 1 }}
+            aria-label="back"
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h4" fontWeight="500">
+            Evidence Item Details
+          </Typography>
+        </Box>
+        
+        <Box>
+          <IconButton 
+            onClick={handleRefresh} 
+            disabled={loading}
+            color="primary"
+            aria-label="refresh"
+            sx={{ mr: 1 }}
+          >
+            <RefreshIcon />
+          </IconButton>
+          
+          <Button
+            variant="outlined"
+            startIcon={<EditIcon />}
+            onClick={handleEdit}
+            sx={{ mr: 1 }}
+          >
             Edit
-          </button>
+          </Button>
+          
           {item.status === 'ACTIVE' && (
-            <button className="dispose-btn" onClick={handleDispose}>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={handleDispose}
+            >
               Dispose
-            </button>
+            </Button>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
       
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <Paper sx={{ p: 2, mb: 3, bgcolor: 'error.light' }}>
+          <Typography color="error.contrastText">{error}</Typography>
+        </Paper>
+      )}
       
-      <div className="detail-card">
-        <div className="detail-section">
-          <h2>Registration Information</h2>
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="label">Registry Number:</span>
-              <span className="value">{item.registryNumber}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Mother Number:</span>
-              <span className="value">{item.motherNumber}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Registry Type:</span>
-              <span className="value">{item.registryType === 'BLACK_INK' ? 'Black Ink' : 'Red Ink'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Registry Year:</span>
-              <span className="value">{item.registryYear}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="detail-section">
-          <h2>Item Information</h2>
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="label">Case Number:</span>
-              <span className="value">{item.caseNumber}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Category:</span>
-              <span className="value">{item.category}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Date Received:</span>
-              <span className="value">{new Date(item.dateReceived).toLocaleDateString()}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Received From:</span>
-              <span className="value">{item.receivedFrom}</span>
-            </div>
-            <div className="detail-item full-width">
-              <span className="label">Description:</span>
-              <span className="value">{item.description}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Condition:</span>
-              <span className="value">{item.condition}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Status:</span>
-              <span className={`value status-${item.status.toLowerCase()}`}>
-                {item.status}
-              </span>
-            </div>
-          </div>
-        </div>
-        
-        {item.shelfId && (
-          <div className="detail-section">
-            <h2>Storage Location</h2>
-            <div className="detail-grid">
-              <div className="detail-item">
-                <span className="label">Shelf ID:</span>
-                <span className="value">{item.shelfId}</span>
-              </div>
-              <div className="detail-item">
-                <span className="label">Shelf Location:</span>
-                <span className="value">{item.shelfLocation || 'N/A'}</span>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {item.status === 'DISPOSED' && (
-          <div className="detail-section">
-            <h2>Disposal Information</h2>
-            <div className="detail-grid">
-              <div className="detail-item">
-                <span className="label">Disposal Date:</span>
-                <span className="value">
-                  {item.disposalDate ? new Date(item.disposalDate).toLocaleDateString() : 'N/A'}
-                </span>
-              </div>
-              <div className="detail-item">
-                <span className="label">Approved By:</span>
-                <span className="value">{item.disposalApprovedBy || 'N/A'}</span>
-              </div>
-              <div className="detail-item full-width">
-                <span className="label">Reason:</span>
-                <span className="value">{item.disposalReason || 'N/A'}</span>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {item.notes && (
-          <div className="detail-section">
-            <h2>Notes</h2>
-            <p className="notes">{item.notes}</p>
-          </div>
+      <Card 
+        elevation={0} 
+        sx={{ 
+          borderRadius: 2, 
+          border: `1px solid ${theme.palette.divider}`,
+          mb: 3
+        }}
+      >
+        <CardContent>
+          <Typography variant="h6" fontWeight="500" gutterBottom>
+            Registration Information
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Registry Number
+              </Typography>
+              <Typography variant="body1">
+                {item.registryNumber}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Mother Number
+              </Typography>
+              <Typography variant="body1">
+                {item.motherNumber}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Registry Type
+              </Typography>
+              <Typography variant="body1">
+                {item.registryType === 'BLACK_INK' ? 'Black Ink' : 'Red Ink'}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Registry Year
+              </Typography>
+              <Typography variant="body1">
+                {item.registryYear}
+              </Typography>
+            </Grid>
+          </Grid>
+          
+          <Typography variant="h6" fontWeight="500" gutterBottom>
+            Item Information
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Case Number
+              </Typography>
+              <Typography variant="body1">
+                {item.caseNumber}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Category
+              </Typography>
+              <Typography variant="body1">
+                {item.category}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Date Received
+              </Typography>
+              <Typography variant="body1">
+                {new Date(item.dateReceived).toLocaleDateString()}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Received From
+              </Typography>
+              <Typography variant="body1">
+                {item.receivedFrom}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Condition
+              </Typography>
+              <Typography variant="body1">
+                {item.condition}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Status
+              </Typography>
+              <Chip 
+                label={item.status} 
+                size="small"
+                sx={{ 
+                  bgcolor: `${getStatusColor(item.status)}20`,
+                  color: getStatusColor(item.status),
+                  fontWeight: 500
+                }} 
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Description
+              </Typography>
+              <Typography variant="body1">
+                {item.description}
+              </Typography>
+            </Grid>
+          </Grid>
+          
+          {item.shelfId && (
+            <>
+              <Typography variant="h6" fontWeight="500" gutterBottom>
+                Storage Location
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Shelf ID
+                  </Typography>
+                  <Typography variant="body1">
+                    {item.shelfId}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Shelf Location
+                  </Typography>
+                  <Typography variant="body1">
+                    {item.shelf?.location || 'N/A'}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </>
+          )}
+          
+          {item.status === 'DISPOSED' && (
+            <>
+              <Typography variant="h6" fontWeight="500" gutterBottom>
+                Disposal Information
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Disposal Date
+                  </Typography>
+                  <Typography variant="body1">
+                    {item.disposalDate ? new Date(item.disposalDate).toLocaleDateString() : 'N/A'}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Approved By
+                  </Typography>
+                  <Typography variant="body1">
+                    {item.disposalApprovedBy || 'N/A'}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Reason
+                  </Typography>
+                  <Typography variant="body1">
+                    {item.disposalReason || 'N/A'}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </>
+          )}
+          
+          {item.notes && (
+            <>
+              <Typography variant="h6" fontWeight="500" gutterBottom>
+                Notes
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="body1">
+                  {item.notes}
+                </Typography>
+              </Box>
+            </>
           )}
           
           {item.photos && item.photos.length > 0 && (
-          <div className="detail-section">
-            <h2>Photos</h2>
-            <div className="photos-grid">
-                  {item.photos.map((photo, index) => (
-                <div key={index} className="photo-item">
-                  <img src={photo} alt={`Evidence item ${item.motherNumber} - ${index + 1}`} />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        <div className="detail-section qr-code-section">
-          <h2>QR Code</h2>
-          {item.qrCodeUrl ? (
-            <div>
-              <img 
-                src={item.qrCodeUrl} 
-                alt={`QR Code for ${item.motherNumber}`} 
-                className="qr-code"
-              />
-              <p>Scan this QR code to quickly access this item's details</p>
-            </div>
-          ) : (
-            <Button 
-              variant="contained" 
-              color="primary" 
-              onClick={handleGenerateQrCode}
-              startIcon={<QrCodeIcon />}
-            >
-              Generate QR Code
-            </Button>
+            <>
+              <Typography variant="h6" fontWeight="500" gutterBottom>
+                Photos
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              <Grid container spacing={2} sx={{ mb: 4 }}>
+                {item.photos.map((photo, index) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                    <Box 
+                      component="img"
+                      src={photo}
+                      alt={`Evidence item ${item.motherNumber} - ${index + 1}`}
+                      sx={{ 
+                        width: '100%',
+                        height: 200,
+                        objectFit: 'cover',
+                        borderRadius: 1,
+                        border: `1px solid ${theme.palette.divider}`
+                      }}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </>
           )}
-        </div>
-      </div>
+          
+          <Typography variant="h6" fontWeight="500" gutterBottom>
+            QR Code
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
+            {item.qrCodeUrl ? (
+              <>
+                <Box 
+                  component="img"
+                  src={item.qrCodeUrl}
+                  alt={`QR Code for ${item.motherNumber}`}
+                  sx={{ 
+                    width: 200,
+                    height: 200,
+                    objectFit: 'contain',
+                    mb: 2,
+                    border: `1px solid ${theme.palette.divider}`,
+                    borderRadius: 1,
+                    p: 2
+                  }}
+                />
+                <Typography variant="caption" color="text.secondary">
+                  Scan this QR code to quickly access this item's details
+                </Typography>
+              </>
+            ) : (
+              <Button 
+                variant="contained" 
+                color="primary" 
+                onClick={handleGenerateQrCode}
+                startIcon={<QrCodeIcon />}
+              >
+                Generate QR Code
+              </Button>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
       
       {/* QR Code Dialog */}
       <Dialog open={openQrDialog} onClose={() => setOpenQrDialog(false)}>
@@ -361,21 +561,22 @@ const ItemDetail: React.FC = () => {
             
             {item.qrCodeUrl ? (
               <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
-                <img 
-                  src={item.qrCodeUrl} 
-                  alt={`QR Code for ${item.motherNumber}`} 
-                  style={{ maxWidth: '100%', height: 'auto' }}
+                <Box 
+                  component="img"
+                  src={item.qrCodeUrl}
+                  alt={`QR Code for ${item.motherNumber}`}
+                  sx={{ maxWidth: '100%', height: 'auto' }}
                 />
               </Box>
             ) : (
-            <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
-              <Typography sx={{ fontSize: '8rem', color: theme.palette.primary.main }}>
-                <QrCodeIcon fontSize="inherit" />
-              </Typography>
-              <Typography variant="caption" display="block" mt={1}>
+              <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
+                <Typography sx={{ fontSize: '8rem', color: theme.palette.primary.main }}>
+                  <QrCodeIcon fontSize="inherit" />
+                </Typography>
+                <Typography variant="caption" display="block" mt={1}>
                   QR Code not available
-              </Typography>
-            </Box>
+                </Typography>
+              </Box>
             )}
             
             <Button variant="outlined" fullWidth>
@@ -387,7 +588,7 @@ const ItemDetail: React.FC = () => {
           <Button onClick={() => setOpenQrDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Container>
   );
 };
 

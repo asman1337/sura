@@ -10,6 +10,7 @@ export type RegistryType = 'BLACK_INK' | 'RED_INK';
 
 // Historical Red Ink ID record
 export interface RedInkHistoryEntry {
+  id: string;
   year: number;
   redInkId: number;
 }
@@ -20,6 +21,10 @@ export interface ShelfInfo {
   name: string;
   location: string;
   category?: string;
+  qrCodeUrl?: string;
+  itemCount?: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Base interface for a Malkhana item
@@ -45,11 +50,97 @@ export interface MalkhanaItem {
   photos?: string[]; // URLs to photos
   // Shelf organization
   shelfId?: string;
-  shelfLocation?: string;
+  shelf?: ShelfInfo;
   // QR code for the item
   qrCodeUrl?: string;
   // History of red ink IDs for this item
   redInkHistory?: RedInkHistoryEntry[];
+  // Audit information
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Create Malkhana Item DTO for API requests
+export interface CreateMalkhanaItemDto {
+  caseNumber?: string;
+  description?: string;
+  category: string;
+  dateReceived: Date;
+  receivedFrom: string;
+  condition: string;
+  notes?: string;
+  photos?: string[];
+  shelfId?: string;
+}
+
+// Update Malkhana Item DTO for API requests
+export interface UpdateMalkhanaItemDto {
+  caseNumber?: string;
+  description?: string;
+  category?: string;
+  dateReceived?: Date;
+  receivedFrom?: string;
+  condition?: string;
+  status?: MalkhanaItemStatus;
+  notes?: string;
+  photos?: string[];
+  shelfId?: string;
+  qrCodeUrl?: string;
+}
+
+// Dispose Item DTO for API requests
+export interface DisposeItemDto {
+  disposalDate: Date;
+  disposalReason: string;
+  disposalApprovedBy: string;
+}
+
+// Create Shelf DTO for API requests
+export interface CreateShelfDto {
+  name: string;
+  location: string;
+  category?: string;
+}
+
+// Update Shelf DTO for API requests
+export interface UpdateShelfDto {
+  name?: string;
+  location?: string;
+  category?: string;
+  qrCodeUrl?: string;
+}
+
+// Assign to Shelf DTO for API requests
+export interface AssignToShelfDto {
+  shelfId: string;
+}
+
+// Year Transition DTO for API requests
+export interface YearTransitionDto {
+  newYear: number;
+}
+
+// Year Transition Response DTO from API
+export interface YearTransitionResponseDto {
+  transitionedCount: number;
+  newRedInkItems: MalkhanaItem[];
+}
+
+// Interface for Malkhana Dashboard stats
+export interface MalkhanaStats {
+  totalItems: number;
+  blackInkItems: number;
+  redInkItems: number;
+  disposedItems: number;
+  recentlyAddedItems: number;
+  currentYear: number;
+}
+
+// Interface for shelf management
+export interface ShelfRegistry {
+  shelves: ShelfInfo[];
 }
 
 // Interface for Black Ink Registry (current year)
@@ -63,18 +154,4 @@ export interface BlackInkRegistry {
 export interface RedInkRegistry {
   items: MalkhanaItem[];
   lastRegistryNumber: number; // Last used registry number
-}
-
-// Interface for Malkhana Dashboard stats
-export interface MalkhanaStats {
-  totalItems: number;
-  blackInkItems: number;
-  redInkItems: number;
-  disposedItems: number;
-  recentlyAddedItems: number;
-}
-
-// Interface for shelf management
-export interface ShelfRegistry {
-  shelves: ShelfInfo[];
 } 

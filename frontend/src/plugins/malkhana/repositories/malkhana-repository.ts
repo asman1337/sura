@@ -2,7 +2,19 @@ import {
   ApiClient, 
   DataContextValue
 } from '../../../core/data';
-import { MalkhanaItem, RegistryType, ShelfInfo } from '../types';
+import { 
+  MalkhanaItem, 
+  ShelfInfo, 
+  MalkhanaStats,
+  CreateMalkhanaItemDto,
+  UpdateMalkhanaItemDto,
+  DisposeItemDto,
+  AssignToShelfDto,
+  YearTransitionDto,
+  YearTransitionResponseDto,
+  CreateShelfDto,
+  UpdateShelfDto
+} from '../types';
 
 /**
  * Repository for Malkhana evidence items - direct API implementation without caching
@@ -18,85 +30,85 @@ export class MalkhanaRepository {
   /**
    * Get statistics for Malkhana
    */
-  async getStats(): Promise<any> {
-    return this.api.get(`${this.basePath}/stats`);
+  async getStats(): Promise<MalkhanaStats> {
+    return this.api.get<MalkhanaStats>(`${this.basePath}/stats`);
   }
 
   /**
    * Get all Black Ink (current year) items
    */
   async getBlackInkItems(): Promise<MalkhanaItem[]> {
-    return this.api.get(`${this.basePath}/black-ink`);
+    return this.api.get<MalkhanaItem[]>(`${this.basePath}/black-ink`);
   }
 
   /**
    * Get all Red Ink (historical) items
    */
   async getRedInkItems(): Promise<MalkhanaItem[]> {
-    return this.api.get(`${this.basePath}/red-ink`);
+    return this.api.get<MalkhanaItem[]>(`${this.basePath}/red-ink`);
   }
 
   /**
    * Get item by ID
    */
   async getItemById(id: string): Promise<MalkhanaItem> {
-    return this.api.get(`${this.basePath}/items/${id}`);
+    return this.api.get<MalkhanaItem>(`${this.basePath}/items/${id}`);
   }
 
   /**
    * Search items by query
    */
   async searchItems(query: string): Promise<MalkhanaItem[]> {
-    return this.api.get(`${this.basePath}/search?query=${encodeURIComponent(query)}`);
+    return this.api.get<MalkhanaItem[]>(`${this.basePath}/search?query=${encodeURIComponent(query)}`);
   }
 
   /**
    * Find item by mother number
    */
   async findByMotherNumber(motherNumber: string): Promise<MalkhanaItem> {
-    return this.api.get(`${this.basePath}/mother-number/${motherNumber}`);
+    return this.api.get<MalkhanaItem>(`${this.basePath}/mother-number/${motherNumber}`);
   }
 
   /**
    * Create a new item
    */
-  async createItem(item: Omit<MalkhanaItem, 'id'>): Promise<MalkhanaItem> {
-    return this.api.post(`${this.basePath}/items`, item);
+  async createItem(item: CreateMalkhanaItemDto): Promise<MalkhanaItem> {
+    return this.api.post<MalkhanaItem>(`${this.basePath}/items`, item);
   }
 
   /**
    * Update an existing item
    */
-  async updateItem(id: string, updates: Partial<MalkhanaItem>): Promise<MalkhanaItem> {
-    return this.api.put(`${this.basePath}/items/${id}`, updates);
+  async updateItem(id: string, updates: UpdateMalkhanaItemDto): Promise<MalkhanaItem> {
+    return this.api.put<MalkhanaItem>(`${this.basePath}/items/${id}`, updates);
   }
 
   /**
    * Dispose of an item
    */
-  async disposeItem(id: string, disposalData: { disposalDate: Date, disposalReason: string }): Promise<MalkhanaItem> {
-    return this.api.post(`${this.basePath}/items/${id}/dispose`, disposalData);
+  async disposeItem(id: string, disposalData: DisposeItemDto): Promise<MalkhanaItem> {
+    return this.api.post<MalkhanaItem>(`${this.basePath}/items/${id}/dispose`, disposalData);
   }
 
   /**
    * Generate QR code for an item
    */
   async generateQRCode(id: string): Promise<{ qrCodeUrl: string }> {
-    return this.api.post(`${this.basePath}/items/${id}/qr-code`, {});
+    return this.api.post<{ qrCodeUrl: string }>(`${this.basePath}/items/${id}/qr-code`, {});
   }
 
   /**
    * Assign an item to a shelf
    */
-  async assignToShelf(id: string, shelfId: string): Promise<MalkhanaItem> {
-    return this.api.post(`${this.basePath}/items/${id}/assign-shelf`, { shelfId });
+  async assignToShelf(id: string, assignDto: AssignToShelfDto): Promise<MalkhanaItem> {
+    return this.api.post<MalkhanaItem>(`${this.basePath}/items/${id}/assign-shelf`, assignDto);
   }
 
   /**
    * Perform year transition (Black Ink to Red Ink)
    */
-  async performYearTransition(newYear: number): Promise<{ transitionedCount: number; newRedInkItems: MalkhanaItem[] }> {
-    return this.api.post(`${this.basePath}/year-transition`, { newYear });
+  async performYearTransition(yearTransitionDto: YearTransitionDto): Promise<YearTransitionResponseDto> {
+    return this.api.post<YearTransitionResponseDto>(`${this.basePath}/year-transition`, yearTransitionDto);
   }
 
   // Shelf related methods
@@ -104,28 +116,28 @@ export class MalkhanaRepository {
    * Get all shelves
    */
   async getAllShelves(): Promise<ShelfInfo[]> {
-    return this.api.get(`${this.basePath}/shelves`);
+    return this.api.get<ShelfInfo[]>(`${this.basePath}/shelves`);
   }
 
   /**
    * Get a shelf by ID
    */
   async getShelfById(id: string): Promise<ShelfInfo> {
-    return this.api.get(`${this.basePath}/shelves/${id}`);
+    return this.api.get<ShelfInfo>(`${this.basePath}/shelves/${id}`);
   }
 
   /**
    * Create a new shelf
    */
-  async createShelf(shelf: Omit<ShelfInfo, 'id'>): Promise<ShelfInfo> {
-    return this.api.post(`${this.basePath}/shelves`, shelf);
+  async createShelf(shelf: CreateShelfDto): Promise<ShelfInfo> {
+    return this.api.post<ShelfInfo>(`${this.basePath}/shelves`, shelf);
   }
 
   /**
    * Update an existing shelf
    */
-  async updateShelf(id: string, updates: Partial<ShelfInfo>): Promise<ShelfInfo> {
-    return this.api.put(`${this.basePath}/shelves/${id}`, updates);
+  async updateShelf(id: string, updates: UpdateShelfDto): Promise<ShelfInfo> {
+    return this.api.put<ShelfInfo>(`${this.basePath}/shelves/${id}`, updates);
   }
 
   /**
@@ -139,14 +151,14 @@ export class MalkhanaRepository {
    * Get all items on a shelf
    */
   async getShelfItems(id: string): Promise<MalkhanaItem[]> {
-    return this.api.get(`${this.basePath}/shelves/${id}/items`);
+    return this.api.get<MalkhanaItem[]>(`${this.basePath}/shelves/${id}/items`);
   }
 
   /**
    * Generate QR code for a shelf
    */
   async generateShelfQRCode(id: string): Promise<{ qrCodeUrl: string }> {
-    return this.api.post(`${this.basePath}/shelves/${id}/qr-code`, {});
+    return this.api.post<{ qrCodeUrl: string }>(`${this.basePath}/shelves/${id}/qr-code`, {});
   }
 }
 

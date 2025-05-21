@@ -4,7 +4,15 @@ import { setItems, setLoading, setError, setSelectedItem } from './store';
 import { 
   MalkhanaItem, 
   ShelfInfo, 
-  MalkhanaStats 
+  MalkhanaStats,
+  CreateMalkhanaItemDto,
+  UpdateMalkhanaItemDto,
+  DisposeItemDto,
+  AssignToShelfDto,
+  YearTransitionDto,
+  YearTransitionResponseDto,
+  CreateShelfDto,
+  UpdateShelfDto
 } from './types';
 
 // Single global API instance for use with the hook pattern
@@ -90,7 +98,7 @@ class MalkhanaService {
     }
   }
 
-  async createItem(item: Omit<MalkhanaItem, 'id'>): Promise<MalkhanaItem> {
+  async createItem(item: CreateMalkhanaItemDto): Promise<MalkhanaItem> {
     try {
       return await this.api.post<MalkhanaItem>('/malkhana/items', item);
     } catch (error) {
@@ -99,7 +107,7 @@ class MalkhanaService {
     }
   }
 
-  async updateItem(id: string, updates: Partial<MalkhanaItem>): Promise<MalkhanaItem> {
+  async updateItem(id: string, updates: UpdateMalkhanaItemDto): Promise<MalkhanaItem> {
     try {
       return await this.api.put<MalkhanaItem>(`/malkhana/items/${id}`, updates);
     } catch (error) {
@@ -108,7 +116,7 @@ class MalkhanaService {
     }
   }
 
-  async disposeItem(id: string, disposalData: { disposalDate: Date, disposalReason: string }): Promise<MalkhanaItem> {
+  async disposeItem(id: string, disposalData: DisposeItemDto): Promise<MalkhanaItem> {
     try {
       return await this.api.post<MalkhanaItem>(`/malkhana/items/${id}/dispose`, disposalData);
     } catch (error) {
@@ -126,18 +134,18 @@ class MalkhanaService {
     }
   }
 
-  async assignToShelf(id: string, shelfId: string): Promise<MalkhanaItem> {
+  async assignToShelf(id: string, assignDto: AssignToShelfDto): Promise<MalkhanaItem> {
     try {
-      return await this.api.post<MalkhanaItem>(`/malkhana/items/${id}/assign-shelf`, { shelfId });
+      return await this.api.post<MalkhanaItem>(`/malkhana/items/${id}/assign-shelf`, assignDto);
     } catch (error) {
       console.error(`Error assigning item ${id} to shelf:`, error);
       throw error;
     }
   }
 
-  async performYearTransition(newYear: number): Promise<{ transitionedCount: number; newRedInkItems: MalkhanaItem[] }> {
+  async performYearTransition(yearTransitionDto: YearTransitionDto): Promise<YearTransitionResponseDto> {
     try {
-      return await this.api.post<{ transitionedCount: number; newRedInkItems: MalkhanaItem[] }>('/malkhana/year-transition', { newYear });
+      return await this.api.post<YearTransitionResponseDto>('/malkhana/year-transition', yearTransitionDto);
     } catch (error) {
       console.error('Error performing year transition:', error);
       throw error;
@@ -163,7 +171,7 @@ class MalkhanaService {
     }
   }
 
-  async createShelf(shelf: Omit<ShelfInfo, 'id'>): Promise<ShelfInfo> {
+  async createShelf(shelf: CreateShelfDto): Promise<ShelfInfo> {
     try {
       return await this.api.post<ShelfInfo>('/malkhana/shelves', shelf);
     } catch (error) {
@@ -172,7 +180,7 @@ class MalkhanaService {
     }
   }
 
-  async updateShelf(id: string, updates: Partial<ShelfInfo>): Promise<ShelfInfo> {
+  async updateShelf(id: string, updates: UpdateShelfDto): Promise<ShelfInfo> {
     try {
       return await this.api.put<ShelfInfo>(`/malkhana/shelves/${id}`, updates);
     } catch (error) {

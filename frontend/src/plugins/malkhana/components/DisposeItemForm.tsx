@@ -153,7 +153,8 @@ const DisposeItemForm: React.FC = () => {
       // Dispose item using real API
       const result = await malkhanaApi.disposeItem(id, {
         disposalDate: new Date(),
-        disposalReason: formData.disposalReason
+        disposalReason: formData.disposalReason,
+        disposalApprovedBy: formData.disposalApprovedBy
       });
       
       if (result) {

@@ -143,7 +143,8 @@ const ShelfItems: React.FC = () => {
         throw new Error('API service is not initialized');
       }
       
-      const result = await malkhanaApi.assignToShelf(selectedItem.id, targetShelfId);
+      // Move item to new shelf
+      const result = await malkhanaApi.assignToShelf(selectedItem.id, { shelfId: targetShelfId });
       if (result) {
         setOpenMoveDialog(false);
         // Refresh items

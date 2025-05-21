@@ -164,14 +164,9 @@ const AddItemForm: React.FC = () => {
         description: formData.description,
         category: formData.category,
         receivedFrom: formData.receivedFrom,
-        dateReceived: formData.dateReceived.toISOString(),
+        dateReceived: formData.dateReceived,
         condition: formData.condition,
         notes: formData.notes,
-        status: 'ACTIVE',
-        registryType: 'BLACK_INK',
-        registryYear: new Date().getFullYear(),
-        registryNumber: 0,
-        motherNumber: '',
       });
       
       if (result) {

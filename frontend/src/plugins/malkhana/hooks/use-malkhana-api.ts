@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useData } from '../../../core/data';
 import { MalkhanaRepository } from '../repositories';
-import { MalkhanaItem, ShelfInfo, MalkhanaStats } from '../types';
+import { 
+  MalkhanaItem, 
+  ShelfInfo, 
+  MalkhanaStats,
+  CreateMalkhanaItemDto,
+  UpdateMalkhanaItemDto,
+  DisposeItemDto,
+  AssignToShelfDto,
+  YearTransitionDto,
+  YearTransitionResponseDto,
+  CreateShelfDto,
+  UpdateShelfDto
+} from '../types';
 import { setGlobalApiInstance, getMalkhanaService } from '../services';
 
 /**
@@ -107,7 +119,7 @@ export function useMalkhanaApi() {
       }
     },
     
-    createItem: async (item: Omit<MalkhanaItem, 'id'>): Promise<MalkhanaItem | null> => {
+    createItem: async (item: CreateMalkhanaItemDto): Promise<MalkhanaItem | null> => {
       // Try service first (preferred)
       if (service) {
         return service.createItem(item);
@@ -118,7 +130,7 @@ export function useMalkhanaApi() {
       return repository.createItem(item);
     },
     
-    updateItem: async (id: string, updates: Partial<MalkhanaItem>): Promise<MalkhanaItem | null> => {
+    updateItem: async (id: string, updates: UpdateMalkhanaItemDto): Promise<MalkhanaItem | null> => {
       // Try service first (preferred)
       if (service) {
         return service.updateItem(id, updates);
@@ -129,7 +141,7 @@ export function useMalkhanaApi() {
       return repository.updateItem(id, updates);
     },
     
-    disposeItem: async (id: string, disposalData: { disposalDate: Date, disposalReason: string }): Promise<MalkhanaItem | null> => {
+    disposeItem: async (id: string, disposalData: DisposeItemDto): Promise<MalkhanaItem | null> => {
       // Try service first (preferred)
       if (service) {
         return service.disposeItem(id, disposalData);
@@ -151,26 +163,26 @@ export function useMalkhanaApi() {
       return repository.generateQRCode(id);
     },
     
-    assignToShelf: async (id: string, shelfId: string): Promise<MalkhanaItem | null> => {
+    assignToShelf: async (id: string, assignDto: AssignToShelfDto): Promise<MalkhanaItem | null> => {
       // Try service first (preferred)
       if (service) {
-        return service.assignToShelf(id, shelfId);
+        return service.assignToShelf(id, assignDto);
       }
       
       // Fallback to repository if service not ready yet
       if (!repository) return null;
-      return repository.assignToShelf(id, shelfId);
+      return repository.assignToShelf(id, assignDto);
     },
     
-    performYearTransition: async (newYear: number): Promise<{ transitionedCount: number; newRedInkItems: MalkhanaItem[] } | null> => {
+    performYearTransition: async (yearTransitionDto: YearTransitionDto): Promise<YearTransitionResponseDto | null> => {
       // Try service first (preferred)
       if (service) {
-        return service.performYearTransition(newYear);
+        return service.performYearTransition(yearTransitionDto);
       }
       
       // Fallback to repository if service not ready yet
       if (!repository) return null;
-      return repository.performYearTransition(newYear);
+      return repository.performYearTransition(yearTransitionDto);
     },
     
     // Shelves
@@ -201,7 +213,7 @@ export function useMalkhanaApi() {
       }
     },
     
-    createShelf: async (shelf: Omit<ShelfInfo, 'id'>): Promise<ShelfInfo | null> => {
+    createShelf: async (shelf: CreateShelfDto): Promise<ShelfInfo | null> => {
       // Try service first (preferred)
       if (service) {
         return service.createShelf(shelf);
@@ -212,7 +224,7 @@ export function useMalkhanaApi() {
       return repository.createShelf(shelf);
     },
     
-    updateShelf: async (id: string, updates: Partial<ShelfInfo>): Promise<ShelfInfo | null> => {
+    updateShelf: async (id: string, updates: UpdateShelfDto): Promise<ShelfInfo | null> => {
       // Try service first (preferred)
       if (service) {
         return service.updateShelf(id, updates);
