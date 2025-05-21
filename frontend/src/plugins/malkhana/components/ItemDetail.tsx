@@ -1,22 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Alert,
   Box,
-  Breadcrumbs,
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardMedia,
-  Chip,
-  Divider,
-  Grid,
-  Link,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
+  CircularProgress,
   Typography,
   Dialog,
   DialogTitle,
@@ -25,59 +12,53 @@ import {
   useTheme
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  History as HistoryIcon,
-  Receipt as ReceiptIcon,
-  QrCode as QrCodeIcon,
-  Shelves as ShelvesIcon
-} from '@mui/icons-material';
+  QrCode as QrCodeIcon} from '@mui/icons-material';
 
-import { malkhanaService } from '../services/MalkhanaService';
 import { MalkhanaItem } from '../types';
+import { useMalkhanaApi } from '../hooks';
+import { useData } from '../../../core/data';
+import { setGlobalApiInstance } from '../services';
 
+/**
+ * Component to display details for a single Malkhana item
+ */
 const ItemDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
+  const { api } = useData();
+  const malkhanaApi = useMalkhanaApi();
   const [item, setItem] = useState<MalkhanaItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openQrDialog, setOpenQrDialog] = useState(false);
   
+  // Set global API instance on component mount
   useEffect(() => {
-    const loadItem = async () => {
-      if (!id) return;
+    if (api) {
+      setGlobalApiInstance(api);
+    }
+  }, [api]);
+  
+  useEffect(() => {
+    const fetchItem = async () => {
+      if (!id || !malkhanaApi.isReady) return;
       
+      setLoading(true);
       try {
-        setLoading(true);
-        
-        // First try Black Ink registry
-        const blackInkRegistry = await malkhanaService.getBlackInkRegistry();
-        let foundItem = blackInkRegistry.items.find(item => item.id === id);
-        
-        // If not in Black Ink, try Red Ink registry
-        if (!foundItem) {
-          const redInkRegistry = await malkhanaService.getRedInkRegistry();
-          foundItem = redInkRegistry.items.find(item => item.id === id);
-        }
-        
-        if (foundItem) {
-          setItem(foundItem);
-        } else {
-          setError(`Item with ID ${id} not found`);
-        }
+        const itemData = await malkhanaApi.getItemById(id);
+        setItem(itemData);
+        setError(null);
       } catch (err) {
-        setError('Failed to load item details');
-        console.error(err);
+        console.error(`Error fetching item ${id}:`, err);
+        setError('Failed to load item. Please try again.');
       } finally {
         setLoading(false);
       }
     };
     
-    loadItem();
-  }, [id]);
+    fetchItem();
+  }, [id, malkhanaApi.isReady]);
   
   const handleGenerateQrCode = async () => {
     if (!item) return;
@@ -85,9 +66,16 @@ const ItemDetail: React.FC = () => {
     try {
       // Generate QR code if it doesn't exist
       if (!item.qrCodeUrl) {
-        const qrCode = await malkhanaService.generateQRCode(item);
-        const updatedItem = await malkhanaService.updateItem(item.id, { qrCodeUrl: qrCode });
+        const qrCode = await malkhanaApi.generateQRCode(item.id);
+        if (qrCode) {
+          // Update item with QR code URL
+          const updatedItem = await malkhanaApi.updateItem(item.id, { 
+            qrCodeUrl: qrCode.qrCodeUrl 
+          });
+          if (updatedItem) {
         setItem(updatedItem);
+          }
+        }
       }
       
       setOpenQrDialog(true);
@@ -96,27 +84,86 @@ const ItemDetail: React.FC = () => {
     }
   };
   
-  if (loading) {
+  const handleEdit = () => {
+    navigate(`/malkhana/edit/${id}`);
+  };
+  
+  const handleDispose = () => {
+    navigate(`/malkhana/dispose/${id}`);
+  };
+  
+  const handleBack = () => {
+    navigate(-1);
+  };
+  
+  const handleRefresh = async () => {
+    if (!id) return;
+    
+    setLoading(true);
+    try {
+      const itemData = await malkhanaApi.getItemById(id);
+      setItem(itemData);
+      setError(null);
+    } catch (err) {
+      console.error(`Error refreshing item ${id}:`, err);
+      setError('Failed to refresh item data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Show initialization progress
+  if (!api) {
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography>Loading item details...</Typography>
-      </Box>
+      <div className="loading-container">
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing API services...
+        </Typography>
+      </div>
     );
   }
   
-  if (error) {
+  // Show loading state while Malkhana API initializes
+  if (!malkhanaApi.isReady) {
     return (
-      <Alert severity="error" sx={{ mt: 3 }}>
-        {error}
-      </Alert>
+      <div className="loading-container">
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing Malkhana module...
+        </Typography>
+      </div>
+    );
+  }
+  
+  if (loading && !item) {
+    return (
+      <div className="loading-container">
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Loading item details...
+        </Typography>
+      </div>
+    );
+  }
+  
+  if (error && !item) {
+    return (
+      <div className="error-container">
+        <h2>Error</h2>
+        <p>{error}</p>
+        <button onClick={handleBack}>Go Back</button>
+      </div>
     );
   }
   
   if (!item) {
     return (
-      <Alert severity="warning" sx={{ mt: 3 }}>
-        Item not found
-      </Alert>
+      <div className="error-container">
+        <h2>Item Not Found</h2>
+        <p>The requested item could not be found.</p>
+        <button onClick={handleBack}>Go Back</button>
+      </div>
     );
   }
   
@@ -136,305 +183,169 @@ const ItemDetail: React.FC = () => {
   };
   
   return (
-    <Box>
-      <Box sx={{ mb: 3 }}>
-        <Breadcrumbs aria-label="breadcrumb">
-          <Link component={RouterLink} to="/malkhana" color="inherit">
-            Malkhana
-          </Link>
-          {item.registryType === 'BLACK_INK' ? (
-            <Link component={RouterLink} to="/malkhana/black-ink" color="inherit">
-              Black Ink Registry
-            </Link>
-          ) : (
-            <Link component={RouterLink} to="/malkhana/red-ink" color="inherit">
-              Red Ink Registry
-            </Link>
-          )}
-          <Typography color="textPrimary">Item Details</Typography>
-        </Breadcrumbs>
-      </Box>
+    <div className="item-detail">
+      {loading && <div className="loading-overlay">Refreshing...</div>}
       
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" fontWeight="500">
-          {item.description}
-        </Typography>
-        
-        <Box>
-          <Button
-            variant="outlined"
-            startIcon={<BackIcon />}
-            component={RouterLink}
-            to={item.registryType === 'BLACK_INK' ? '/malkhana/black-ink' : '/malkhana/red-ink'}
-            sx={{ mr: 1 }}
-          >
-            Back
-          </Button>
-          
-          <Button
-            variant="contained"
-            startIcon={<EditIcon />}
-            component={RouterLink}
-            to={`/malkhana/edit/${item.id}`}
-            disabled={item.status !== 'ACTIVE'}
-          >
+      <div className="detail-header">
+        <button className="back-btn" onClick={handleBack}>Back</button>
+        <h1>Evidence Item Details</h1>
+        <div className="action-buttons">
+          <button className="refresh-btn" onClick={handleRefresh} disabled={loading}>
+            Refresh
+          </button>
+          <button className="edit-btn" onClick={handleEdit}>
             Edit
-          </Button>
-        </Box>
-      </Box>
-      
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 8}}>
-          <Card elevation={0} sx={{ mb: 3, border: `1px solid ${theme.palette.divider}`, borderRadius: 2 }}>
-            <CardHeader 
-              title="Item Information" 
-              action={
-                <Chip 
-                  label={item.status} 
-                  sx={{ 
-                    backgroundColor: `${getStatusColor(item.status)}20`,
-                    color: getStatusColor(item.status),
-                    fontWeight: 500
-                  }}
-                />
-              }
-            />
-            <Divider />
-            <CardContent>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm:6 }}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="textSecondary">
-                      Mother Number (Permanent ID)
-                    </Typography>
-                    <Typography variant="body1" fontWeight={500}>
-                      {item.motherNumber}
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid size={{ xs: 12, sm:6 }}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="textSecondary">
-                      Current Registry Number
-                    </Typography>
-                    <Typography variant="body1" fontWeight={500}>
-                      {item.registryNumber} ({item.registryType === 'BLACK_INK' ? 'Black Ink' : 'Red Ink'})
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid size={{ xs: 12, sm:6 }}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="textSecondary">
-                      Case Number
-                    </Typography>
-                    <Typography variant="body1">
-                      {item.caseNumber}
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid size={{ xs: 12, sm:6 }}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="textSecondary">
-                      Category
-                    </Typography>
-                    <Typography variant="body1">
-                      {item.category}
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid size={{ xs: 12, sm:6 }}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="textSecondary">
-                      Date Received
-                    </Typography>
-                    <Typography variant="body1">
-                      {new Date(item.dateReceived).toLocaleDateString()}
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid size={{ xs: 12, sm:6 }}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="textSecondary">
-                      Received From
-                    </Typography>
-                    <Typography variant="body1">
-                      {item.receivedFrom}
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="textSecondary">
-                      Condition
-                    </Typography>
-                    <Typography variant="body1">
-                      {item.condition}
-                    </Typography>
-                  </Box>
-                </Grid>
-                {item.notes && (
-                  <Grid size={{ xs: 12 }}>
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" color="textSecondary">
-                        Notes
-                      </Typography>
-                      <Typography variant="body1">
-                        {item.notes}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                )}
-                {item.status === 'DISPOSED' && (
-                  <>
-                    <Grid size={{ xs: 12 }}>
-                      <Divider />
-                      <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
-                        Disposal Information
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 12, sm:6 }}>
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="subtitle2" color="textSecondary">
-                          Disposal Date
-                        </Typography>
-                        <Typography variant="body1">
-                          {new Date(item.disposalDate!).toLocaleDateString()}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12, sm:6 }}>
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="subtitle2" color="textSecondary">
-                          Approved By
-                        </Typography>
-                        <Typography variant="body1">
-                          {item.disposalApprovedBy}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="subtitle2" color="textSecondary">
-                          Disposal Reason
-                        </Typography>
-                        <Typography variant="body1">
-                          {item.disposalReason}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </>
-                )}
-              </Grid>
-            </CardContent>
-          </Card>
-          
-          {/* Historical Red Ink IDs */}
-          {item.redInkHistory && item.redInkHistory.length > 0 && (
-            <Card elevation={0} sx={{ mb: 3, border: `1px solid ${theme.palette.divider}`, borderRadius: 2 }}>
-              <CardHeader 
-                title="Historical Red Ink Registry Numbers" 
-                avatar={<HistoryIcon color="primary" />}
-              />
-              <Divider />
-              <CardContent>
-                <List disablePadding>
-                  {item.redInkHistory.map((history, index) => (
-                    <ListItem key={index} divider={index < item.redInkHistory!.length - 1}>
-                      <ListItemIcon>
-                        <ReceiptIcon />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={`Year ${history.year}: Registry #${history.redInkId}`}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              </CardContent>
-            </Card>
+          </button>
+          {item.status === 'ACTIVE' && (
+            <button className="dispose-btn" onClick={handleDispose}>
+              Dispose
+            </button>
           )}
-          
-        </Grid>
+        </div>
+      </div>
+      
+      {error && <div className="error-message">{error}</div>}
+      
+      <div className="detail-card">
+        <div className="detail-section">
+          <h2>Registration Information</h2>
+          <div className="detail-grid">
+            <div className="detail-item">
+              <span className="label">Registry Number:</span>
+              <span className="value">{item.registryNumber}</span>
+            </div>
+            <div className="detail-item">
+              <span className="label">Mother Number:</span>
+              <span className="value">{item.motherNumber}</span>
+            </div>
+            <div className="detail-item">
+              <span className="label">Registry Type:</span>
+              <span className="value">{item.registryType === 'BLACK_INK' ? 'Black Ink' : 'Red Ink'}</span>
+            </div>
+            <div className="detail-item">
+              <span className="label">Registry Year:</span>
+              <span className="value">{item.registryYear}</span>
+            </div>
+          </div>
+        </div>
         
-        <Grid size={{ xs: 12, md:4 }}>
-          <Card elevation={0} sx={{ mb: 3, border: `1px solid ${theme.palette.divider}`, borderRadius: 2 }}>
-            <CardHeader title="Quick Actions" />
-            <Divider />
-            <CardContent>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<QrCodeIcon />}
-                onClick={handleGenerateQrCode}
-                sx={{ mb: 2 }}
-              >
-                {item.qrCodeUrl ? 'View QR Code' : 'Generate QR Code'}
-              </Button>
-              
-              {item.status === 'ACTIVE' && (
-                <>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    color="error"
-                    component={RouterLink}
-                    to={`/malkhana/dispose/${item.id}`}
-                    startIcon={<DeleteIcon />}
-                    sx={{ mb: 2 }}
-                  >
-                    Dispose Item
-                  </Button>
-                  
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<ShelvesIcon />}
-                    sx={{ mb: 2 }}
-                  >
-                    {item.shelfId ? 'Change Shelf Location' : 'Assign to Shelf'}
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          
-          {item.shelfId && (
-            <Card elevation={0} sx={{ mb: 3, border: `1px solid ${theme.palette.divider}`, borderRadius: 2 }}>
-              <CardHeader 
-                title="Shelf Location" 
-                avatar={<ShelvesIcon color="primary" />}
-              />
-              <Divider />
-              <CardContent>
-                <Typography variant="body1" fontWeight={500}>
-                  {item.shelfLocation}
-                </Typography>
-              </CardContent>
-            </Card>
+        <div className="detail-section">
+          <h2>Item Information</h2>
+          <div className="detail-grid">
+            <div className="detail-item">
+              <span className="label">Case Number:</span>
+              <span className="value">{item.caseNumber}</span>
+            </div>
+            <div className="detail-item">
+              <span className="label">Category:</span>
+              <span className="value">{item.category}</span>
+            </div>
+            <div className="detail-item">
+              <span className="label">Date Received:</span>
+              <span className="value">{new Date(item.dateReceived).toLocaleDateString()}</span>
+            </div>
+            <div className="detail-item">
+              <span className="label">Received From:</span>
+              <span className="value">{item.receivedFrom}</span>
+            </div>
+            <div className="detail-item full-width">
+              <span className="label">Description:</span>
+              <span className="value">{item.description}</span>
+            </div>
+            <div className="detail-item">
+              <span className="label">Condition:</span>
+              <span className="value">{item.condition}</span>
+            </div>
+            <div className="detail-item">
+              <span className="label">Status:</span>
+              <span className={`value status-${item.status.toLowerCase()}`}>
+                {item.status}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        {item.shelfId && (
+          <div className="detail-section">
+            <h2>Storage Location</h2>
+            <div className="detail-grid">
+              <div className="detail-item">
+                <span className="label">Shelf ID:</span>
+                <span className="value">{item.shelfId}</span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Shelf Location:</span>
+                <span className="value">{item.shelfLocation || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {item.status === 'DISPOSED' && (
+          <div className="detail-section">
+            <h2>Disposal Information</h2>
+            <div className="detail-grid">
+              <div className="detail-item">
+                <span className="label">Disposal Date:</span>
+                <span className="value">
+                  {item.disposalDate ? new Date(item.disposalDate).toLocaleDateString() : 'N/A'}
+                </span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Approved By:</span>
+                <span className="value">{item.disposalApprovedBy || 'N/A'}</span>
+              </div>
+              <div className="detail-item full-width">
+                <span className="label">Reason:</span>
+                <span className="value">{item.disposalReason || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {item.notes && (
+          <div className="detail-section">
+            <h2>Notes</h2>
+            <p className="notes">{item.notes}</p>
+          </div>
           )}
           
           {item.photos && item.photos.length > 0 && (
-            <Card elevation={0} sx={{ mb: 3, border: `1px solid ${theme.palette.divider}`, borderRadius: 2 }}>
-              <CardHeader title="Photos" />
-              <Divider />
-              <CardContent>
-                <Grid container spacing={1}>
+          <div className="detail-section">
+            <h2>Photos</h2>
+            <div className="photos-grid">
                   {item.photos.map((photo, index) => (
-                    <Grid size={{ xs:6}} key={index}>
-                      <CardMedia
-                        component="img"
-                        height="140"
-                        image={photo}
-                        alt={`Photo ${index + 1}`}
-                        sx={{ borderRadius: 1 }}
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
-              </CardContent>
-            </Card>
+                <div key={index} className="photo-item">
+                  <img src={photo} alt={`Evidence item ${item.motherNumber} - ${index + 1}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        <div className="detail-section qr-code-section">
+          <h2>QR Code</h2>
+          {item.qrCodeUrl ? (
+            <div>
+              <img 
+                src={item.qrCodeUrl} 
+                alt={`QR Code for ${item.motherNumber}`} 
+                className="qr-code"
+              />
+              <p>Scan this QR code to quickly access this item's details</p>
+            </div>
+          ) : (
+            <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={handleGenerateQrCode}
+              startIcon={<QrCodeIcon />}
+            >
+              Generate QR Code
+            </Button>
           )}
-        </Grid>
-      </Grid>
+        </div>
+      </div>
       
       {/* QR Code Dialog */}
       <Dialog open={openQrDialog} onClose={() => setOpenQrDialog(false)}>
@@ -448,15 +359,24 @@ const ItemDetail: React.FC = () => {
               {item.description}
             </Typography>
             
+            {item.qrCodeUrl ? (
+              <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
+                <img 
+                  src={item.qrCodeUrl} 
+                  alt={`QR Code for ${item.motherNumber}`} 
+                  style={{ maxWidth: '100%', height: 'auto' }}
+                />
+              </Box>
+            ) : (
             <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
-              {/* In a real application, render an actual QR code image here */}
               <Typography sx={{ fontSize: '8rem', color: theme.palette.primary.main }}>
                 <QrCodeIcon fontSize="inherit" />
               </Typography>
               <Typography variant="caption" display="block" mt={1}>
-                {item.qrCodeUrl}
+                  QR Code not available
               </Typography>
             </Box>
+            )}
             
             <Button variant="outlined" fullWidth>
               Print QR Code
@@ -467,7 +387,7 @@ const ItemDetail: React.FC = () => {
           <Button onClick={() => setOpenQrDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

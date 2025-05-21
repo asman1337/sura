@@ -17,14 +17,14 @@ import {
   MenuItem,
   Select,
   Typography,
-  useTheme
+  useTheme,
+  CircularProgress
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   QrCode as QrCodeIcon} from '@mui/icons-material';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 
-import { malkhanaService } from '../services/MalkhanaService';
 import { MalkhanaItem, ShelfInfo } from '../types';
 import MalkhanaDataGrid, { 
   viewActionRenderer, 
@@ -32,10 +32,15 @@ import MalkhanaDataGrid, {
   moveActionRenderer
 } from './common/MalkhanaDataGrid';
 import { shelfItemColumns, createActionsColumn } from './common/gridColumns';
+import { useMalkhanaApi } from '../hooks';
+import { useData } from '../../../core/data';
+import { setGlobalApiInstance } from '../services';
 
 const ShelfItems: React.FC = () => {
   const { shelfId } = useParams<{ shelfId: string }>();
   const theme = useTheme();
+  const { api } = useData();
+  const malkhanaApi = useMalkhanaApi();
   
   const [shelf, setShelf] = useState<ShelfInfo | null>(null);
   const [items, setItems] = useState<MalkhanaItem[]>([]);
@@ -50,15 +55,21 @@ const ShelfItems: React.FC = () => {
   const [availableShelves, setAvailableShelves] = useState<ShelfInfo[]>([]);
   const [targetShelfId, setTargetShelfId] = useState<string>('');
   
+  // Set global API instance on component mount
+  useEffect(() => {
+    if (api) {
+      setGlobalApiInstance(api);
+    }
+  }, [api]);
+  
   const loadShelfData = async () => {
-    if (!shelfId) return;
+    if (!shelfId || !malkhanaApi.isReady) return;
     
     try {
       setLoading(true);
       
-      // Load shelf registry to get shelf details
-      const shelfRegistry = await malkhanaService.getShelfRegistry();
-      const shelfData = shelfRegistry.shelves.find(s => s.id === shelfId);
+      // Load shelf details
+      const shelfData = await malkhanaApi.getShelfById(shelfId);
       
       if (!shelfData) {
         setError(`Shelf with ID ${shelfId} not found`);
@@ -69,15 +80,17 @@ const ShelfItems: React.FC = () => {
       setShelf(shelfData);
       
       // Load items assigned to this shelf
-      const shelfItems = await malkhanaService.getItemsByShelf(shelfId);
+      const shelfItems = await malkhanaApi.getShelfItems(shelfId);
       setItems(shelfItems);
       
       // Load all shelves for the move dialog
-      setAvailableShelves(shelfRegistry.shelves.filter(s => s.id !== shelfId));
+      const allShelves = await malkhanaApi.getAllShelves();
+      setAvailableShelves(allShelves.filter(s => s.id !== shelfId));
       
+      setError(null);
     } catch (err) {
-      setError('Failed to load shelf data');
-      console.error(err);
+      console.error('Failed to load shelf data:', err);
+      setError(`Failed to load shelf data: ${(err as Error).message}`);
     } finally {
       setLoading(false);
     }
@@ -85,24 +98,34 @@ const ShelfItems: React.FC = () => {
   
   useEffect(() => {
     loadShelfData();
-  }, [shelfId]);
+  }, [shelfId, malkhanaApi.isReady]);
   
   const handleOpenQrDialog = async (item: MalkhanaItem) => {
     setSelectedItem(item);
     try {
+      if (!malkhanaApi.isReady) {
+        throw new Error('API service is not initialized');
+      }
+      
       let qrCodeUrl = item.qrCodeUrl;
       
       // Generate QR code if it doesn't exist
       if (!qrCodeUrl) {
-        qrCodeUrl = await malkhanaService.generateQRCode(item);
-        // Update item with QR code URL
-        await malkhanaService.updateItem(item.id, { qrCodeUrl });
+        const qrResult = await malkhanaApi.generateQRCode(item.id);
+        if (qrResult && qrResult.qrCodeUrl) {
+          qrCodeUrl = qrResult.qrCodeUrl;
+          // Update item with QR code URL
+          await malkhanaApi.updateItem(item.id, { qrCodeUrl });
+        } else {
+          throw new Error('Failed to generate QR code');
+        }
       }
       
       setQrCode(qrCodeUrl);
       setOpenQrDialog(true);
     } catch (err) {
-      setError('Failed to generate QR code');
+      console.error('Failed to generate QR code:', err);
+      setError(`Failed to generate QR code: ${(err as Error).message}`);
     }
   };
   
@@ -118,13 +141,21 @@ const ShelfItems: React.FC = () => {
     }
     
     try {
-      await malkhanaService.assignItemToShelf(selectedItem.id, targetShelfId);
-      setOpenMoveDialog(false);
-      // Refresh items
-      await loadShelfData();
+      if (!malkhanaApi.isReady) {
+        throw new Error('API service is not initialized');
+      }
+      
+      const result = await malkhanaApi.assignToShelf(selectedItem.id, targetShelfId);
+      if (result) {
+        setOpenMoveDialog(false);
+        // Refresh items
+        await loadShelfData();
+      } else {
+        throw new Error('Failed to move item to new shelf');
+      }
     } catch (err) {
-      setError('Failed to move item to new shelf');
-      console.error(err);
+      console.error('Failed to move item to new shelf:', err);
+      setError(`Failed to move item: ${(err as Error).message}`);
     }
   };
   
@@ -158,10 +189,37 @@ const ShelfItems: React.FC = () => {
   // Combine the columns with our action column
   const columns: GridColDef[] = [...shelfItemColumns, actionColumn];
   
+  // Show initialization progress
+  if (!api) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing API services...
+        </Typography>
+      </Box>
+    );
+  }
+  
+  // Show loading state while Malkhana API initializes
+  if (!malkhanaApi.isReady) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing Malkhana module...
+        </Typography>
+      </Box>
+    );
+  }
+  
   if (loading) {
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography>Loading shelf items...</Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Loading shelf items...
+        </Typography>
       </Box>
     );
   }
@@ -198,14 +256,16 @@ const ShelfItems: React.FC = () => {
           </Typography>
         </Box>
         
-        <Button
-          component={RouterLink}
-          to="/malkhana/shelves"
-          startIcon={<BackIcon />}
-          variant="outlined"
-        >
-          Back to Shelves
-        </Button>
+        <Box>
+          <Button
+            component={RouterLink}
+            to="/malkhana/shelves"
+            startIcon={<BackIcon />}
+            sx={{ mr: 1 }}
+          >
+            Back to Shelves
+          </Button>
+        </Box>
       </Box>
       
       {error && (
@@ -214,80 +274,50 @@ const ShelfItems: React.FC = () => {
         </Alert>
       )}
       
-      <Box sx={{ mb: 2 }}>
-        <Grid container spacing={2}>
-          <Grid size={{ xs:12, md:6 }}>
-            <Card
-              elevation={0}
-              sx={{ 
-                borderRadius: 2,
-                border: `1px solid ${theme.palette.divider}`,
-                p: 2
-              }}
-            >
-              <Typography variant="subtitle1">Shelf QR Code</Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <QrCodeIcon fontSize="large" sx={{ mr: 2 }} />
-                <Button variant="outlined" size="small">
-                  Print Shelf QR Code
-                </Button>
-              </Box>
-            </Card>
-          </Grid>
-          <Grid size={{ xs:12, md:6 }}>
-            <Card
-              elevation={0}
-              sx={{ 
-                borderRadius: 2,
-                border: `1px solid ${theme.palette.divider}`,
-                p: 2
-              }}
-            >
-              <Typography variant="subtitle1">Items on this Shelf</Typography>
-              <Typography variant="h4" fontWeight="500" mt={1}>
-                {items.length}
-              </Typography>
-            </Card>
-          </Grid>
-        </Grid>
-      </Box>
-      
       <MalkhanaDataGrid 
         rows={items}
         columns={columns}
         loading={loading}
-        title={`Items on ${shelf.name}`}
+        title={`Items on ${shelf.name} (${items.length})`}
         customEmptyContent={
           <Typography color="text.secondary">
-            No items are currently assigned to this shelf
+            No items are currently stored on this shelf.
           </Typography>
         }
       />
       
       {/* QR Code Dialog */}
-      <Dialog open={openQrDialog} onClose={() => setOpenQrDialog(false)} maxWidth="sm">
+      <Dialog open={openQrDialog} onClose={() => setOpenQrDialog(false)}>
         <DialogTitle>Item QR Code</DialogTitle>
         <DialogContent>
           {selectedItem && (
             <Box sx={{ textAlign: 'center', p: 2 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Mother #: {selectedItem.motherNumber}
+              <Typography variant="h6">
+                {selectedItem.motherNumber}
               </Typography>
-              <Typography variant="body2" gutterBottom>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
                 {selectedItem.description}
               </Typography>
-              <Typography color="textSecondary" paragraph>
-                Case: {selectedItem.caseNumber}
-              </Typography>
-              <Box sx={{ my: 2, p: 2, border: `1px solid ${theme.palette.divider}` }}>
-                {/* In a real application, render an actual QR code image here */}
-                <Typography sx={{ fontSize: '8rem', color: theme.palette.primary.main }}>
-                  <QrCodeIcon fontSize="inherit" />
-                </Typography>
-                <Typography variant="caption" display="block" mt={1}>
-                  {qrCode}
-                </Typography>
-              </Box>
+              
+              {qrCode ? (
+                <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
+                  <img 
+                    src={qrCode} 
+                    alt={`QR Code for ${selectedItem.motherNumber}`}
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                  />
+                </Box>
+              ) : (
+                <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
+                  <Typography sx={{ fontSize: '8rem', color: theme.palette.primary.main }}>
+                    <QrCodeIcon fontSize="inherit" />
+                  </Typography>
+                  <Typography variant="caption" display="block" mt={1}>
+                    QR Code not available
+                  </Typography>
+                </Box>
+              )}
+              
               <Button variant="outlined" fullWidth>
                 Print QR Code
               </Button>
@@ -300,21 +330,21 @@ const ShelfItems: React.FC = () => {
       </Dialog>
       
       {/* Move Item Dialog */}
-      <Dialog open={openMoveDialog} onClose={() => setOpenMoveDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Move Item to Another Shelf</DialogTitle>
+      <Dialog open={openMoveDialog} onClose={() => setOpenMoveDialog(false)}>
+        <DialogTitle>Move Item to Different Shelf</DialogTitle>
         <DialogContent>
           {selectedItem && (
             <Box sx={{ pt: 1 }}>
               <Typography gutterBottom>
-                Move item <strong>{selectedItem.motherNumber}</strong> from <strong>{shelf.name}</strong> to:
+                Select the shelf to move <strong>{selectedItem.motherNumber}</strong> to:
               </Typography>
               
               <FormControl fullWidth sx={{ mt: 2 }}>
                 <InputLabel>Target Shelf</InputLabel>
                 <Select
                   value={targetShelfId}
-                  label="Target Shelf"
                   onChange={(e) => setTargetShelfId(e.target.value as string)}
+                  label="Target Shelf"
                 >
                   {availableShelves.map(shelf => (
                     <MenuItem key={shelf.id} value={shelf.id}>

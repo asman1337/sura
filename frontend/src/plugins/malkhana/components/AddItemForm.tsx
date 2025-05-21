@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -13,11 +13,15 @@ import {
   Select,
   TextField,
   Typography,
-  useTheme
+  useTheme,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 
-import { malkhanaService } from '../services/MalkhanaService';
+import { useData } from '../../../core/data';
+import { useMalkhanaApi } from '../hooks';
+import { setGlobalApiInstance } from '../services';
 
 // Item categories
 const itemCategories = [
@@ -45,6 +49,8 @@ const itemConditions = [
 const AddItemForm: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { api } = useData();
+  const malkhanaApi = useMalkhanaApi();
   
   // Form state
   const [formData, setFormData] = useState({
@@ -60,6 +66,14 @@ const AddItemForm: React.FC = () => {
   // Validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Set global API instance on component mount
+  useEffect(() => {
+    if (api) {
+      setGlobalApiInstance(api);
+    }
+  }, [api]);
   
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -136,10 +150,16 @@ const AddItemForm: React.FC = () => {
     }
     
     setIsSubmitting(true);
+    setError(null);
     
     try {
-      // Add item to Black Ink registry
-      await malkhanaService.addItem({
+      // Check if malkhanaApi is ready
+      if (!malkhanaApi.isReady) {
+        throw new Error('API service is not initialized');
+      }
+      
+      // Add item using the real API
+      const result = await malkhanaApi.createItem({
         caseNumber: formData.caseNumber,
         description: formData.description,
         category: formData.category,
@@ -147,17 +167,50 @@ const AddItemForm: React.FC = () => {
         dateReceived: formData.dateReceived.toISOString(),
         condition: formData.condition,
         notes: formData.notes,
-        status: 'ACTIVE'
+        status: 'ACTIVE',
+        registryType: 'BLACK_INK',
+        registryYear: new Date().getFullYear(),
+        registryNumber: 0,
+        motherNumber: '',
       });
       
-      // Navigate to Black Ink registry
-      navigate('/malkhana/black-ink', { state: { success: true, message: 'Item added successfully' } });
-    } catch (error) {
-      console.error('Error adding item:', error);
+      if (result) {
+        // Navigate to Black Ink registry
+        navigate('/malkhana/black-ink', { state: { success: true, message: 'Item added successfully' } });
+      } else {
+        setError('Failed to add item. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error adding item:', err);
+      setError(`Error adding item: ${(err as Error).message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
+  
+  // Show initialization progress
+  if (!api) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing API services...
+        </Typography>
+      </Box>
+    );
+  }
+  
+  // Show loading state while Malkhana API initializes
+  if (!malkhanaApi.isReady) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing Malkhana module...
+        </Typography>
+      </Box>
+    );
+  }
   
   return (
     <Box>
@@ -169,6 +222,12 @@ const AddItemForm: React.FC = () => {
           Add a new item to the Black Ink Registry for the current year.
         </Typography>
       </Box>
+      
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
       
       <Card
         elevation={0}
@@ -294,16 +353,17 @@ const AddItemForm: React.FC = () => {
               </Grid>
               
               <Grid size={{ xs: 12 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => navigate('/malkhana')}
+                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button 
+                    variant="outlined" 
                     sx={{ mr: 2 }}
+                    onClick={() => navigate(-1)}
+                    disabled={isSubmitting}
                   >
                     Cancel
                   </Button>
-                  <Button
-                    type="submit"
+                  <Button 
+                    type="submit" 
                     variant="contained"
                     disabled={isSubmitting}
                   >

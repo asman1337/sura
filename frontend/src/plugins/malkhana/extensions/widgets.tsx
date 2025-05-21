@@ -12,37 +12,72 @@ import {
 } from '@mui/material';
 import { ArrowForward as ArrowForwardIcon } from '@mui/icons-material';
 import { Plugin, DashboardWidget } from '../../../core/plugins';
-import { malkhanaService } from '../services/MalkhanaService';
 import { MalkhanaItem, MalkhanaStats } from '../types';
+import { useMalkhanaApi } from '../hooks';
+import { useData } from '../../../core/data';
+import { setGlobalApiInstance } from '../services';
 
 // Widget to display recent items from Black Ink Registry
 const RecentItemsWidget = () => {
+  const { api } = useData();
+  const malkhanaApi = useMalkhanaApi();
   const [items, setItems] = useState<MalkhanaItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Set global API instance on component mount
+  useEffect(() => {
+    if (api) {
+      setGlobalApiInstance(api);
+    }
+  }, [api]);
   
   useEffect(() => {
     const loadData = async () => {
+      if (!malkhanaApi.isReady) return;
+      
       try {
-        const blackInk = await malkhanaService.getBlackInkRegistry();
-        const sortedItems = [...blackInk.items]
+        setLoading(true);
+        const blackInkItems = await malkhanaApi.getBlackInkItems();
+        const sortedItems = [...blackInkItems]
           .sort((a, b) => new Date(b.dateReceived).getTime() - new Date(a.dateReceived).getTime())
           .slice(0, 5);
           
         setItems(sortedItems);
-      } catch (error) {
-        console.error('Error loading recent items:', error);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading recent items:', err);
+        setError('Failed to load recent items');
       } finally {
         setLoading(false);
       }
     };
     
     loadData();
-  }, []);
+  }, [malkhanaApi.isReady]);
+  
+  if (!api || !malkhanaApi.isReady) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
+        <CircularProgress size={24} />
+      </Box>
+    );
+  }
   
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
         <CircularProgress size={24} />
+      </Box>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Box sx={{ py: 2, textAlign: 'center' }}>
+        <Typography variant="body2" color="error">
+          {error}
+        </Typography>
       </Box>
     );
   }
@@ -99,28 +134,61 @@ const RecentItemsWidget = () => {
 
 // Widget to display Malkhana statistics
 const StatsWidget = () => {
+  const { api } = useData();
+  const malkhanaApi = useMalkhanaApi();
   const [stats, setStats] = useState<MalkhanaStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Set global API instance on component mount
+  useEffect(() => {
+    if (api) {
+      setGlobalApiInstance(api);
+    }
+  }, [api]);
   
   useEffect(() => {
     const loadData = async () => {
+      if (!malkhanaApi.isReady) return;
+      
       try {
-        const malkhanaStats = await malkhanaService.getStats();
+        setLoading(true);
+        const malkhanaStats = await malkhanaApi.getStats();
         setStats(malkhanaStats);
-      } catch (error) {
-        console.error('Error loading stats:', error);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading stats:', err);
+        setError('Failed to load statistics');
       } finally {
         setLoading(false);
       }
     };
     
     loadData();
-  }, []);
+  }, [malkhanaApi.isReady]);
+  
+  if (!api || !malkhanaApi.isReady) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
+        <CircularProgress size={24} />
+      </Box>
+    );
+  }
   
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
         <CircularProgress size={24} />
+      </Box>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Box sx={{ py: 2, textAlign: 'center' }}>
+        <Typography variant="body2" color="error">
+          {error}
+        </Typography>
       </Box>
     );
   }

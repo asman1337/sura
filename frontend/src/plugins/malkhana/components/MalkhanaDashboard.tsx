@@ -2,70 +2,143 @@ import React, { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
-  Button,
   Card,
-  CardContent,
-  CardHeader,
-  Divider,
   Grid,
-  IconButton,
   List,
-  ListItem,
-  ListItemText,
   Paper,
-  Typography,
+  alpha,
+  Button,
+  Divider,
   useTheme,
-  alpha
+  ListItem,
+  IconButton,
+  Typography,
+  CardHeader,
+  CardContent,
+  ListItemText,
+  CircularProgress
 } from '@mui/material';
 import {
   Add as AddIcon,
-  ArrowForward as ArrowForwardIcon,
   MoreVert as MoreIcon,
-  Inventory as InventoryIcon,
-  Delete as DeleteIcon,
-  History as HistoryIcon,
-  ViewList as ViewListIcon,
   Search as SearchIcon,
-  Category as ShelvesIcon
+  Delete as DeleteIcon,
+  Refresh as RefreshIcon,
+  History as HistoryIcon,
+  Category as ShelvesIcon,
+  ViewList as ViewListIcon,
+  Inventory as InventoryIcon,
+  ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
-
-import { malkhanaService } from '../services/MalkhanaService';
+import { useMalkhanaApi } from '../hooks';
 import { MalkhanaItem, MalkhanaStats } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { useData } from '../../../core/data';
+import { setGlobalApiInstance } from '../services';
 
+/**
+ * Dashboard component for the Malkhana plugin
+ * Shows statistics and item lists
+ */
 const MalkhanaDashboard: React.FC = () => {
   const theme = useTheme();
+  const { api } = useData();
+  const malkhanaApi = useMalkhanaApi();
+
   const [stats, setStats] = useState<MalkhanaStats | null>(null);
   const [recentItems, setRecentItems] = useState<MalkhanaItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Set global API instance on component mount
+  useEffect(() => {
+    if (api) {
+      setGlobalApiInstance(api);
+    }
+  }, [api]);
   
   useEffect(() => {
     const loadData = async () => {
+      if (!malkhanaApi.isReady) return;
+      
       try {
-        // Load stats
-        const malkhanaStats = await malkhanaService.getStats();
-        setStats(malkhanaStats);
+        setLoading(true);
         
-        // Load recent items from Black Ink
-        const blackInk = await malkhanaService.getBlackInkRegistry();
-        const sortedItems = [...blackInk.items]
+        // Load stats and items in parallel for better performance
+        const [statsData, blackInkItems] = await Promise.all([
+          malkhanaApi.getStats(),
+          malkhanaApi.getBlackInkItems()
+        ]);
+        
+        if (statsData) setStats(statsData);
+        
+        // Sort and get recent items
+        const sortedItems = [...blackInkItems]
           .sort((a, b) => new Date(b.dateReceived).getTime() - new Date(a.dateReceived).getTime())
           .slice(0, 5);
-        
+          
         setRecentItems(sortedItems);
-      } catch (error) {
-        console.error('Error loading Malkhana data:', error);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading Malkhana data:', err);
+        setError('Failed to load Malkhana data. Please try again.');
       } finally {
         setLoading(false);
       }
     };
     
     loadData();
-  }, []);
+  }, [malkhanaApi.isReady]);
   
-  if (loading) {
+  const handleRefresh = async () => {
+    if (!malkhanaApi.isReady) return;
+    
+    try {
+      setLoading(true);
+      
+      // Load stats and items in parallel
+      const [statsData, blackInkItems] = await Promise.all([
+        malkhanaApi.getStats(),
+        malkhanaApi.getBlackInkItems()
+      ]);
+      
+      if (statsData) setStats(statsData);
+      
+      // Sort and get recent items
+      const sortedItems = [...blackInkItems]
+        .sort((a, b) => new Date(b.dateReceived).getTime() - new Date(a.dateReceived).getTime())
+        .slice(0, 5);
+        
+      setRecentItems(sortedItems);
+      setError(null);
+    } catch (err) {
+      console.error('Error refreshing Malkhana data:', err);
+      setError('Failed to refresh Malkhana data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Show initialization progress
+  if (!api) {
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography>Loading Malkhana data...</Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing API services...
+        </Typography>
+      </Box>
+    );
+  }
+  
+  // Show loading state while Malkhana API initializes
+  if (!malkhanaApi.isReady) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing Malkhana module...
+        </Typography>
       </Box>
     );
   }
@@ -77,15 +150,53 @@ const MalkhanaDashboard: React.FC = () => {
           Malkhana Management
         </Typography>
         
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          component={RouterLink}
-          to="/malkhana/add-item"
-        >
-          Add New Item
-        </Button>
+        <Box>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={handleRefresh}
+            disabled={loading}
+            sx={{ mr: 2 }}
+          >
+            Refresh
+          </Button>
+          
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            component={RouterLink}
+            to="/malkhana/add-item"
+          >
+            Add New Item
+          </Button>
+        </Box>
       </Box>
+      
+      {error && (
+        <Box sx={{ mb: 3, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+          <Typography color="error.contrastText">{error}</Typography>
+        </Box>
+      )}
+      
+      {/* Overlay for loading state */}
+      {loading && (
+        <Box 
+          sx={{ 
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: 'rgba(255, 255, 255, 0.7)',
+            zIndex: 9999
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      )}
       
       {/* Stats cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>

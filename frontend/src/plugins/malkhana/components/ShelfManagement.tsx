@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -11,7 +11,8 @@ import {
   TextField,
   Tooltip,
   Typography,
-  useTheme
+  useTheme,
+  CircularProgress
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -20,14 +21,18 @@ import {
 } from '@mui/icons-material';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 
-import { malkhanaService } from '../services/MalkhanaService';
 import { ShelfInfo } from '../types';
 import MalkhanaDataGrid, { qrCodeActionRenderer } from './common/MalkhanaDataGrid';
 import { shelfColumns, createActionsColumn } from './common/gridColumns';
+import { useMalkhanaApi } from '../hooks';
+import { useData } from '../../../core/data';
+import { setGlobalApiInstance } from '../services';
 
 const ShelfManagement: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { api } = useData();
+  const malkhanaApi = useMalkhanaApi();
   const [shelves, setShelves] = useState<ShelfInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,14 +50,24 @@ const ShelfManagement: React.FC = () => {
     category: ''
   });
   
+  // Set global API instance on component mount
+  useEffect(() => {
+    if (api) {
+      setGlobalApiInstance(api);
+    }
+  }, [api]);
+  
   const loadShelves = async () => {
+    if (!malkhanaApi.isReady) return;
+    
     try {
       setLoading(true);
-      const registry = await malkhanaService.getShelfRegistry();
-      setShelves(registry.shelves);
+      const shelves = await malkhanaApi.getAllShelves();
+      setShelves(shelves);
+      setError(null);
     } catch (err) {
-      setError('Failed to load shelves');
-      console.error(err);
+      console.error('Failed to load shelves:', err);
+      setError('Failed to load shelves. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -60,7 +75,7 @@ const ShelfManagement: React.FC = () => {
   
   useEffect(() => {
     loadShelves();
-  }, []);
+  }, [malkhanaApi.isReady]);
   
   const handleOpenNewShelfDialog = () => {
     setNewShelfData({
@@ -90,23 +105,40 @@ const ShelfManagement: React.FC = () => {
         return;
       }
       
-      await malkhanaService.addShelf(newShelfData);
-      handleCloseNewShelfDialog();
-      await loadShelves();
+      if (!malkhanaApi.isReady) {
+        throw new Error('API service is not initialized');
+      }
+      
+      const result = await malkhanaApi.createShelf(newShelfData);
+      if (result) {
+        handleCloseNewShelfDialog();
+        await loadShelves();
+      } else {
+        setError('Failed to add new shelf');
+      }
     } catch (err) {
-      setError('Failed to add new shelf');
-      console.error(err);
+      console.error('Failed to add new shelf:', err);
+      setError(`Failed to add new shelf: ${(err as Error).message}`);
     }
   };
   
   const handleOpenQrDialog = async (shelf: ShelfInfo) => {
     setSelectedShelf(shelf);
     try {
-      const qrCode = await malkhanaService.generateShelfQRCode(shelf.id);
-      setShelfQrCode(qrCode);
-      setOpenQrDialog(true);
+      if (!malkhanaApi.isReady) {
+        throw new Error('API service is not initialized');
+      }
+      
+      const qrCode = await malkhanaApi.generateShelfQRCode(shelf.id);
+      if (qrCode && qrCode.qrCodeUrl) {
+        setShelfQrCode(qrCode.qrCodeUrl);
+        setOpenQrDialog(true);
+      } else {
+        setError('Failed to generate QR code');
+      }
     } catch (err) {
-      setError('Failed to generate QR code');
+      console.error('Failed to generate QR code:', err);
+      setError(`Failed to generate QR code: ${(err as Error).message}`);
     }
   };
   
@@ -133,6 +165,30 @@ const ShelfManagement: React.FC = () => {
 
   // Combine the shelf columns with our action column
   const columns: GridColDef[] = [...shelfColumns, actionColumn];
+  
+  // Show initialization progress
+  if (!api) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing API services...
+        </Typography>
+      </Box>
+    );
+  }
+  
+  // Show loading state while Malkhana API initializes
+  if (!malkhanaApi.isReady) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing Malkhana module...
+        </Typography>
+      </Box>
+    );
+  }
   
   return (
     <Box>
@@ -168,6 +224,38 @@ const ShelfManagement: React.FC = () => {
         }
       />
       
+      {/* Navigation buttons */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+        <Button
+          variant="outlined"
+          component={RouterLink}
+          to="/malkhana"
+        >
+          Back to Dashboard
+        </Button>
+        
+        <Button
+          variant="outlined"
+          component={RouterLink}
+          to="/malkhana/black-ink"
+        >
+          View Black Ink Registry
+        </Button>
+      </Box>
+      
+      {/* Information section */}
+      <Box sx={{ mt: 4, p: 3, bgcolor: 'rgba(156, 39, 176, 0.1)', borderRadius: 2, border: '1px solid rgba(156, 39, 176, 0.3)' }}>
+        <Typography variant="h6" color="secondary.dark" gutterBottom>
+          About Shelf Management
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          The Shelf Management system helps organize Malkhana items in physical storage locations.
+          Create shelves corresponding to real-world storage units in your facility, and assign items to specific shelves.
+          Each shelf can have a QR code generated for easy identification and scanning.
+          View all items on a shelf to quickly locate evidence and maintain proper chain of custody.
+        </Typography>
+      </Box>
+      
       {/* New Shelf Dialog */}
       <Dialog open={openNewShelfDialog} onClose={handleCloseNewShelfDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Add New Shelf</DialogTitle>
@@ -199,42 +287,57 @@ const ShelfManagement: React.FC = () => {
               value={newShelfData.category}
               onChange={handleNewShelfDataChange}
               margin="normal"
-              helperText="Category of items stored on this shelf"
+              helperText="Type of items stored on this shelf (e.g., Weapons, Documents)"
             />
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseNewShelfDialog}>Cancel</Button>
-          <Button onClick={handleAddShelf} variant="contained">Add Shelf</Button>
+          <Button onClick={handleAddShelf} variant="contained">
+            Add Shelf
+          </Button>
         </DialogActions>
       </Dialog>
       
       {/* QR Code Dialog */}
-      <Dialog open={openQrDialog} onClose={() => setOpenQrDialog(false)} maxWidth="sm">
+      <Dialog open={openQrDialog} onClose={() => setOpenQrDialog(false)}>
         <DialogTitle>Shelf QR Code</DialogTitle>
         <DialogContent>
-          {selectedShelf && (
-            <Box sx={{ textAlign: 'center', p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                {selectedShelf.name}
-              </Typography>
-              <Typography color="textSecondary" paragraph>
-                Location: {selectedShelf.location}
-              </Typography>
-              <Box sx={{ my: 2, p: 2, border: `1px solid ${theme.palette.divider}` }}>
-                {/* In a real application, render an actual QR code image here */}
-                <Typography sx={{ fontSize: '8rem', color: theme.palette.primary.main }}>
-                  <QrCodeIcon fontSize="inherit" />
+          <Box sx={{ p: 2, textAlign: 'center' }}>
+            {selectedShelf && (
+              <>
+                <Typography variant="h6" gutterBottom>
+                  {selectedShelf.name}
                 </Typography>
-                <Typography variant="caption" display="block" mt={1}>
-                  {shelfQrCode}
+                <Typography variant="body2" gutterBottom>
+                  Location: {selectedShelf.location}
                 </Typography>
-              </Box>
-              <Button variant="outlined" fullWidth>
-                Print QR Code
-              </Button>
-            </Box>
-          )}
+                
+                {shelfQrCode ? (
+                  <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
+                    <img 
+                      src={shelfQrCode} 
+                      alt={`QR Code for ${selectedShelf.name}`} 
+                      style={{ maxWidth: '100%', height: 'auto' }}
+                    />
+                  </Box>
+                ) : (
+                  <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
+                    <Typography sx={{ fontSize: '8rem', color: theme.palette.primary.main }}>
+                      <QrCodeIcon fontSize="inherit" />
+                    </Typography>
+                    <Typography variant="caption" display="block" mt={1}>
+                      QR Code not available
+                    </Typography>
+                  </Box>
+                )}
+                
+                <Button variant="outlined" fullWidth>
+                  Print QR Code
+                </Button>
+              </>
+            )}
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenQrDialog(false)}>Close</Button>

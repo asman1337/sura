@@ -1,104 +1,152 @@
 import { 
   ApiClient, 
-  CacheManager, 
-  SyncManager,
-  StorageClient,
-  BaseRepository, 
-  createCustomRepositoryHook, 
   DataContextValue
 } from '../../../core/data';
+import { MalkhanaItem, RegistryType, ShelfInfo } from '../types';
 
 /**
- * Malkhana evidence item interface
+ * Repository for Malkhana evidence items - direct API implementation without caching
  */
-export interface MalkhanaItem {
-  id: string;
-  name: string;
-  caseId: string;
-  dateAdded: string;
-  description?: string;
-  category: string;
-  location?: string;
-  status: 'in-storage' | 'released' | 'destroyed' | 'transferred';
-  addedBy: string;
-  photoUrl?: string;
-  barcodeId?: string;
-  notes?: string;
-}
+export class MalkhanaRepository {
+  private api: ApiClient;
+  private basePath: string = '/malkhana';
 
-/**
- * Repository for Malkhana evidence items
- */
-export class MalkhanaRepository extends BaseRepository<MalkhanaItem> {
-  constructor(
-    api: ApiClient,
-    cache: CacheManager,
-    sync: SyncManager,
-    storage: StorageClient
-  ) {
-    super(
-      '/api/malkhana',
-      'malkhana',
-      api,
-      cache,
-      sync,
-      storage
-    );
+  constructor(api: ApiClient) {
+    this.api = api;
   }
   
   /**
-   * Get items by case ID
+   * Get statistics for Malkhana
    */
-  async getItemsByCase(caseId: string): Promise<MalkhanaItem[]> {
-    const cacheKey = `malkhana:case:${caseId}`;
-    
-    // Try cache first if enabled and preferred
-    if (this.repositoryOptions.cacheEnabled && this.repositoryOptions.preferCache) {
-      const cached = await this.cacheManager.get<MalkhanaItem[]>(cacheKey);
-      if (cached) {
-        return cached;
-      }
-    }
-    
-    try {
-      // Fetch from API with filter
-      const items = await this.apiClient.get<MalkhanaItem[]>(`${this.path}?caseId=${caseId}`);
-      
-      // Cache the results if enabled
-      if (this.repositoryOptions.cacheEnabled) {
-        await this.cacheManager.set(cacheKey, items, this.repositoryOptions.cacheTTL);
-      }
-      
-      return items;
-    } catch (error) {
-      throw error;
-    }
+  async getStats(): Promise<any> {
+    return this.api.get(`${this.basePath}/stats`);
   }
-  
+
   /**
-   * Find items by barcode
+   * Get all Black Ink (current year) items
    */
-  async findByBarcode(barcode: string): Promise<MalkhanaItem | null> {
-    try {
-      const items = await this.apiClient.get<MalkhanaItem[]>(`${this.path}?barcode=${barcode}`);
-      return items.length > 0 ? items[0] : null;
-    } catch (error) {
-      throw error;
-    }
+  async getBlackInkItems(): Promise<MalkhanaItem[]> {
+    return this.api.get(`${this.basePath}/black-ink`);
   }
-  
+
   /**
-   * Change the status of an item
+   * Get all Red Ink (historical) items
    */
-  async changeStatus(id: string, status: MalkhanaItem['status'], notes?: string): Promise<MalkhanaItem> {
-    return this.update(id, { status, notes });
+  async getRedInkItems(): Promise<MalkhanaItem[]> {
+    return this.api.get(`${this.basePath}/red-ink`);
   }
-  
+
   /**
-   * Transfer an item to a new location
+   * Get item by ID
    */
-  async transfer(id: string, location: string, notes?: string): Promise<MalkhanaItem> {
-    return this.update(id, { location, notes });
+  async getItemById(id: string): Promise<MalkhanaItem> {
+    return this.api.get(`${this.basePath}/items/${id}`);
+  }
+
+  /**
+   * Search items by query
+   */
+  async searchItems(query: string): Promise<MalkhanaItem[]> {
+    return this.api.get(`${this.basePath}/search?query=${encodeURIComponent(query)}`);
+  }
+
+  /**
+   * Find item by mother number
+   */
+  async findByMotherNumber(motherNumber: string): Promise<MalkhanaItem> {
+    return this.api.get(`${this.basePath}/mother-number/${motherNumber}`);
+  }
+
+  /**
+   * Create a new item
+   */
+  async createItem(item: Omit<MalkhanaItem, 'id'>): Promise<MalkhanaItem> {
+    return this.api.post(`${this.basePath}/items`, item);
+  }
+
+  /**
+   * Update an existing item
+   */
+  async updateItem(id: string, updates: Partial<MalkhanaItem>): Promise<MalkhanaItem> {
+    return this.api.put(`${this.basePath}/items/${id}`, updates);
+  }
+
+  /**
+   * Dispose of an item
+   */
+  async disposeItem(id: string, disposalData: { disposalDate: Date, disposalReason: string }): Promise<MalkhanaItem> {
+    return this.api.post(`${this.basePath}/items/${id}/dispose`, disposalData);
+  }
+
+  /**
+   * Generate QR code for an item
+   */
+  async generateQRCode(id: string): Promise<{ qrCodeUrl: string }> {
+    return this.api.post(`${this.basePath}/items/${id}/qr-code`, {});
+  }
+
+  /**
+   * Assign an item to a shelf
+   */
+  async assignToShelf(id: string, shelfId: string): Promise<MalkhanaItem> {
+    return this.api.post(`${this.basePath}/items/${id}/assign-shelf`, { shelfId });
+  }
+
+  /**
+   * Perform year transition (Black Ink to Red Ink)
+   */
+  async performYearTransition(newYear: number): Promise<{ transitionedCount: number; newRedInkItems: MalkhanaItem[] }> {
+    return this.api.post(`${this.basePath}/year-transition`, { newYear });
+  }
+
+  // Shelf related methods
+  /**
+   * Get all shelves
+   */
+  async getAllShelves(): Promise<ShelfInfo[]> {
+    return this.api.get(`${this.basePath}/shelves`);
+  }
+
+  /**
+   * Get a shelf by ID
+   */
+  async getShelfById(id: string): Promise<ShelfInfo> {
+    return this.api.get(`${this.basePath}/shelves/${id}`);
+  }
+
+  /**
+   * Create a new shelf
+   */
+  async createShelf(shelf: Omit<ShelfInfo, 'id'>): Promise<ShelfInfo> {
+    return this.api.post(`${this.basePath}/shelves`, shelf);
+  }
+
+  /**
+   * Update an existing shelf
+   */
+  async updateShelf(id: string, updates: Partial<ShelfInfo>): Promise<ShelfInfo> {
+    return this.api.put(`${this.basePath}/shelves/${id}`, updates);
+  }
+
+  /**
+   * Delete a shelf
+   */
+  async deleteShelf(id: string): Promise<void> {
+    return this.api.delete(`${this.basePath}/shelves/${id}`);
+  }
+
+  /**
+   * Get all items on a shelf
+   */
+  async getShelfItems(id: string): Promise<MalkhanaItem[]> {
+    return this.api.get(`${this.basePath}/shelves/${id}/items`);
+  }
+
+  /**
+   * Generate QR code for a shelf
+   */
+  async generateShelfQRCode(id: string): Promise<{ qrCodeUrl: string }> {
+    return this.api.post(`${this.basePath}/shelves/${id}/qr-code`, {});
   }
 }
 
@@ -106,15 +154,20 @@ export class MalkhanaRepository extends BaseRepository<MalkhanaItem> {
  * Create a repository factory function
  */
 export const createMalkhanaRepository = (deps: DataContextValue): MalkhanaRepository => {
-  return new MalkhanaRepository(
-    deps.api,
-    deps.cache,
-    deps.sync,
-    deps.storage
-  );
+  return new MalkhanaRepository(deps.api);
 };
 
 /**
- * Create a hook for using the Malkhana repository in components
+ * Create a custom hook for using the Malkhana repository
  */
-export const useMalkhanaRepository = createCustomRepositoryHook<MalkhanaItem>(createMalkhanaRepository); 
+export const useMalkhanaRepository = () => {
+  // Assuming useData hook is available in the component that uses this hook
+  // This hook needs to be called from within a component that has access to the DataContext
+  // Import useData from '../../core/data'; in the component file
+  return {
+    repository: null as unknown as MalkhanaRepository,
+    initialize: (api: ApiClient) => {
+      return new MalkhanaRepository(api);
+    }
+  };
+}; 

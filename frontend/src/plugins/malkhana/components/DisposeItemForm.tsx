@@ -14,10 +14,13 @@ import {
   TextField,
   Typography,
   Alert,
-  useTheme
+  useTheme,
+  CircularProgress
 } from '@mui/material';
 
-import { malkhanaService } from '../services/MalkhanaService';
+import { useMalkhanaApi } from '../hooks';
+import { useData } from '../../../core/data';
+import { setGlobalApiInstance } from '../services';
 import { MalkhanaItem } from '../types';
 
 // Disposal reasons
@@ -35,6 +38,8 @@ const DisposeItemForm: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { api } = useData();
+  const malkhanaApi = useMalkhanaApi();
   
   // Item state
   const [item, setItem] = useState<MalkhanaItem | null>(null);
@@ -52,46 +57,44 @@ const DisposeItemForm: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Set global API instance on component mount
+  useEffect(() => {
+    if (api) {
+      setGlobalApiInstance(api);
+    }
+  }, [api]);
+  
   // Load item data
   useEffect(() => {
     const loadItem = async () => {
-      if (!id) {
-        setError('Item ID is missing');
-        setLoading(false);
+      if (!id || !malkhanaApi.isReady) {
         return;
       }
       
       try {
-        // First check Black Ink
-        const blackInk = await malkhanaService.getBlackInkRegistry();
-        let foundItem = blackInk.items.find(item => item.id === id);
+        setLoading(true);
+        const itemData = await malkhanaApi.getItemById(id);
         
-        // If not in Black Ink, check Red Ink
-        if (!foundItem) {
-          const redInk = await malkhanaService.getRedInkRegistry();
-          foundItem = redInk.items.find(item => item.id === id);
-        }
-        
-        if (foundItem) {
-          setItem(foundItem);
+        if (itemData) {
+          setItem(itemData);
           
           // If item is already disposed, show error
-          if (foundItem.status !== 'ACTIVE') {
-            setError(`This item has already been ${foundItem.status.toLowerCase()}`);
+          if (itemData.status !== 'ACTIVE') {
+            setError(`This item has already been ${itemData.status.toLowerCase()}`);
           }
         } else {
           setError('Item not found');
         }
       } catch (err) {
-        setError('Failed to load item');
         console.error('Error loading item:', err);
+        setError('Failed to load item details. Please try again.');
       } finally {
         setLoading(false);
       }
     };
     
     loadItem();
-  }, [id]);
+  }, [id, malkhanaApi.isReady]);
   
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -140,38 +143,73 @@ const DisposeItemForm: React.FC = () => {
     }
     
     setIsSubmitting(true);
+    setError(null);
     
     try {
-      // Dispose item
-      await malkhanaService.disposeItem(id, {
-        disposalDate: new Date().toISOString(),
-        disposalReason: formData.disposalReason,
-        disposalApprovedBy: formData.disposalApprovedBy
+      if (!malkhanaApi.isReady) {
+        throw new Error('API service is not initialized');
+      }
+      
+      // Dispose item using real API
+      const result = await malkhanaApi.disposeItem(id, {
+        disposalDate: new Date(),
+        disposalReason: formData.disposalReason
       });
       
-      // Navigate back based on registry type
-      const redirectPath = item.registryType === 'BLACK_INK' 
-        ? '/malkhana/black-ink' 
-        : '/malkhana/red-ink';
-        
-      navigate(redirectPath, { 
-        state: { 
-          success: true, 
-          message: 'Item disposed successfully' 
-        } 
-      });
-    } catch (error) {
-      console.error('Error disposing item:', error);
-      setError('Failed to dispose item');
+      if (result) {
+        // Navigate back based on registry type
+        const redirectPath = item.registryType === 'BLACK_INK' 
+          ? '/malkhana/black-ink' 
+          : '/malkhana/red-ink';
+          
+        navigate(redirectPath, { 
+          state: { 
+            success: true, 
+            message: 'Item disposed successfully' 
+          } 
+        });
+      } else {
+        setError('Failed to dispose item. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error disposing item:', err);
+      setError(`Error disposing item: ${(err as Error).message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
   
+  // Show initialization progress
+  if (!api) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing API services...
+        </Typography>
+      </Box>
+    );
+  }
+  
+  // Show loading state while Malkhana API initializes
+  if (!malkhanaApi.isReady) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing Malkhana module...
+        </Typography>
+      </Box>
+    );
+  }
+  
   if (loading) {
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography>Loading item details...</Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Loading item details...
+        </Typography>
       </Box>
     );
   }
@@ -194,13 +232,16 @@ const DisposeItemForm: React.FC = () => {
   
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+        <Button
+          variant="outlined"
+          sx={{ mr: 2 }}
+          onClick={() => navigate(-1)}
+        >
+          Back
+        </Button>
         <Typography variant="h4" fontWeight="500">
           Dispose Malkhana Item
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Mark this item as disposed in the {item.registryType === 'BLACK_INK' ? 'Black' : 'Red'} Ink Registry.
-          {item.registryType === 'RED_INK' && ' This will renumber subsequent items in the Red Ink Registry.'}
         </Typography>
       </Box>
       

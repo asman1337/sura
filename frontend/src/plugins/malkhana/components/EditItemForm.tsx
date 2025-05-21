@@ -13,13 +13,16 @@ import {
   TextField,
   Typography,
   Alert,
-  useTheme
+  useTheme,
+  CircularProgress
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from '@mui/icons-material';
 
-import { malkhanaService } from '../services/MalkhanaService';
 import { MalkhanaItem } from '../types';
+import { useMalkhanaApi } from '../hooks';
+import { useData } from '../../../core/data';
+import { setGlobalApiInstance } from '../services';
 
 // Item categories
 const ITEM_CATEGORIES = [
@@ -46,6 +49,8 @@ const EditItemForm: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { api } = useData();
+  const malkhanaApi = useMalkhanaApi();
   
   // Form state
   const [formData, setFormData] = useState<Partial<MalkhanaItem>>({
@@ -65,41 +70,42 @@ const EditItemForm: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
   
+  // Set global API instance on component mount
+  useEffect(() => {
+    if (api) {
+      setGlobalApiInstance(api);
+    }
+  }, [api]);
+  
   // Load item data
   useEffect(() => {
     const loadItem = async () => {
-      if (!id) {
-        setError('Item ID is missing');
-        setLoading(false);
+      if (!id || !malkhanaApi.isReady) {
         return;
       }
       
       try {
-        // Only check Black Ink since only those items can be edited
-        const blackInk = await malkhanaService.getBlackInkRegistry();
-        const foundItem = blackInk.items.find(item => item.id === id);
+        setLoading(true);
+        const item = await malkhanaApi.getItemById(id);
         
-        if (foundItem && foundItem.status === 'ACTIVE') {
-          setFormData({
-            ...foundItem,
-            // Ensure dateReceived is in ISO format
-            dateReceived: foundItem.dateReceived
-          });
-        } else if (foundItem && foundItem.status !== 'ACTIVE') {
+        if (item && item.status === 'ACTIVE') {
+          setFormData(item);
+          setError(null);
+        } else if (item && item.status !== 'ACTIVE') {
           setError('Only active items can be edited');
         } else {
-          setError('Item not found or not in Black Ink registry');
+          setError('Item not found');
         }
       } catch (err) {
-        setError('Failed to load item');
         console.error('Error loading item:', err);
+        setError('Failed to load item details. Please try again.');
       } finally {
         setLoading(false);
       }
     };
     
     loadItem();
-  }, [id]);
+  }, [id, malkhanaApi.isReady]);
   
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -195,61 +201,90 @@ const EditItemForm: React.FC = () => {
         throw new Error('Item ID is missing');
       }
       
-      // Update the item
-      await malkhanaService.updateItem(id, formData);
-      setSuccess(true);
+      if (!malkhanaApi.isReady) {
+        throw new Error('API service is not initialized');
+      }
       
-      // Navigate back to item details after a short delay
-      setTimeout(() => {
-        navigate(`/malkhana/item/${id}`);
-      }, 1500);
+      // Update the item
+      const result = await malkhanaApi.updateItem(id, formData);
+      
+      if (result) {
+        setSuccess(true);
+        // After short delay, redirect back to item detail
+        setTimeout(() => {
+          navigate(`/malkhana/item/${id}`);
+        }, 1500);
+      } else {
+        setError('Failed to update item. Please try again.');
+      }
     } catch (err) {
       console.error('Error updating item:', err);
-      setError('Failed to update item. Please try again.');
+      setError(`Error updating item: ${(err as Error).message}`);
     } finally {
       setSubmitting(false);
     }
   };
   
-  if (loading) {
+  // Show initialization progress
+  if (!api) {
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography>Loading item data...</Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing API services...
+        </Typography>
       </Box>
     );
   }
   
-  if (error && !success) {
+  // Show loading state while Malkhana API initializes
+  if (!malkhanaApi.isReady) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate(-1)}
-        >
-          Go Back
-        </Button>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Initializing Malkhana module...
+        </Typography>
+      </Box>
+    );
+  }
+  
+  // Show loading spinner while loading item
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Loading item details...
+        </Typography>
       </Box>
     );
   }
   
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          sx={{ mr: 2 }}
+          onClick={() => navigate(-1)}
+        >
+          Back
+        </Button>
         <Typography variant="h4" fontWeight="500">
-          Edit Malkhana Item
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Update details for item in Black Ink Registry
+          Edit Item
         </Typography>
       </Box>
       
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+      
       {success && (
         <Alert severity="success" sx={{ mb: 3 }}>
-          Item updated successfully! Redirecting to item details...
+          Item updated successfully! Redirecting...
         </Alert>
       )}
       
