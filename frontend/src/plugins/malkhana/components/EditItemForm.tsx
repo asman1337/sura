@@ -19,7 +19,7 @@ import {
 import { DatePicker } from '@mui/x-date-pickers';
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from '@mui/icons-material';
 
-import { MalkhanaItem, UpdateMalkhanaItemDto } from '../types';
+import { MalkhanaItem, UpdateMalkhanaItemDto, ShelfInfo } from '../types';
 import { useMalkhanaApi } from '../hooks';
 import { useData } from '../../../core/data';
 import { setGlobalApiInstance } from '../services';
@@ -60,8 +60,13 @@ const EditItemForm: React.FC = () => {
     receivedFrom: '',
     dateReceived: new Date().toISOString(),
     condition: '',
-    notes: ''
+    notes: '',
+    shelfId: ''
   });
+  
+  // Available shelves
+  const [shelves, setShelves] = useState<ShelfInfo[]>([]);
+  const [loadingShelves, setLoadingShelves] = useState(false);
   
   // UI state
   const [loading, setLoading] = useState(true);
@@ -76,6 +81,26 @@ const EditItemForm: React.FC = () => {
       setGlobalApiInstance(api);
     }
   }, [api]);
+  
+  // Load shelves
+  useEffect(() => {
+    const loadShelves = async () => {
+      if (!malkhanaApi.isReady) return;
+      
+      try {
+        setLoadingShelves(true);
+        const availableShelves = await malkhanaApi.getAllShelves();
+        setShelves(availableShelves);
+      } catch (err) {
+        console.error('Error loading shelves:', err);
+        // Non-critical error - just log it
+      } finally {
+        setLoadingShelves(false);
+      }
+    };
+    
+    loadShelves();
+  }, [malkhanaApi.isReady]);
   
   // Load item data
   useEffect(() => {
@@ -213,6 +238,7 @@ const EditItemForm: React.FC = () => {
         receivedFrom: formData.receivedFrom,
         condition: formData.condition,
         notes: formData.notes,
+        shelfId: formData.shelfId === '' ? undefined : formData.shelfId
       };
       
       // Convert string date to Date object if it exists
@@ -354,7 +380,7 @@ const EditItemForm: React.FC = () => {
                 </FormControl>
               </Grid>
               
-              <Grid size={{ xs: 12 }}>
+              <Grid size={{ xs: 12 }}>   
                 <TextField
                   fullWidth
                   label="Description"
@@ -421,6 +447,33 @@ const EditItemForm: React.FC = () => {
                   {validationErrors.condition && (
                     <FormHelperText>{validationErrors.condition}</FormHelperText>
                   )}
+                </FormControl>
+              </Grid>
+              
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth>
+                  <InputLabel id="shelf-label">Assign to Shelf</InputLabel>
+                  <Select
+                    labelId="shelf-label"
+                    name="shelfId"
+                    value={formData.shelfId || ''}
+                    onChange={handleSelectChange}
+                    disabled={submitting || loadingShelves}
+                    label="Assign to Shelf"
+                  >
+                    <MenuItem value="">
+                      <em>None (No shelf assigned)</em>
+                    </MenuItem>
+                    {shelves.map(shelf => (
+                      <MenuItem key={shelf.id} value={shelf.id}>
+                        {shelf.name} - {shelf.location} {shelf.category ? `(${shelf.category})` : ''}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>
+                    {loadingShelves ? 'Loading shelves...' : 
+                    'Select a shelf to store this item or leave empty for no shelf assignment'}
+                  </FormHelperText>
                 </FormControl>
               </Grid>
               

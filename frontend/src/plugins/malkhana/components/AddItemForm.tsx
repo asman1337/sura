@@ -22,6 +22,7 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { useData } from '../../../core/data';
 import { useMalkhanaApi } from '../hooks';
 import { setGlobalApiInstance } from '../services';
+import { ShelfInfo } from '../types';
 
 // Item categories
 const itemCategories = [
@@ -60,8 +61,13 @@ const AddItemForm: React.FC = () => {
     receivedFrom: '',
     dateReceived: new Date(),
     condition: '',
-    notes: ''
+    notes: '',
+    shelfId: ''
   });
+  
+  // Available shelves
+  const [shelves, setShelves] = useState<ShelfInfo[]>([]);
+  const [loadingShelves, setLoadingShelves] = useState(false);
   
   // Validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -74,6 +80,26 @@ const AddItemForm: React.FC = () => {
       setGlobalApiInstance(api);
     }
   }, [api]);
+  
+  // Load available shelves
+  useEffect(() => {
+    const loadShelves = async () => {
+      if (!malkhanaApi.isReady) return;
+      
+      try {
+        setLoadingShelves(true);
+        const availableShelves = await malkhanaApi.getAllShelves();
+        setShelves(availableShelves);
+      } catch (err) {
+        console.error('Error loading shelves:', err);
+        setError('Failed to load available shelves. You can still create the item without assigning a shelf.');
+      } finally {
+        setLoadingShelves(false);
+      }
+    };
+    
+    loadShelves();
+  }, [malkhanaApi.isReady]);
   
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -167,6 +193,7 @@ const AddItemForm: React.FC = () => {
         dateReceived: formData.dateReceived,
         condition: formData.condition,
         notes: formData.notes,
+        shelfId: formData.shelfId || undefined
       });
       
       if (result) {
@@ -333,6 +360,33 @@ const AddItemForm: React.FC = () => {
                   helperText={errors.receivedFrom}
                   required
                 />
+              </Grid>
+              
+              <Grid size={{ xs: 12 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Assign to Shelf (Optional)</InputLabel>
+                  <Select
+                    name="shelfId"
+                    value={formData.shelfId}
+                    onChange={handleSelectChange}
+                    label="Assign to Shelf (Optional)"
+                    disabled={loadingShelves || shelves.length === 0}
+                  >
+                    <MenuItem value="">
+                      <em>None (Assign Later)</em>
+                    </MenuItem>
+                    {shelves.map((shelf) => (
+                      <MenuItem key={shelf.id} value={shelf.id}>
+                        {shelf.name} - {shelf.location} {shelf.category ? `(${shelf.category})` : ''}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>
+                    {loadingShelves ? 'Loading shelves...' : 
+                     shelves.length === 0 ? 'No shelves available. Create shelves in Shelf Management.' : 
+                     'Select a shelf to store this item or leave empty to assign later.'}
+                  </FormHelperText>
+                </FormControl>
               </Grid>
               
               <Grid size={{ xs: 12 }}>
