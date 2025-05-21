@@ -91,13 +91,6 @@ export class MalkhanaRepository {
   }
 
   /**
-   * Generate QR code for an item
-   */
-  async generateQRCode(id: string): Promise<{ qrCodeUrl: string }> {
-    return this.api.post<{ qrCodeUrl: string }>(`${this.basePath}/items/${id}/qr-code`, {});
-  }
-
-  /**
    * Assign an item to a shelf
    */
   async assignToShelf(id: string, assignDto: AssignToShelfDto): Promise<MalkhanaItem> {
@@ -152,13 +145,6 @@ export class MalkhanaRepository {
    */
   async getShelfItems(id: string): Promise<MalkhanaItem[]> {
     return this.api.get<MalkhanaItem[]>(`${this.basePath}/shelves/${id}/items`);
-  }
-
-  /**
-   * Generate QR code for a shelf
-   */
-  async generateShelfQRCode(id: string): Promise<{ qrCodeUrl: string }> {
-    return this.api.post<{ qrCodeUrl: string }>(`${this.basePath}/shelves/${id}/qr-code`, {});
   }
 }
 

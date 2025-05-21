@@ -125,15 +125,6 @@ class MalkhanaService {
     }
   }
 
-  async generateQRCode(id: string): Promise<{ qrCodeUrl: string }> {
-    try {
-      return await this.api.post<{ qrCodeUrl: string }>(`/malkhana/items/${id}/qr-code`, {});
-    } catch (error) {
-      console.error(`Error generating QR code for item ${id}:`, error);
-      throw error;
-    }
-  }
-
   async assignToShelf(id: string, assignDto: AssignToShelfDto): Promise<MalkhanaItem> {
     try {
       return await this.api.post<MalkhanaItem>(`/malkhana/items/${id}/assign-shelf`, assignDto);
@@ -203,15 +194,6 @@ class MalkhanaService {
       return await this.api.get<MalkhanaItem[]>(`/malkhana/shelves/${id}/items`);
     } catch (error) {
       console.error(`Error fetching items for shelf ${id}:`, error);
-      throw error;
-    }
-  }
-
-  async generateShelfQRCode(id: string): Promise<{ qrCodeUrl: string }> {
-    try {
-      return await this.api.post<{ qrCodeUrl: string }>(`/malkhana/shelves/${id}/qr-code`, {});
-    } catch (error) {
-      console.error(`Error generating QR code for shelf ${id}:`, error);
       throw error;
     }
   }

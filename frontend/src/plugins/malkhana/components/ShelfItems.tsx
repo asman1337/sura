@@ -22,6 +22,7 @@ import {
   ArrowBack as BackIcon,
   QrCode as QrCodeIcon} from '@mui/icons-material';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { QRCodeSVG } from 'qrcode.react';
 
 import { MalkhanaItem, ShelfInfo } from '../types';
 import MalkhanaDataGrid, { 
@@ -49,7 +50,6 @@ const ShelfItems: React.FC = () => {
   const [openQrDialog, setOpenQrDialog] = useState(false);
   const [openMoveDialog, setOpenMoveDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MalkhanaItem | null>(null);
-  const [qrCode, setQrCode] = useState<string | null>(null);
   const [availableShelves, setAvailableShelves] = useState<ShelfInfo[]>([]);
   const [targetShelfId, setTargetShelfId] = useState<string>('');
   
@@ -98,33 +98,27 @@ const ShelfItems: React.FC = () => {
     loadShelfData();
   }, [shelfId, malkhanaApi.isReady]);
   
-  const handleOpenQrDialog = async (item: MalkhanaItem) => {
+  // Generate QR code data as JSON string
+  const getQrCodeData = (item: MalkhanaItem) => {
+    // Create a data structure that's useful for both web and mobile apps
+    const qrData = {
+      type: 'malkhana_item',
+      id: item.id,
+      motherNumber: item.motherNumber,
+      registryNumber: item.registryNumber,
+      registryType: item.registryType,
+      registryYear: item.registryYear,
+      shelfId: item.shelfId,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Return JSON string of the data
+    return JSON.stringify(qrData);
+  };
+  
+  const handleOpenQrDialog = (item: MalkhanaItem) => {
     setSelectedItem(item);
-    try {
-      if (!malkhanaApi.isReady) {
-        throw new Error('API service is not initialized');
-      }
-      
-      let qrCodeUrl = item.qrCodeUrl;
-      
-      // Generate QR code if it doesn't exist
-      if (!qrCodeUrl) {
-        const qrResult = await malkhanaApi.generateQRCode(item.id);
-        if (qrResult && qrResult.qrCodeUrl) {
-          qrCodeUrl = qrResult.qrCodeUrl;
-          // Update item with QR code URL
-          await malkhanaApi.updateItem(item.id, { qrCodeUrl });
-        } else {
-          throw new Error('Failed to generate QR code');
-        }
-      }
-      
-      setQrCode(qrCodeUrl);
-      setOpenQrDialog(true);
-    } catch (err) {
-      console.error('Failed to generate QR code:', err);
-      setError(`Failed to generate QR code: ${(err as Error).message}`);
-    }
+    setOpenQrDialog(true);
   };
   
   const handleOpenMoveDialog = (item: MalkhanaItem) => {
@@ -298,24 +292,16 @@ const ShelfItems: React.FC = () => {
                 {selectedItem.description}
               </Typography>
               
-              {qrCode ? (
-                <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
-                  <img 
-                    src={qrCode} 
-                    alt={`QR Code for ${selectedItem.motherNumber}`}
-                    style={{ maxWidth: '100%', height: 'auto' }}
-                  />
-                </Box>
-              ) : (
-                <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
-                  <Typography sx={{ fontSize: '8rem', color: theme.palette.primary.main }}>
-                    <QrCodeIcon fontSize="inherit" />
-                  </Typography>
-                  <Typography variant="caption" display="block" mt={1}>
-                    QR Code not available
-                  </Typography>
-                </Box>
-              )}
+              <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
+                <QRCodeSVG 
+                  value={getQrCodeData(selectedItem)}
+                  size={250}
+                  level="M"
+                  includeMargin
+                  bgColor="#ffffff"
+                  fgColor="#000000"
+                />
+              </Box>
               
               <Button variant="outlined" fullWidth>
                 Print QR Code

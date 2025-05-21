@@ -20,6 +20,7 @@ import {
   Visibility as ViewIcon
 } from '@mui/icons-material';
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { QRCodeSVG } from 'qrcode.react';
 
 import { ShelfInfo } from '../types';
 import MalkhanaDataGrid, { qrCodeActionRenderer } from './common/MalkhanaDataGrid';
@@ -41,7 +42,6 @@ const ShelfManagement: React.FC = () => {
   const [openNewShelfDialog, setOpenNewShelfDialog] = useState(false);
   const [openQrDialog, setOpenQrDialog] = useState(false);
   const [selectedShelf, setSelectedShelf] = useState<ShelfInfo | null>(null);
-  const [shelfQrCode, setShelfQrCode] = useState<string | null>(null);
   
   // New shelf form state
   const [newShelfData, setNewShelfData] = useState({
@@ -76,6 +76,22 @@ const ShelfManagement: React.FC = () => {
   useEffect(() => {
     loadShelves();
   }, [malkhanaApi.isReady]);
+  
+  // Generate QR code data for shelf as JSON string
+  const getShelfQrCodeData = (shelf: ShelfInfo) => {
+    // Create a data structure that's useful for both web and mobile apps
+    const qrData = {
+      type: 'malkhana_shelf',
+      id: shelf.id,
+      name: shelf.name,
+      location: shelf.location,
+      category: shelf.category,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Return JSON string of the data
+    return JSON.stringify(qrData);
+  };
   
   const handleOpenNewShelfDialog = () => {
     setNewShelfData({
@@ -122,24 +138,9 @@ const ShelfManagement: React.FC = () => {
     }
   };
   
-  const handleOpenQrDialog = async (shelf: ShelfInfo) => {
+  const handleOpenQrDialog = (shelf: ShelfInfo) => {
     setSelectedShelf(shelf);
-    try {
-      if (!malkhanaApi.isReady) {
-        throw new Error('API service is not initialized');
-      }
-      
-      const qrCode = await malkhanaApi.generateShelfQRCode(shelf.id);
-      if (qrCode && qrCode.qrCodeUrl) {
-        setShelfQrCode(qrCode.qrCodeUrl);
-        setOpenQrDialog(true);
-      } else {
-        setError('Failed to generate QR code');
-      }
-    } catch (err) {
-      console.error('Failed to generate QR code:', err);
-      setError(`Failed to generate QR code: ${(err as Error).message}`);
-    }
+    setOpenQrDialog(true);
   };
   
   const handleViewShelfItems = (shelfId: string) => {
@@ -313,24 +314,16 @@ const ShelfManagement: React.FC = () => {
                   Location: {selectedShelf.location}
                 </Typography>
                 
-                {shelfQrCode ? (
-                  <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
-                    <img 
-                      src={shelfQrCode} 
-                      alt={`QR Code for ${selectedShelf.name}`} 
-                      style={{ maxWidth: '100%', height: 'auto' }}
-                    />
-                  </Box>
-                ) : (
-                  <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
-                    <Typography sx={{ fontSize: '8rem', color: theme.palette.primary.main }}>
-                      <QrCodeIcon fontSize="inherit" />
-                    </Typography>
-                    <Typography variant="caption" display="block" mt={1}>
-                      QR Code not available
-                    </Typography>
-                  </Box>
-                )}
+                <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
+                  <QRCodeSVG 
+                    value={getShelfQrCodeData(selectedShelf)}
+                    size={250}
+                    level="M"
+                    includeMargin
+                    bgColor="#ffffff"
+                    fgColor="#000000"
+                  />
+                </Box>
                 
                 <Button variant="outlined" fullWidth>
                   Print QR Code

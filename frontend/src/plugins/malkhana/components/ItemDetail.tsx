@@ -26,6 +26,7 @@ import {
   Refresh as RefreshIcon,
   QrCode as QrCodeIcon
 } from '@mui/icons-material';
+import { QRCodeSVG } from 'qrcode.react';
 
 import { MalkhanaItem } from '../types';
 import { useMalkhanaApi } from '../hooks';
@@ -73,28 +74,26 @@ const ItemDetail: React.FC = () => {
     fetchItem();
   }, [id, malkhanaApi.isReady]);
   
-  const handleGenerateQrCode = async () => {
-    if (!item) return;
+  // Generate QR code data as JSON string
+  const getQrCodeData = (item: MalkhanaItem) => {
+    // Create a data structure that's useful for both web and mobile apps
+    const qrData = {
+      type: 'malkhana_item',
+      id: item.id,
+      motherNumber: item.motherNumber,
+      registryNumber: item.registryNumber,
+      registryType: item.registryType,
+      registryYear: item.registryYear,
+      timestamp: new Date().toISOString()
+    };
     
-    try {
-      // Generate QR code if it doesn't exist
-      if (!item.qrCodeUrl) {
-        const qrCode = await malkhanaApi.generateQRCode(item.id);
-        if (qrCode) {
-          // Update item with QR code URL
-          const updatedItem = await malkhanaApi.updateItem(item.id, { 
-            qrCodeUrl: qrCode.qrCodeUrl 
-          });
-          if (updatedItem) {
-            setItem(updatedItem);
-          }
-        }
-      }
-      
-      setOpenQrDialog(true);
-    } catch (err) {
-      setError('Failed to generate QR code');
-    }
+    // Return JSON string of the data
+    return JSON.stringify(qrData);
+  };
+  
+  const handleGenerateQrCode = () => {
+    if (!item) return;
+    setOpenQrDialog(true);
   };
   
   const handleEdit = () => {
@@ -513,35 +512,34 @@ const ItemDetail: React.FC = () => {
           <Divider sx={{ mb: 2 }} />
           
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
-            {item.qrCodeUrl ? (
+            {item && (
               <>
                 <Box 
-                  component="img"
-                  src={item.qrCodeUrl}
-                  alt={`QR Code for ${item.motherNumber}`}
                   sx={{ 
                     width: 200,
                     height: 200,
-                    objectFit: 'contain',
                     mb: 2,
                     border: `1px solid ${theme.palette.divider}`,
                     borderRadius: 1,
-                    p: 2
+                    p: 2,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
                   }}
-                />
+                >
+                  <QRCodeSVG 
+                    value={getQrCodeData(item)}
+                    size={180}
+                    level="M"
+                    includeMargin={false}
+                    bgColor="#ffffff"
+                    fgColor="#000000"
+                  />
+                </Box>
                 <Typography variant="caption" color="text.secondary">
                   Scan this QR code to quickly access this item's details
                 </Typography>
               </>
-            ) : (
-              <Button 
-                variant="contained" 
-                color="primary" 
-                onClick={handleGenerateQrCode}
-                startIcon={<QrCodeIcon />}
-              >
-                Generate QR Code
-              </Button>
             )}
           </Box>
         </CardContent>
@@ -553,29 +551,22 @@ const ItemDetail: React.FC = () => {
         <DialogContent>
           <Box sx={{ p: 2, textAlign: 'center' }}>
             <Typography variant="h6" gutterBottom>
-              {item.motherNumber}
+              {item?.motherNumber}
             </Typography>
             <Typography variant="body2" gutterBottom>
-              {item.description}
+              {item?.description}
             </Typography>
             
-            {item.qrCodeUrl ? (
+            {item && (
               <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
-                <Box 
-                  component="img"
-                  src={item.qrCodeUrl}
-                  alt={`QR Code for ${item.motherNumber}`}
-                  sx={{ maxWidth: '100%', height: 'auto' }}
+                <QRCodeSVG 
+                  value={getQrCodeData(item)}
+                  size={250}
+                  level="M"
+                  includeMargin
+                  bgColor="#ffffff"
+                  fgColor="#000000"
                 />
-              </Box>
-            ) : (
-              <Box sx={{ my: 3, p: 2, border: `1px solid ${theme.palette.divider}` }}>
-                <Typography sx={{ fontSize: '8rem', color: theme.palette.primary.main }}>
-                  <QrCodeIcon fontSize="inherit" />
-                </Typography>
-                <Typography variant="caption" display="block" mt={1}>
-                  QR Code not available
-                </Typography>
               </Box>
             )}
             

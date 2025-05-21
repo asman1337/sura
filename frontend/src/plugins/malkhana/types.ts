@@ -21,7 +21,6 @@ export interface ShelfInfo {
   name: string;
   location: string;
   category?: string;
-  qrCodeUrl?: string;
   itemCount?: number;
   createdAt: Date;
   updatedAt: Date;
@@ -51,8 +50,6 @@ export interface MalkhanaItem {
   // Shelf organization
   shelfId?: string;
   shelf?: ShelfInfo;
-  // QR code for the item
-  qrCodeUrl?: string;
   // History of red ink IDs for this item
   redInkHistory?: RedInkHistoryEntry[];
   // Audit information
@@ -87,7 +84,6 @@ export interface UpdateMalkhanaItemDto {
   notes?: string;
   photos?: string[];
   shelfId?: string;
-  qrCodeUrl?: string;
 }
 
 // Dispose Item DTO for API requests
@@ -109,7 +105,6 @@ export interface UpdateShelfDto {
   name?: string;
   location?: string;
   category?: string;
-  qrCodeUrl?: string;
 }
 
 // Assign to Shelf DTO for API requests

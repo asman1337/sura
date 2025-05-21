@@ -152,17 +152,6 @@ export function useMalkhanaApi() {
       return repository.disposeItem(id, disposalData);
     },
     
-    generateQRCode: async (id: string): Promise<{ qrCodeUrl: string } | null> => {
-      // Try service first (preferred)
-      if (service) {
-        return service.generateQRCode(id);
-      }
-      
-      // Fallback to repository if service not ready yet
-      if (!repository) return null;
-      return repository.generateQRCode(id);
-    },
-    
     assignToShelf: async (id: string, assignDto: AssignToShelfDto): Promise<MalkhanaItem | null> => {
       // Try service first (preferred)
       if (service) {
@@ -262,17 +251,6 @@ export function useMalkhanaApi() {
       // Fallback to repository if service not ready yet
       if (!repository) return [];
       return repository.getShelfItems(id);
-    },
-    
-    generateShelfQRCode: async (id: string): Promise<{ qrCodeUrl: string } | null> => {
-      // Try service first (preferred)
-      if (service) {
-        return service.generateShelfQRCode(id);
-      }
-      
-      // Fallback to repository if service not ready yet
-      if (!repository) return null;
-      return repository.generateShelfQRCode(id);
     },
     
     // Repository status - consider it ready if either service or repository is ready
