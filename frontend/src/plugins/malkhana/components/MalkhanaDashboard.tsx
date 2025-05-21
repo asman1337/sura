@@ -31,10 +31,9 @@ import {
   ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
 import { useMalkhanaApi } from '../hooks';
-import { MalkhanaItem, MalkhanaStats } from '../types';
-import { useNavigate } from 'react-router-dom';
 import { useData } from '../../../core/data';
 import { setGlobalApiInstance } from '../services';
+import { MalkhanaItem, MalkhanaStats } from '../types';
 
 /**
  * Dashboard component for the Malkhana plugin

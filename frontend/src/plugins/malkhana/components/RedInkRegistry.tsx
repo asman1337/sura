@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Typography,
-  useTheme,
   CircularProgress
 } from '@mui/material';
 
@@ -20,7 +19,6 @@ import { useData } from '../../../core/data';
 import { setGlobalApiInstance } from '../services';
 
 const RedInkRegistry: React.FC = () => {
-  const theme = useTheme();
   const { api } = useData();
   const malkhanaApi = useMalkhanaApi();
   const [items, setItems] = useState<MalkhanaItem[]>([]);
