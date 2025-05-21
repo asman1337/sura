@@ -2,7 +2,6 @@
  * Utility function to print QR codes
  */
 
-import { QRCodeSVG } from 'qrcode.react';
 
 /**
  * Prints a QR code with a title and subtitle in a new window
@@ -12,12 +11,6 @@ import { QRCodeSVG } from 'qrcode.react';
  */
 export const printQrCode = (title: string, subtitle: string, value: string) => {
   try {
-    // Ensure the value is properly escaped to prevent issues in the HTML
-    const safeValue = value
-      .replace(/\\/g, '\\\\')
-      .replace(/'/g, "\\'")
-      .replace(/"/g, '\\"');
-    
     // Convert to Base64 to avoid JSON parsing issues when printing
     const base64Value = btoa(unescape(encodeURIComponent(value)));
     
