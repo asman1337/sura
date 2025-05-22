@@ -12,6 +12,7 @@ import { MalkhanaModule } from './modules/malkhana/malkhana.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { OfficerRanksModule } from './modules/officer-ranks/officer-ranks.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
+import { DutyRosterModule } from './modules/duty-roster/duty-roster.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
     AuthModule,
     SeederModule,
     MalkhanaModule,
+    DutyRosterModule,
   ],
   controllers: [AppController],
   providers: [AppService],
