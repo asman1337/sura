@@ -20,9 +20,11 @@ export class DutyRosterController {
   @ApiResponse({ status: 201, description: 'The duty roster has been successfully created.' })
   create(
     @Body() createDutyRosterDto: CreateDutyRosterDto, 
-    @CurrentUser() user
+    @CurrentUser() user,
+    @UnitId() unitId: string
   ) {
-    return this.dutyRosterService.create(createDutyRosterDto, user.officerId);
+    const effectiveUnitId = createDutyRosterDto.unitId || unitId;
+    return this.dutyRosterService.create(createDutyRosterDto, user.id, effectiveUnitId);
   }
 
   @Get()

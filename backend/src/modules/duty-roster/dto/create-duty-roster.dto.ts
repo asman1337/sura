@@ -1,13 +1,14 @@
-import { IsDateString, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { DutyRosterStatus } from '../entities/duty-roster.entity';
 
 export class CreateDutyRosterDto {
   @IsNotEmpty()
   @IsString()
   name: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID()
-  unitId: string;
+  unitId?: string;
 
   @IsNotEmpty()
   @IsDateString()
@@ -16,6 +17,10 @@ export class CreateDutyRosterDto {
   @IsNotEmpty()
   @IsDateString()
   endDate: string;
+
+  @IsOptional()
+  @IsEnum(DutyRosterStatus)
+  status?: DutyRosterStatus;
 
   @IsOptional()
   @IsString()

@@ -12,11 +12,12 @@ export class DutyRosterService {
     private dutyRosterRepository: Repository<DutyRoster>,
   ) {}
 
-  async create(createDutyRosterDto: CreateDutyRosterDto, officerId: string): Promise<DutyRoster> {
+  async create(createDutyRosterDto: CreateDutyRosterDto, officerId: string, unitId: string): Promise<DutyRoster> {
     const dutyRoster = this.dutyRosterRepository.create({
       ...createDutyRosterDto,
       createdById: officerId,
-      status: DutyRosterStatus.DRAFT
+      unitId,
+      status: createDutyRosterDto.status || DutyRosterStatus.DRAFT
     });
     return this.dutyRosterRepository.save(dutyRoster);
   }
@@ -62,6 +63,9 @@ export class DutyRosterService {
 
   async publish(id: string): Promise<DutyRoster> {
     const dutyRoster = await this.findOne(id);
+    if (dutyRoster.status === DutyRosterStatus.PUBLISHED) {
+      throw new Error('Duty roster is already published');
+    }
     dutyRoster.status = DutyRosterStatus.PUBLISHED;
     return this.dutyRosterRepository.save(dutyRoster);
   }
