@@ -1,0 +1,709 @@
+# Duty Roster Module API Documentation
+
+This document provides comprehensive details about the Duty Roster module's backend APIs for the frontend team to implement UI and business logic.
+
+## Overview
+
+The Duty Roster module allows police stations to create and manage duty schedules for their officers. It consists of three main components:
+
+1. **Duty Rosters** - Weekly/monthly schedules for a specific unit
+2. **Duty Shifts** - Predefined shift timings (Morning, Day, Night)
+3. **Duty Assignments** - Individual officer assignments to specific shifts on specific dates
+
+## Authentication & Authorization
+
+All endpoints require authentication via JWT token. Access is restricted to a user's primary unit unless they have administrative privileges.
+
+### Headers Required
+
+```
+Authorization: Bearer {jwt_token}
+```
+
+## API Endpoints
+
+### 1. Duty Rosters
+
+#### Create a Duty Roster
+
+```
+POST /duty-roster
+```
+
+**Request Body:**
+```json
+{
+  "name": "Week 28 Roster",
+  "unitId": "uuid-of-unit",
+  "startDate": "2023-07-10",
+  "endDate": "2023-07-16",
+  "notes": "Special arrangements for Independence Day"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "generated-uuid",
+  "name": "Week 28 Roster",
+  "unitId": "uuid-of-unit",
+  "startDate": "2023-07-10",
+  "endDate": "2023-07-16",
+  "status": "DRAFT",
+  "createdById": "officer-uuid",
+  "notes": "Special arrangements for Independence Day",
+  "createdAt": "2023-07-05T10:30:00.000Z",
+  "updatedAt": "2023-07-05T10:30:00.000Z"
+}
+```
+
+#### Get All Duty Rosters
+
+```
+GET /duty-roster
+```
+
+**Query Parameters:**
+- `unitId` (optional) - Filter by specific unit
+
+**Response:**
+```json
+[
+  {
+    "id": "roster-uuid-1",
+    "name": "Week 28 Roster",
+    "unitId": "uuid-of-unit",
+    "unit": {
+      "id": "uuid-of-unit",
+      "name": "Central Police Station"
+    },
+    "startDate": "2023-07-10",
+    "endDate": "2023-07-16",
+    "status": "DRAFT",
+    "createdById": "officer-uuid",
+    "createdBy": {
+      "id": "officer-uuid",
+      "name": "Inspector Singh"
+    },
+    "notes": "Special arrangements for Independence Day",
+    "createdAt": "2023-07-05T10:30:00.000Z",
+    "updatedAt": "2023-07-05T10:30:00.000Z"
+  }
+]
+```
+
+#### Get a Specific Duty Roster
+
+```
+GET /duty-roster/{id}
+```
+
+**Response:**
+```json
+{
+  "id": "roster-uuid-1",
+  "name": "Week 28 Roster",
+  "unitId": "uuid-of-unit",
+  "unit": {
+    "id": "uuid-of-unit",
+    "name": "Central Police Station"
+  },
+  "startDate": "2023-07-10",
+  "endDate": "2023-07-16",
+  "status": "DRAFT",
+  "createdById": "officer-uuid",
+  "createdBy": {
+    "id": "officer-uuid",
+    "name": "Inspector Singh"
+  },
+  "notes": "Special arrangements for Independence Day",
+  "assignments": [
+    {
+      "id": "assignment-uuid-1",
+      "officerId": "officer-uuid-1",
+      "officer": {
+        "id": "officer-uuid-1",
+        "name": "Constable Kumar"
+      },
+      "date": "2023-07-10",
+      "shiftId": "shift-uuid-1",
+      "shift": {
+        "id": "shift-uuid-1",
+        "name": "Morning",
+        "startTime": "06:00:00",
+        "endTime": "14:00:00"
+      },
+      "assignmentType": "REGULAR",
+      "notes": null
+    }
+  ],
+  "createdAt": "2023-07-05T10:30:00.000Z",
+  "updatedAt": "2023-07-05T10:30:00.000Z"
+}
+```
+
+#### Update a Duty Roster
+
+```
+PATCH /duty-roster/{id}
+```
+
+**Request Body:**
+```json
+{
+  "name": "Updated Roster Name",
+  "notes": "Updated notes"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "roster-uuid-1",
+  "name": "Updated Roster Name",
+  "unitId": "uuid-of-unit",
+  "startDate": "2023-07-10",
+  "endDate": "2023-07-16",
+  "status": "DRAFT",
+  "createdById": "officer-uuid",
+  "notes": "Updated notes",
+  "createdAt": "2023-07-05T10:30:00.000Z",
+  "updatedAt": "2023-07-05T11:45:00.000Z"
+}
+```
+
+#### Publish a Duty Roster
+
+```
+POST /duty-roster/{id}/publish
+```
+
+**Response:**
+```json
+{
+  "id": "roster-uuid-1",
+  "name": "Week 28 Roster",
+  "unitId": "uuid-of-unit",
+  "startDate": "2023-07-10",
+  "endDate": "2023-07-16",
+  "status": "PUBLISHED",
+  "createdById": "officer-uuid",
+  "notes": "Special arrangements for Independence Day",
+  "createdAt": "2023-07-05T10:30:00.000Z",
+  "updatedAt": "2023-07-05T12:00:00.000Z"
+}
+```
+
+#### Delete a Duty Roster
+
+```
+DELETE /duty-roster/{id}
+```
+
+**Response:**
+```
+204 No Content
+```
+
+### 2. Duty Shifts
+
+#### Seed Default Shifts
+
+```
+POST /duty-shifts/seed-defaults
+```
+
+**Response:**
+```
+201 Created
+```
+
+#### Get All Shifts
+
+```
+GET /duty-shifts
+```
+
+**Response:**
+```json
+[
+  {
+    "id": "shift-uuid-1",
+    "name": "Morning",
+    "startTime": "06:00:00",
+    "endTime": "14:00:00",
+    "isDefault": true,
+    "createdAt": "2023-07-01T00:00:00.000Z",
+    "updatedAt": "2023-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "shift-uuid-2",
+    "name": "Day",
+    "startTime": "14:00:00",
+    "endTime": "22:00:00",
+    "isDefault": true,
+    "createdAt": "2023-07-01T00:00:00.000Z",
+    "updatedAt": "2023-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "shift-uuid-3",
+    "name": "Night",
+    "startTime": "22:00:00",
+    "endTime": "06:00:00",
+    "isDefault": true,
+    "createdAt": "2023-07-01T00:00:00.000Z",
+    "updatedAt": "2023-07-01T00:00:00.000Z"
+  }
+]
+```
+
+#### Create a Custom Shift
+
+```
+POST /duty-shifts
+```
+
+**Request Body:**
+```json
+{
+  "name": "Special Event",
+  "startTime": "16:00:00",
+  "endTime": "00:00:00",
+  "isDefault": false
+}
+```
+
+**Response:**
+```json
+{
+  "id": "shift-uuid-4",
+  "name": "Special Event",
+  "startTime": "16:00:00",
+  "endTime": "00:00:00",
+  "isDefault": false,
+  "createdAt": "2023-07-05T14:30:00.000Z",
+  "updatedAt": "2023-07-05T14:30:00.000Z"
+}
+```
+
+#### Get a Specific Shift
+
+```
+GET /duty-shifts/{id}
+```
+
+**Response:**
+```json
+{
+  "id": "shift-uuid-1",
+  "name": "Morning",
+  "startTime": "06:00:00",
+  "endTime": "14:00:00",
+  "isDefault": true,
+  "createdAt": "2023-07-01T00:00:00.000Z",
+  "updatedAt": "2023-07-01T00:00:00.000Z"
+}
+```
+
+#### Update a Shift
+
+```
+PATCH /duty-shifts/{id}
+```
+
+**Request Body:**
+```json
+{
+  "startTime": "07:00:00",
+  "endTime": "15:00:00"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "shift-uuid-1",
+  "name": "Morning",
+  "startTime": "07:00:00",
+  "endTime": "15:00:00",
+  "isDefault": true,
+  "createdAt": "2023-07-01T00:00:00.000Z",
+  "updatedAt": "2023-07-05T16:45:00.000Z"
+}
+```
+
+#### Delete a Shift
+
+```
+DELETE /duty-shifts/{id}
+```
+
+**Response:**
+```
+204 No Content
+```
+
+### 3. Duty Assignments
+
+#### Create a Duty Assignment
+
+```
+POST /duty-assignments
+```
+
+**Request Body:**
+```json
+{
+  "dutyRosterId": "roster-uuid-1",
+  "officerId": "officer-uuid-1",
+  "date": "2023-07-10",
+  "shiftId": "shift-uuid-1",
+  "assignmentType": "REGULAR",
+  "notes": "Beat patrol in sector 5"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "assignment-uuid-1",
+  "dutyRosterId": "roster-uuid-1",
+  "officerId": "officer-uuid-1",
+  "date": "2023-07-10",
+  "shiftId": "shift-uuid-1",
+  "assignmentType": "REGULAR",
+  "notes": "Beat patrol in sector 5",
+  "createdAt": "2023-07-05T17:30:00.000Z",
+  "updatedAt": "2023-07-05T17:30:00.000Z"
+}
+```
+
+#### Create Multiple Duty Assignments
+
+```
+POST /duty-assignments/batch
+```
+
+**Request Body:**
+```json
+[
+  {
+    "dutyRosterId": "roster-uuid-1",
+    "officerId": "officer-uuid-1",
+    "date": "2023-07-10",
+    "shiftId": "shift-uuid-1",
+    "assignmentType": "REGULAR"
+  },
+  {
+    "dutyRosterId": "roster-uuid-1",
+    "officerId": "officer-uuid-1",
+    "date": "2023-07-11",
+    "shiftId": "shift-uuid-2",
+    "assignmentType": "REGULAR"
+  },
+  {
+    "dutyRosterId": "roster-uuid-1",
+    "officerId": "officer-uuid-2",
+    "date": "2023-07-10",
+    "shiftId": "shift-uuid-3",
+    "assignmentType": "REGULAR"
+  }
+]
+```
+
+**Response:**
+```json
+[
+  {
+    "id": "assignment-uuid-1",
+    "dutyRosterId": "roster-uuid-1",
+    "officerId": "officer-uuid-1",
+    "date": "2023-07-10",
+    "shiftId": "shift-uuid-1",
+    "assignmentType": "REGULAR",
+    "notes": null,
+    "createdAt": "2023-07-05T17:30:00.000Z",
+    "updatedAt": "2023-07-05T17:30:00.000Z"
+  },
+  {
+    "id": "assignment-uuid-2",
+    "dutyRosterId": "roster-uuid-1",
+    "officerId": "officer-uuid-1",
+    "date": "2023-07-11",
+    "shiftId": "shift-uuid-2",
+    "assignmentType": "REGULAR",
+    "notes": null,
+    "createdAt": "2023-07-05T17:30:00.000Z",
+    "updatedAt": "2023-07-05T17:30:00.000Z"
+  },
+  {
+    "id": "assignment-uuid-3",
+    "dutyRosterId": "roster-uuid-1",
+    "officerId": "officer-uuid-2",
+    "date": "2023-07-10",
+    "shiftId": "shift-uuid-3",
+    "assignmentType": "REGULAR",
+    "notes": null,
+    "createdAt": "2023-07-05T17:30:00.000Z",
+    "updatedAt": "2023-07-05T17:30:00.000Z"
+  }
+]
+```
+
+#### Get Duty Assignments
+
+```
+GET /duty-assignments
+```
+
+**Query Parameters:**
+- `rosterId` (optional) - Filter by specific roster
+- `officerId` (optional) - Filter by specific officer
+
+**Response:**
+```json
+[
+  {
+    "id": "assignment-uuid-1",
+    "dutyRosterId": "roster-uuid-1",
+    "dutyRoster": {
+      "id": "roster-uuid-1",
+      "name": "Week 28 Roster"
+    },
+    "officerId": "officer-uuid-1",
+    "officer": {
+      "id": "officer-uuid-1",
+      "name": "Constable Kumar"
+    },
+    "date": "2023-07-10",
+    "shiftId": "shift-uuid-1",
+    "shift": {
+      "id": "shift-uuid-1",
+      "name": "Morning",
+      "startTime": "06:00:00",
+      "endTime": "14:00:00"
+    },
+    "assignmentType": "REGULAR",
+    "notes": "Beat patrol in sector 5",
+    "createdAt": "2023-07-05T17:30:00.000Z",
+    "updatedAt": "2023-07-05T17:30:00.000Z"
+  }
+]
+```
+
+#### Get a Specific Duty Assignment
+
+```
+GET /duty-assignments/{id}
+```
+
+**Response:**
+```json
+{
+  "id": "assignment-uuid-1",
+  "dutyRosterId": "roster-uuid-1",
+  "dutyRoster": {
+    "id": "roster-uuid-1",
+    "name": "Week 28 Roster"
+  },
+  "officerId": "officer-uuid-1",
+  "officer": {
+    "id": "officer-uuid-1",
+    "name": "Constable Kumar"
+  },
+  "date": "2023-07-10",
+  "shiftId": "shift-uuid-1",
+  "shift": {
+    "id": "shift-uuid-1",
+    "name": "Morning",
+    "startTime": "06:00:00",
+    "endTime": "14:00:00"
+  },
+  "assignmentType": "REGULAR",
+  "notes": "Beat patrol in sector 5",
+  "createdAt": "2023-07-05T17:30:00.000Z",
+  "updatedAt": "2023-07-05T17:30:00.000Z"
+}
+```
+
+#### Update a Duty Assignment
+
+```
+PATCH /duty-assignments/{id}
+```
+
+**Request Body:**
+```json
+{
+  "shiftId": "shift-uuid-2",
+  "notes": "Updated assignment notes"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "assignment-uuid-1",
+  "dutyRosterId": "roster-uuid-1",
+  "officerId": "officer-uuid-1",
+  "date": "2023-07-10",
+  "shiftId": "shift-uuid-2",
+  "assignmentType": "REGULAR",
+  "notes": "Updated assignment notes",
+  "createdAt": "2023-07-05T17:30:00.000Z",
+  "updatedAt": "2023-07-05T18:15:00.000Z"
+}
+```
+
+#### Delete a Duty Assignment
+
+```
+DELETE /duty-assignments/{id}
+```
+
+**Response:**
+```
+204 No Content
+```
+
+## Frontend Implementation Guide
+
+### Suggested UI Flow
+
+1. **Roster Management Screen**
+   - List of rosters with filter by date range
+   - Create/Edit/Delete roster buttons
+   - Status indicator (Draft/Published)
+   - Publish button for draft rosters
+
+2. **Roster Creation Form**
+   - Name, date range, notes fields
+   - Submit button
+
+3. **Roster Detail Screen**
+   - Roster information header
+   - Calendar/grid view of assignments
+   - Add/Edit/Remove assignment buttons
+   - Publish button (if in draft status)
+
+4. **Assignment Creation**
+   - Officer selection dropdown
+   - Date selection (within roster date range)
+   - Shift selection dropdown
+   - Assignment type selection
+   - Notes field
+   - Option to create multiple assignments at once
+
+5. **Officer Duty View**
+   - Calendar view of officer's assignments
+   - Filter by date range
+   - Print/Export functionality
+
+### Implementation Notes
+
+1. **Authentication**
+   - Store JWT token in secure storage
+   - Include token in all API requests
+   - Handle token expiration and refresh
+
+2. **Unit-Based Access**
+   - UI should reflect the user's unit context
+   - Admin users may need unit selection capability
+
+3. **Roster Workflow**
+   - Only draft rosters can be edited or deleted
+   - Published rosters are read-only
+   - Consider implementing a copy feature for creating new rosters based on existing ones
+
+4. **Shift Management**
+   - Seed default shifts on initial setup
+   - Allow custom shifts for special events
+   - Display shifts with visual indicators for morning/day/night
+
+5. **Assignment Creation**
+   - Implement batch assignment creation for efficiency
+   - Validate to prevent double-booking officers
+   - Consider implementing drag-and-drop for calendar-based assignment
+
+6. **Data Visualization**
+   - Calendar view for roster assignments
+   - Color-code shifts for easy identification
+   - Officer-centric view for individual schedules
+   - Unit-centric view for overall coverage
+
+7. **Offline Support Considerations**
+   - Cache roster data for offline viewing
+   - Queue changes for sync when online
+
+8. **Error Handling**
+   - Handle API errors gracefully
+   - Provide meaningful error messages
+   - Implement retry mechanisms for network failures
+
+## Data Models
+
+### DutyRoster
+
+```typescript
+interface DutyRoster {
+  id: string;
+  name: string;
+  unitId: string;
+  unit?: Unit;
+  startDate: string; // ISO date format
+  endDate: string; // ISO date format
+  status: 'DRAFT' | 'PUBLISHED';
+  createdById: string;
+  createdBy?: Officer;
+  notes?: string;
+  assignments?: DutyAssignment[];
+  createdAt: string; // ISO datetime format
+  updatedAt: string; // ISO datetime format
+}
+```
+
+### DutyShift
+
+```typescript
+interface DutyShift {
+  id: string;
+  name: string;
+  startTime: string; // 24-hour format (HH:MM:SS)
+  endTime: string; // 24-hour format (HH:MM:SS)
+  isDefault: boolean;
+  createdAt: string; // ISO datetime format
+  updatedAt: string; // ISO datetime format
+}
+```
+
+### DutyAssignment
+
+```typescript
+interface DutyAssignment {
+  id: string;
+  dutyRosterId: string;
+  dutyRoster?: DutyRoster;
+  officerId: string;
+  officer?: Officer;
+  date: string; // ISO date format
+  shiftId: string;
+  shift?: DutyShift;
+  assignmentType: 'REGULAR' | 'SPECIAL';
+  notes?: string;
+  createdAt: string; // ISO datetime format
+  updatedAt: string; // ISO datetime format
+}
+```
+
+## Best Practices
+
+1. Use TypeScript for type safety
+2. Implement proper error handling
+3. Use state management (Redux, MobX, etc.) for complex state
+4. Create reusable components for roster and assignment views
+5. Implement form validation for all inputs
+6. Use optimistic UI updates for better user experience
+7. Consider accessibility in your UI design
+8. Implement proper loading states and indicators
+9. Add confirmation dialogs for destructive actions
+10. Include print/export functionality for duty rosters
