@@ -11,9 +11,27 @@ export interface Unit {
 // Officer interface (simplified - would normally import from core)
 export interface Officer {
   id: string;
-  name: string;
-  rank: string;
+  firstName: string;
+  lastName: string;
   badgeNumber: string;
+  email: string;
+  rank?: {
+    id: string;
+    name: string;
+    abbreviation: string;
+  };
+  organization?: {
+    id: string;
+    name: string;
+  };
+  primaryUnit?: {
+    id: string;
+    name: string;
+  };
+  department?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 // Duty Roster Status

@@ -61,36 +61,9 @@ export class DutyAssignmentRepository extends BaseRepository<DutyAssignment> {
   /**
    * Get assignments by roster ID
    */
-  async getAssignmentsByRoster(rosterId: string): Promise<DutyAssignment[]> {
-    return this.api.get<DutyAssignment[]>(this.resourcePath, { 
-      params: { rosterId } 
-    });
-  }
-
-  /**
-   * Get assignments by officer ID
-   */
-  async getAssignmentsByOfficer(officerId: string): Promise<DutyAssignment[]> {
-    return this.api.get<DutyAssignment[]>(this.resourcePath, { 
-      params: { officerId } 
-    });
-  }
-
-  /**
-   * Get assignments by roster ID
-   */
   async getByRosterId(rosterId: string): Promise<DutyAssignment[]> {
     return this.api.get<DutyAssignment[]>(this.resourcePath, { 
       params: { rosterId } 
-    });
-  }
-
-  /**
-   * Get assignments by roster ID and officer ID
-   */
-  async getAssignmentsByRosterAndOfficer(rosterId: string, officerId: string): Promise<DutyAssignment[]> {
-    return this.api.get<DutyAssignment[]>(this.resourcePath, { 
-      params: { rosterId, officerId } 
     });
   }
 
@@ -100,6 +73,15 @@ export class DutyAssignmentRepository extends BaseRepository<DutyAssignment> {
   async getByOfficerId(officerId: string): Promise<DutyAssignment[]> {
     return this.api.get<DutyAssignment[]>(this.resourcePath, { 
       params: { officerId } 
+    });
+  }
+
+  /**
+   * Get assignments by roster ID and officer ID
+   */
+  async getAssignmentsByRosterAndOfficer(rosterId: string, officerId: string): Promise<DutyAssignment[]> {
+    return this.api.get<DutyAssignment[]>(this.resourcePath, { 
+      params: { rosterId, officerId } 
     });
   }
 }

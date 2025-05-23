@@ -14,11 +14,14 @@ import { useData } from '../../../core/data/data-context';
 import { DutyAssignmentRepository } from '../repositories/duty-assignment-repository';
 import { DutyShiftRepository } from '../repositories/duty-shift-repository';
 import { DutyRosterRepository } from '../repositories/duty-roster-repository';
+import { OfficerRepository } from '../repositories/officer-repository';
 import { PageContainer } from './common';
 import {
   DutyAssignmentType,
   DutyShift,
-  DutyRoster
+  DutyRoster,
+  CreateDutyAssignmentDto,
+  UpdateDutyAssignmentDto
 } from '../types';
 import {
   Save as SaveIcon,
@@ -33,9 +36,14 @@ import {
 
 interface Officer {
   id: string;
-  name: string;
-  rank?: string;
-  badgeNumber?: string;
+  firstName: string;
+  lastName: string;
+  badgeNumber: string;
+  rank?: {
+    id: string;
+    name: string;
+    abbreviation: string;
+  };
 }
 
 interface FormErrors {
@@ -117,19 +125,17 @@ const AssignmentForm: React.FC = () => {
           dataContext.storage
         );
         
+        const officerRepository = new OfficerRepository(
+          dataContext.api,
+          dataContext.cache,
+          dataContext.sync,
+          dataContext.storage
+        );
+        
         // Load shifts
         const shiftsData = await shiftRepository.getAll();
         setShifts(shiftsData);
         
-        // Mock officers data (in a real app, we'd fetch from an officer repository)
-        setOfficers([
-          { id: '1', name: 'John Doe', rank: 'Inspector', badgeNumber: 'B001' },
-          { id: '2', name: 'Jane Smith', rank: 'Constable', badgeNumber: 'B002' },
-          { id: '3', name: 'Robert Johnson', rank: 'Sub-Inspector', badgeNumber: 'B003' },
-          { id: '4', name: 'Emily Wilson', rank: 'ASI', badgeNumber: 'B004' },
-          { id: '5', name: 'Michael Brown', rank: 'Head Constable', badgeNumber: 'B005' }
-        ]);
-
         // If rosterId is provided, load the roster
         if (queryRosterId) {
           const rosterData = await rosterRepository.getById(queryRosterId);
@@ -141,8 +147,34 @@ const AssignmentForm: React.FC = () => {
             shift => shift.rosterId === queryRosterId || shift.isDefault
           );
           setFilteredShifts(rosterShifts);
+          
+          // Fetch officers related to this roster's unit
+          try {
+            let officersData;
+            if (rosterData.unitId) {
+              // If roster has a unit, fetch officers for that unit
+              officersData = await officerRepository.getByUnitId(rosterData.unitId);
+            } else {
+              // Fallback to get all officers if no unit is specified
+              officersData = await officerRepository.getAll();
+            }
+            setOfficers(officersData);
+          } catch (err) {
+            console.error('Error fetching officers:', err);
+            // Fallback to empty array if officers can't be fetched
+            setOfficers([]);
+          }
         } else {
           setFilteredShifts(shiftsData);
+          
+          // Fetch all officers if no roster is specified
+          try {
+            const officersData = await officerRepository.getAll();
+            setOfficers(officersData);
+          } catch (err) {
+            console.error('Error fetching officers:', err);
+            setOfficers([]);
+          }
         }
         
         // If editing, load the assignment data
@@ -168,6 +200,20 @@ const AssignmentForm: React.FC = () => {
                 shift => shift.rosterId === assignment.dutyRosterId || shift.isDefault
               );
               setFilteredShifts(rosterShifts);
+              
+              // Fetch officers related to this roster's unit
+              try {
+                let officersData;
+                if (rosterData.unitId) {
+                  officersData = await officerRepository.getByUnitId(rosterData.unitId);
+                } else {
+                  officersData = await officerRepository.getAll();
+                }
+                setOfficers(officersData);
+              } catch (err) {
+                console.error('Error fetching officers:', err);
+                setOfficers([]);
+              }
             }
           } else {
             setError('Assignment not found');
@@ -231,27 +277,29 @@ const AssignmentForm: React.FC = () => {
         
         if (isEditing && id) {
           // For update, we only need to send the updatable fields
-          await assignmentRepository.update(id, {
-            officerId: formData.officerId,
+          const updateDto: UpdateDutyAssignmentDto = {
             shiftId: formData.shiftId,
-            date: formData.date,
             assignmentType: formData.assignmentType,
-            notes: formData.notes || undefined,
-            dutyRosterId: formData.dutyRosterId
-          });
+            notes: formData.notes || undefined
+          };
+          
+          // Use specialized updateAssignment method
+          await assignmentRepository.updateAssignment(id, updateDto);
           
           setSuccess('Assignment updated successfully');
         } else {
           // For create, we need all required fields
-          await assignmentRepository.create({
-            officerId: formData.officerId,
-            shiftId: formData.shiftId,
-            date: formData.date,
-            assignmentType: formData.assignmentType,
-            notes: formData.notes || undefined,
+          const createDto: CreateDutyAssignmentDto = {
             dutyRosterId: formData.dutyRosterId,
-            assignedAt: new Date().toISOString()
-          });
+            officerId: formData.officerId,
+            date: formData.date,
+            shiftId: formData.shiftId,
+            assignmentType: formData.assignmentType,
+            notes: formData.notes || undefined
+          };
+          
+          // Use specialized createAssignment method
+          await assignmentRepository.createAssignment(createDto);
           
           setSuccess('Assignment created successfully');
         }
@@ -465,7 +513,7 @@ const AssignmentForm: React.FC = () => {
                     >
                       {officers.map(officer => (
                         <MenuItem key={officer.id} value={officer.id}>
-                          {officer.name} ({officer.rank})
+                          {officer.firstName} {officer.lastName} {officer.rank ? `(${officer.rank.abbreviation})` : ''}
                         </MenuItem>
                       ))}
                     </Select>

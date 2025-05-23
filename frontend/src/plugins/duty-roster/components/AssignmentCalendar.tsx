@@ -4,12 +4,13 @@ import {
   Grid, Select, MenuItem, FormControl, 
   InputLabel, Button, Divider, Card, CardContent, 
   CardHeader, Chip, useTheme, alpha, IconButton, 
-  Tooltip, Link, Breadcrumbs
+  Tooltip, Link, Breadcrumbs, Avatar, Paper, ToggleButtonGroup, ToggleButton
 } from '@mui/material';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+import { PickersDay } from '@mui/x-date-pickers/PickersDay';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { format } from 'date-fns';
+import { format, isSameDay, addMonths, subMonths } from 'date-fns';
 import { useData } from '../../../core/data/data-context';
 import { DutyRosterRepository } from '../repositories/duty-roster-repository';
 import { DutyAssignmentRepository } from '../repositories/duty-assignment-repository';
@@ -24,12 +25,19 @@ import {
   Schedule as ScheduleIcon,
   CalendarMonth as CalendarIcon,
   Assignment as AssignmentIcon,
-  Category as CategoryIcon
+  Today as TodayIcon,
+  ViewDay as ViewDayIcon,
+  ViewWeek as ViewWeekIcon,
+  ViewModule as ViewMonthIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon
 } from '@mui/icons-material';
 
 interface DateAssignmentsMap {
   [dateString: string]: DutyAssignment[];
 }
+
+type ViewMode = 'day' | 'week' | 'month';
 
 const AssignmentCalendar: React.FC = () => {
   const dataContext = useData();
@@ -41,12 +49,14 @@ const AssignmentCalendar: React.FC = () => {
   const [, setAssignments] = useState<DutyAssignment[]>([]);
   const [dateAssignmentsMap, setDateAssignmentsMap] = useState<DateAssignmentsMap>({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [stats, setStats] = useState({
     totalAssignments: 0,
     totalDates: 0,
     assignedOfficers: 0
   });
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
 
   // Define fetchAssignments function before it's used
   const fetchAssignments = async () => {
@@ -61,6 +71,7 @@ const AssignmentCalendar: React.FC = () => {
         dataContext.storage
       );
 
+      // Use the specialized getByRosterId method
       const rosterAssignments = await assignmentRepository.getByRosterId(selectedRosterId);
       setAssignments(rosterAssignments);
       
@@ -90,6 +101,85 @@ const AssignmentCalendar: React.FC = () => {
       console.error('Error fetching assignments:', err);
       setError('Failed to load assignments');
       setLoading(false);
+    }
+  };
+
+  // Custom day renderer for the calendar
+  const renderDay = (day: Date | null, _selectedDays: Array<Date> | null, pickersDayProps: any) => {
+    try {
+      // Check if day is valid before processing
+      if (!day) {
+        return <PickersDay {...pickersDayProps} day={new Date()} />;
+      }
+      
+      // Explicit check for getTime function before using it
+      if (typeof day.getTime !== 'function') {
+        console.warn('Day is not a proper Date object:', day);
+        return <PickersDay {...pickersDayProps} day={new Date()} />;
+      }
+      
+      let formattedDate;
+      try {
+        formattedDate = format(day, 'yyyy-MM-dd');
+      } catch (err) {
+        console.warn('Error formatting date:', err);
+        return <PickersDay {...pickersDayProps} day={day} />;
+      }
+      
+      const assignments = dateAssignmentsMap[formattedDate] || [];
+      const assignmentCount = assignments.length;
+      const hasAssignments = assignmentCount > 0;
+      let isSelected = false;
+      
+      try {
+        isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
+      } catch (err) {
+        console.warn('Error comparing dates:', err);
+      }
+      
+      // Simplified rendering with fewer style variations to avoid potential issues
+      return (
+        <Box sx={{ position: 'relative' }}>
+          <PickersDay 
+            {...pickersDayProps} 
+            day={day} 
+            selected={isSelected}
+            sx={{ 
+              ...(isSelected && {
+                backgroundColor: alpha(theme.palette.primary.main, 0.2),
+              }),
+              ...(hasAssignments && {
+                fontWeight: 'bold',
+              })
+            }}
+          />
+          {hasAssignments && (
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: 2,
+                left: 0,
+                right: 0,
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <Box
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  bgcolor: theme.palette.primary.main
+                }}
+              />
+            </Box>
+          )}
+        </Box>
+      );
+    } catch (error) {
+      console.error('Error rendering calendar day:', error);
+      // Fallback to default rendering in case of any error
+      return <PickersDay {...pickersDayProps} day={new Date()} />;
     }
   };
 
@@ -151,7 +241,40 @@ const AssignmentCalendar: React.FC = () => {
     }
   };
 
-  const selectedDateAssignments = dateAssignmentsMap[format(selectedDate, 'yyyy-MM-dd')] || [];
+  const handleViewModeChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newViewMode: ViewMode | null,
+  ) => {
+    if (newViewMode !== null) {
+      setViewMode(newViewMode);
+    }
+  };
+
+  const handleTodayClick = () => {
+    const today = new Date();
+    setSelectedDate(today);
+    setCalendarMonth(today);
+  };
+
+  const handlePrevMonth = () => {
+    setCalendarMonth(prevMonth => subMonths(prevMonth, 1));
+  };
+  
+  const handleNextMonth = () => {
+    setCalendarMonth(prevMonth => addMonths(prevMonth, 1));
+  };
+
+  // Get formatted date for assignments, with error handling
+  const getFormattedSelectedDate = () => {
+    try {
+      return selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
+    } catch (err) {
+      console.error('Error formatting selectedDate:', err);
+      return '';
+    }
+  };
+
+  const selectedDateAssignments = dateAssignmentsMap[getFormattedSelectedDate()] || [];
   
   // Get the selected roster name
   const selectedRoster = rosters.find(r => r.id === selectedRosterId);
@@ -162,6 +285,28 @@ const AssignmentCalendar: React.FC = () => {
     const formattedDate = format(selectedDate, 'yyyy-MM-dd');
     navigate(`/duty-roster/assignments/create?rosterId=${selectedRosterId}&date=${formattedDate}`);
   };
+
+  // Get initials for officer avatar
+  const getOfficerInitials = (firstName: string, lastName: string) => {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`;
+  };
+
+  // Get avatar color based on officer name
+  const getAvatarColor = (officerId: string) => {
+    const colors = [
+      theme.palette.primary.main,
+      theme.palette.secondary.main,
+      theme.palette.success.main,
+      theme.palette.info.main,
+      theme.palette.warning.main
+    ];
+    
+    // Simple hash function to get consistent color for the same officer
+    const hash = officerId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
+  };
+
+  // Format date for display with error handling
 
   if (!dataContext) {
     return (
@@ -208,19 +353,13 @@ const AssignmentCalendar: React.FC = () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            disabled={!selectedRosterId}
             onClick={handleAddAssignment}
+            disabled={!selectedRosterId}
           >
             Add Assignment
           </Button>
         </Box>
       </Box>
-      
-      {error && (
-        <Box sx={{ mb: 3, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
-          <Typography color="error.contrastText">{error}</Typography>
-        </Box>
-      )}
       
       {/* Overlay for loading state */}
       {loading && (
@@ -274,6 +413,27 @@ const AssignmentCalendar: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+                <ToggleButtonGroup
+                  value={viewMode}
+                  exclusive
+                  onChange={handleViewModeChange}
+                  aria-label="view mode"
+                  size="small"
+                >
+                  <ToggleButton value="day" aria-label="day view">
+                    <ViewDayIcon fontSize="small" />
+                  </ToggleButton>
+                  <ToggleButton value="week" aria-label="week view">
+                    <ViewWeekIcon fontSize="small" />
+                  </ToggleButton>
+                  <ToggleButton value="month" aria-label="month view">
+                    <ViewMonthIcon fontSize="small" />
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
             </Grid>
           </Grid>
         </CardContent>
@@ -402,12 +562,31 @@ const AssignmentCalendar: React.FC = () => {
           >
             <CardHeader 
               title="Duty Calendar" 
-              subheader={selectedRoster ? `${selectedRoster.name}` : "Select a roster"}
+              subheader={selectedRoster ? `${selectedRoster.name} - ${format(calendarMonth, 'MMMM yyyy')}` : "Select a roster"}
+              action={
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Button
+                    size="small"
+                    startIcon={<TodayIcon />}
+                    onClick={handleTodayClick}
+                    sx={{ mr: 1 }}
+                  >
+                    Today
+                  </Button>
+                  <IconButton size="small" onClick={handlePrevMonth}>
+                    <ChevronLeftIcon />
+                  </IconButton>
+                  <IconButton size="small" onClick={handleNextMonth}>
+                    <ChevronRightIcon />
+                  </IconButton>
+                </Box>
+              }
             />
             <Divider />
             <CardContent>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DateCalendar 
+                  key={`calendar-${selectedRosterId || 'default'}`}
                   value={selectedDate}
                   onChange={handleDateChange}
                 />
@@ -421,17 +600,28 @@ const AssignmentCalendar: React.FC = () => {
             elevation={0}
             sx={{ 
               borderRadius: 2,
-              border: `1px solid ${theme.palette.divider}`
+              border: `1px solid ${theme.palette.divider}`,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column'
             }}
           >
             <CardHeader 
-              title={`Assignments for ${format(selectedDate, 'MMMM d, yyyy')}`}
+              title={(() => {
+                try {
+                  return `Assignments for ${format(selectedDate, 'MMMM d, yyyy')}`;
+                } catch (err) {
+                  console.error('Error formatting date in title:', err);
+                  return 'Assignments for selected date';
+                }
+              })()}
               subheader={`${selectedDateAssignments.length} assignments`}
               action={
                 <Tooltip title="Add Assignment">
                   <IconButton 
                     disabled={!selectedRosterId}
                     onClick={handleAddAssignment}
+                    color="primary"
                   >
                     <AddIcon />
                   </IconButton>
@@ -439,9 +629,26 @@ const AssignmentCalendar: React.FC = () => {
               }
             />
             <Divider />
-            <CardContent sx={{ maxHeight: 400, overflow: 'auto' }}>
+            <CardContent sx={{ flexGrow: 1, overflow: 'auto' }}>
               {selectedDateAssignments.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Box 
+                  sx={{ 
+                    textAlign: 'center', 
+                    py: 4, 
+                    height: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}
+                >
+                  <CalendarIcon 
+                    sx={{ 
+                      fontSize: 48, 
+                      color: alpha(theme.palette.text.secondary, 0.2),
+                      mb: 2
+                    }} 
+                  />
                   <Typography color="text.secondary" gutterBottom>
                     No assignments for this date
                   </Typography>
@@ -450,7 +657,7 @@ const AssignmentCalendar: React.FC = () => {
                     startIcon={<AddIcon />}
                     disabled={!selectedRosterId}
                     onClick={handleAddAssignment}
-                    sx={{ mt: 1 }}
+                    sx={{ mt: 2 }}
                   >
                     Add Assignment
                   </Button>
@@ -459,47 +666,88 @@ const AssignmentCalendar: React.FC = () => {
                 selectedDateAssignments.map(assignment => (
                   <Card
                     key={assignment.id}
+                    component={Paper}
                     elevation={0}
                     sx={{ 
                       mb: 2, 
                       border: `1px solid ${theme.palette.divider}`,
-                      borderRadius: 1,
+                      borderRadius: 2,
+                      transition: 'all 0.2s',
                       '&:hover': {
                         borderColor: theme.palette.primary.main,
-                        boxShadow: `0 0 0 1px ${theme.palette.primary.main}`
+                        boxShadow: `0 4px 8px rgba(0,0,0,0.1)`,
+                        transform: 'translateY(-2px)'
                       }
                     }}
                   >
-                    <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+                    <CardContent sx={{ py: 2, px: 2, '&:last-child': { pb: 2 } }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                        {assignment.officer ? (
+                          <Avatar 
+                            sx={{ 
+                              bgcolor: getAvatarColor(assignment.officer.id),
+                              width: 40,
+                              height: 40,
+                              mr: 2,
+                              fontSize: '1rem'
+                            }}
+                          >
+                            {getOfficerInitials(assignment.officer.firstName, assignment.officer.lastName)}
+                          </Avatar>
+                        ) : (
+                          <Avatar sx={{ mr: 2 }}>
+                            <PersonIcon />
+                          </Avatar>
+                        )}
+                        <Box>
+                          <Typography variant="subtitle1" fontWeight="500" sx={{ lineHeight: 1.2 }}>
+                            {assignment.officer ? 
+                              `${assignment.officer.firstName} ${assignment.officer.lastName}` : 
+                              'Unknown Officer'}
+                          </Typography>
+                          {assignment.officer?.rank && (
+                            <Typography variant="caption" color="text.secondary">
+                              {assignment.officer.rank.name}
+                            </Typography>
+                          )}
+                        </Box>
+                        <Box sx={{ ml: 'auto' }}>
+                          <Chip
+                            label={assignment.assignmentType}
+                            size="small"
+                            color={assignment.assignmentType === 'REGULAR' ? 'primary' : 'secondary'}
+                            variant="outlined"
+                          />
+                        </Box>
+                      </Box>
+                      
+                      <Divider sx={{ my: 1.5 }} />
+                      
                       <Grid container spacing={1}>
                         <Grid size={{ xs: 12 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <PersonIcon fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                            <Typography variant="subtitle1" fontWeight="500">
-                              {(assignment.officer as any)?.name || 'Unknown Officer'}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        <Grid size={{ xs: 6 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <ScheduleIcon fontSize="small" sx={{ mr: 1, color: theme.palette.text.secondary }} />
-                            <Typography variant="body2" color="text.secondary">
-                              {(assignment.shift as any)?.startTime} - {(assignment.shift as any)?.endTime}
+                            <Typography variant="body2" color="text.secondary" fontWeight="medium">
+                              {assignment.shift ? 
+                                `${assignment.shift.startTime.substring(0, 5)} - ${assignment.shift.endTime.substring(0, 5)}` : 
+                                'No time specified'}
                             </Typography>
-                          </Box>
-                        </Grid>
-                        <Grid size={{ xs: 6 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <CategoryIcon fontSize="small" sx={{ mr: 1, color: theme.palette.text.secondary }} />
-                            <Chip
-                              label={assignment.assignmentType}
-                              size="small"
-                              color="primary"
-                              variant="outlined"
-                            />
+                            {assignment.shift?.name && (
+                              <Typography variant="body2" sx={{ ml: 1 }}>
+                                ({assignment.shift.name})
+                              </Typography>
+                            )}
                           </Box>
                         </Grid>
                       </Grid>
+                      
+                      {assignment.notes && (
+                        <Box sx={{ mt: 1.5, bgcolor: alpha(theme.palette.background.default, 0.7), p: 1, borderRadius: 1 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            {assignment.notes}
+                          </Typography>
+                        </Box>
+                      )}
                     </CardContent>
                   </Card>
                 ))

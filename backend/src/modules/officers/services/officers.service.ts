@@ -90,4 +90,94 @@ export class OfficersService {
     const { passwordHash, salt, ...safeOfficer } = officer;
     return safeOfficer as Officer;
   }
+
+  /**
+   * Find all officers
+   * @returns Array of all officers with relations
+   */
+  async findAll(): Promise<Officer[]> {
+    const officers = await this.officersRepository.find({
+      relations: {
+        rank: true,
+        organization: true,
+        primaryUnit: true,
+        department: true
+      }
+    });
+
+    // Remove sensitive information
+    return officers.map(officer => {
+      const { passwordHash, salt, ...safeOfficer } = officer;
+      return safeOfficer as Officer;
+    });
+  }
+
+  /**
+   * Find officers by unit ID
+   * @param unitId The unit ID to filter by
+   * @returns Array of officers in the specified unit
+   */
+  async findByUnitId(unitId: string): Promise<Officer[]> {
+    const officers = await this.officersRepository.find({
+      where: { primaryUnitId: unitId },
+      relations: {
+        rank: true,
+        organization: true,
+        primaryUnit: true,
+        department: true
+      }
+    });
+
+    // Remove sensitive information
+    return officers.map(officer => {
+      const { passwordHash, salt, ...safeOfficer } = officer;
+      return safeOfficer as Officer;
+    });
+  }
+
+  /**
+   * Find officers by organization ID
+   * @param organizationId The organization ID to filter by
+   * @returns Array of officers in the specified organization
+   */
+  async findByOrganizationId(organizationId: string): Promise<Officer[]> {
+    const officers = await this.officersRepository.find({
+      where: { organizationId },
+      relations: {
+        rank: true,
+        organization: true,
+        primaryUnit: true,
+        department: true
+      }
+    });
+
+    // Remove sensitive information
+    return officers.map(officer => {
+      const { passwordHash, salt, ...safeOfficer } = officer;
+      return safeOfficer as Officer;
+    });
+  }
+
+  /**
+   * Find officers by department ID
+   * @param departmentId The department ID to filter by
+   * @returns Array of officers in the specified department
+   */
+  async findByDepartmentId(departmentId: string): Promise<Officer[]> {
+    const officers = await this.officersRepository.find({
+      where: { departmentId },
+      relations: {
+        rank: true,
+        organization: true,
+        primaryUnit: true,
+        department: true
+      }
+    });
+
+    // Remove sensitive information
+    return officers.map(officer => {
+      const { passwordHash, salt, ...safeOfficer } = officer;
+      return safeOfficer as Officer;
+    });
+  }
 }
