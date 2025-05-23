@@ -29,7 +29,8 @@ import {
   ViewWeek as ViewWeekIcon,
   ViewModule as ViewMonthIcon,
   ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  Print as PrintIcon
 } from '@mui/icons-material';
 
 interface DateAssignmentsMap {
@@ -184,6 +185,434 @@ const AssignmentCalendar: React.FC = () => {
     setCalendarMonth(prevMonth => addMonths(prevMonth, 1));
   };
 
+  // Handle printing of duty chart
+  const handlePrintDutyChart = () => {
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow popups for this website to print the duty chart');
+      return;
+    }
+    
+    // Get the formatted date
+    let formattedDate = '';
+    try {
+      formattedDate = format(selectedDate, 'MMMM d, yyyy');
+    } catch (err) {
+      formattedDate = 'Selected date';
+    }
+    
+    // Get roster info
+    const rosterName = selectedRoster?.name || 'Duty Roster';
+    const unitName = selectedRoster?.unit?.name || '';
+
+    // Generate the HTML content for the print window
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Duty Chart - ${formattedDate}</title>
+        <style>
+          :root {
+            --primary-color: #1976d2;
+            --secondary-color: #c2185b;
+            --light-gray: #f5f5f5;
+            --border-color: #e0e0e0;
+          }
+          
+          * {
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            color: #333;
+            line-height: 1.5;
+          }
+          
+          .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          
+          .document {
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: white;
+          }
+          
+          .header {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+          }
+          
+          .header-decoration {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: repeating-linear-gradient(
+              45deg,
+              rgba(255,255,255,0.1),
+              rgba(255,255,255,0.1) 10px,
+              transparent 10px,
+              transparent 20px
+            );
+          }
+          
+          .title {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+          }
+          
+          .subtitle {
+            font-size: 18px;
+            margin: 5px 0 0;
+            opacity: 0.9;
+            font-weight: 500;
+          }
+          
+          .details-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            gap: 20px;
+          }
+          
+          .detail-item {
+            padding: 5px 15px;
+            border-radius: 20px;
+            background-color: rgba(255,255,255,0.2);
+            font-size: 14px;
+            font-weight: 500;
+          }
+          
+          .body-container {
+            padding: 20px;
+          }
+          
+          .info-section {
+            background-color: var(--light-gray);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+          }
+          
+          .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+          }
+          
+          .info-item {
+            background-color: white;
+            border-radius: 6px;
+            padding: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          }
+          
+          .info-title {
+            font-size: 12px;
+            color: #666;
+            margin: 0 0 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          
+          .info-value {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+            color: #333;
+          }
+          
+          .assignments-container {
+            margin-top: 20px;
+          }
+          
+          .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+          }
+          
+          .assignments {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+          }
+          
+          .assignments th {
+            background-color: var(--light-gray);
+            color: #555;
+            font-weight: 600;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          
+          .assignments td {
+            padding: 12px 15px;
+            border-top: 1px solid var(--border-color);
+            font-size: 14px;
+          }
+          
+          .assignments tr:nth-child(even) {
+            background-color: #f9f9f9;
+          }
+          
+          .assignments tr:hover {
+            background-color: #f0f7ff;
+          }
+          
+          .shift-type {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+          }
+          
+          .regular {
+            background-color: #e3f2fd;
+            color: var(--primary-color);
+          }
+          
+          .special {
+            background-color: #fce4ec;
+            color: var(--secondary-color);
+          }
+          
+          .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 5px;
+            margin-bottom: 5px;
+          }
+          
+          .notes {
+            font-style: italic;
+            color: #666;
+          }
+          
+          .no-data {
+            text-align: center;
+            padding: 40px;
+            font-style: italic;
+            color: #777;
+            background-color: var(--light-gray);
+            border-radius: 6px;
+          }
+          
+          .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            color: #777;
+            font-size: 12px;
+          }
+          
+          .button-container {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+          }
+          
+          .button {
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          
+          .print-button {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 5px rgba(25, 118, 210, 0.3);
+          }
+          
+          .print-button:hover {
+            background-color: #1565c0;
+            box-shadow: 0 4px 8px rgba(25, 118, 210, 0.4);
+          }
+          
+          .close-button {
+            background-color: #f5f5f5;
+            color: #333;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          }
+          
+          .close-button:hover {
+            background-color: #e0e0e0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+          }
+          
+          @media print {
+            body {
+              padding: 0;
+              margin: 0;
+            }
+            
+            .container {
+              padding: 0;
+              max-width: none;
+            }
+            
+            .document {
+              border: none;
+              box-shadow: none;
+              border-radius: 0;
+            }
+            
+            .header {
+              background: white !important;
+              color: #333;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            
+            .header-decoration,
+            .button-container,
+            .no-print {
+              display: none !important;
+            }
+            
+            .footer {
+              margin-top: 20px;
+            }
+            
+            .assignments {
+              box-shadow: none;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="document">
+            <div class="header">
+              <div class="header-decoration"></div>
+              <h1 class="title">Daily Duty Chart</h1>
+              <h2 class="subtitle">${rosterName}</h2>
+              <div class="details-row">
+                <div class="detail-item">${formattedDate}</div>
+                ${unitName ? `<div class="detail-item">${unitName}</div>` : ''}
+              </div>
+            </div>
+            
+            <div class="body-container">
+              <div class="info-section">
+                <div class="info-grid">
+                  <div class="info-item">
+                    <h4 class="info-title">Total Assignments</h4>
+                    <p class="info-value">${selectedDateAssignments.length}</p>
+                  </div>
+                  <div class="info-item">
+                    <h4 class="info-title">Roster Period</h4>
+                    <p class="info-value">${selectedRoster ? `${format(new Date(selectedRoster.startDate), 'MMM dd')} - ${format(new Date(selectedRoster.endDate), 'MMM dd, yyyy')}` : 'N/A'}</p>
+                  </div>
+                  <div class="info-item">
+                    <h4 class="info-title">Generated On</h4>
+                    <p class="info-value">${format(new Date(), 'MMM dd, yyyy h:mm a')}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="assignments-container">
+                <h3 class="section-title">Assignments for ${formattedDate}</h3>
+                
+                ${selectedDateAssignments.length > 0 ? `
+                  <table class="assignments">
+                    <thead>
+                      <tr>
+                        <th>Officer</th>
+                        <th>Rank</th>
+                        <th>Shift Time</th>
+                        <th>Assignment Type</th>
+                        <th>Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${selectedDateAssignments.map(assignment => `
+                        <tr>
+                          <td>${assignment.officer ? `${assignment.officer.firstName} ${assignment.officer.lastName}` : 'Unknown Officer'}</td>
+                          <td>${assignment.officer?.rank ? assignment.officer.rank.name : ''}</td>
+                          <td>${assignment.shift ? `${assignment.shift.startTime.substring(0, 5)} - ${assignment.shift.endTime.substring(0, 5)}` : 'No time specified'} ${assignment.shift?.name ? `<div class="badge">${assignment.shift.name}</div>` : ''}</td>
+                          <td><div class="shift-type ${assignment.assignmentType.toLowerCase()}">${assignment.assignmentType}</div></td>
+                          <td class="notes">${assignment.notes || ''}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                ` : `
+                  <div class="no-data">No assignments found for this date</div>
+                `}
+              </div>
+            </div>
+            
+            <div class="footer">
+              <div>Generated from Duty Roster Management System</div>
+              <div>Page 1 of 1</div>
+            </div>
+          </div>
+          
+          <div class="button-container no-print">
+            <button class="button close-button" onclick="window.close();">Close</button>
+            <button class="button print-button" onclick="window.print();">Print Chart</button>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    // Write to the new window and trigger print
+    printWindow.document.open();
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // Give the browser a moment to load the content before showing print dialog
+    printWindow.onload = function() {
+      // Uncomment below to automatically trigger the print dialog
+      // printWindow.print();
+    };
+  };
+
   // Get formatted date for assignments, with error handling
   const getFormattedSelectedDate = () => {
     try {
@@ -269,6 +698,15 @@ const AssignmentCalendar: React.FC = () => {
             sx={{ mr: 2 }}
           >
             Refresh
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<PrintIcon />}
+            onClick={handlePrintDutyChart}
+            disabled={!selectedRosterId || selectedDateAssignments.length === 0}
+            sx={{ mr: 2 }}
+          >
+            Print Chart
           </Button>
           <Button
             variant="contained"
@@ -537,15 +975,26 @@ const AssignmentCalendar: React.FC = () => {
               })()}
               subheader={`${selectedDateAssignments.length} assignments`}
               action={
-                <Tooltip title="Add Assignment">
-                  <IconButton 
-                    disabled={!selectedRosterId}
-                    onClick={handleAddAssignment}
-                    color="primary"
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </Tooltip>
+                <Box>
+                  <Tooltip title="Print Duty Chart">
+                    <IconButton 
+                      onClick={handlePrintDutyChart}
+                      color="primary"
+                      sx={{ mr: 1 }}
+                    >
+                      <PrintIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Add Assignment">
+                    <IconButton 
+                      disabled={!selectedRosterId}
+                      onClick={handleAddAssignment}
+                      color="primary"
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               }
             />
             <Divider />
