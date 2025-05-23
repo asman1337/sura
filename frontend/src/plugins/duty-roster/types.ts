@@ -100,23 +100,18 @@ export interface UpdateDutyRosterDto {
 
 // Create Duty Shift DTO
 export interface CreateDutyShiftDto {
-  rosterId: string;
-  date: string;
+  name: string;
   startTime: string;
   endTime: string;
-  type: string;
-  location: string;
-  notes?: string;
+  isDefault?: boolean;
 }
 
 // Update Duty Shift DTO
 export interface UpdateDutyShiftDto {
-  date?: string;
+  name?: string; 
   startTime?: string;
   endTime?: string;
-  type?: string;
-  location?: string;
-  notes?: string;
+  isDefault?: boolean;
 }
 
 // Create Duty Assignment DTO

@@ -6,7 +6,6 @@ import {
   TableRow, IconButton, TextField, 
   Dialog, DialogActions, DialogContent, 
   DialogContentText, DialogTitle,
-  FormControl, InputLabel, Select, MenuItem,
   Chip, Tooltip, Card, CardHeader, CardContent,
   Divider, alpha, useTheme, Link, Breadcrumbs
 } from '@mui/material';
@@ -20,13 +19,8 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
-  FilterList as FilterIcon,
   Search as SearchIcon,
   AccessTime as TimeIcon,
-  LocationOn as LocationIcon,
-  Category as CategoryIcon,
-  DarkMode as NightIcon,
-  WbSunny as DayIcon,
   WorkOutline as WorkIcon
 } from '@mui/icons-material';
 
@@ -39,14 +33,11 @@ const ShiftManagement: React.FC = () => {
   const [filteredShifts, setFilteredShifts] = useState<DutyShift[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [shiftToDelete, setShiftToDelete] = useState<string | null>(null);
   const [stats, setStats] = useState({
     total: 0,
-    types: 0,
-    locations: 0,
     defaultShifts: 0
   });
 
@@ -72,14 +63,10 @@ const ShiftManagement: React.FC = () => {
       setFilteredShifts(allShifts);
       
       // Calculate statistics
-      const uniqueTypes = new Set(allShifts.map(shift => shift.type)).size;
-      const uniqueLocations = new Set(allShifts.map(shift => shift.location)).size;
       const defaultShifts = allShifts.filter(shift => shift.isDefault).length;
       
       setStats({
         total: allShifts.length,
-        types: uniqueTypes,
-        locations: uniqueLocations,
         defaultShifts
       });
       
@@ -91,33 +78,22 @@ const ShiftManagement: React.FC = () => {
     }
   };
 
-  // Apply filters when filter type or search query changes
+  // Apply search filter when search query changes
   useEffect(() => {
     if (shifts.length === 0) return;
     
     let result = [...shifts];
     
-    // Apply filter by type
-    if (filterType !== 'all') {
-      result = result.filter(shift => shift.type === filterType);
-    }
-    
     // Apply search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(shift => 
-        shift.name?.toLowerCase().includes(query) ||
-        shift.location.toLowerCase().includes(query) ||
-        shift.type.toLowerCase().includes(query)
+        shift.name?.toLowerCase().includes(query)
       );
     }
     
     setFilteredShifts(result);
-  }, [shifts, filterType, searchQuery]);
-
-  const handleFilterTypeChange = (event: any) => {
-    setFilterType(event.target.value);
-  };
+  }, [shifts, searchQuery]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
@@ -152,41 +128,6 @@ const ShiftManagement: React.FC = () => {
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
     setShiftToDelete(null);
-  };
-
-  // Get unique shift types for filter dropdown
-  const shiftTypes = Array.from(new Set(shifts.map(shift => shift.type)));
-  
-  // Get shift type color
-  const getTypeColor = (type: string) => {
-    switch(type.toLowerCase()) {
-      case 'morning':
-      case 'day':
-        return 'primary';
-      case 'evening':
-      case 'night':
-        return 'secondary';
-      case 'special':
-        return 'warning';
-      case 'patrol':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
-  
-  // Get icon for shift type
-  const getTypeIcon = (type: string) => {
-    switch(type.toLowerCase()) {
-      case 'morning':
-      case 'day':
-        return <DayIcon fontSize="small" />;
-      case 'evening':
-      case 'night':
-        return <NightIcon fontSize="small" />;
-      default:
-        return <WorkIcon fontSize="small" />;
-    }
   };
 
   return (
@@ -253,7 +194,7 @@ const ShiftManagement: React.FC = () => {
       
       {/* Stats cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <Card 
             elevation={0}
             sx={{ 
@@ -289,79 +230,7 @@ const ShiftManagement: React.FC = () => {
           </Card>
         </Grid>
         
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card 
-            elevation={0}
-            sx={{ 
-              height: '100%',
-              borderRadius: 2,
-              border: `1px solid ${theme.palette.divider}`
-            }}
-          >
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Box sx={{ 
-                  bgcolor: alpha(theme.palette.success.main, 0.1),
-                  color: theme.palette.success.main,
-                  width: 48,
-                  height: 48,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <CategoryIcon fontSize="medium" />
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="h4" fontWeight="600">
-                    {stats.types}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Shift Types
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card 
-            elevation={0}
-            sx={{ 
-              height: '100%',
-              borderRadius: 2,
-              border: `1px solid ${theme.palette.divider}`
-            }}
-          >
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Box sx={{ 
-                  bgcolor: alpha(theme.palette.warning.main, 0.1),
-                  color: theme.palette.warning.main,
-                  width: 48,
-                  height: 48,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <LocationIcon fontSize="medium" />
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="h4" fontWeight="600">
-                    {stats.locations}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Locations
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <Card 
             elevation={0}
             sx={{ 
@@ -398,7 +267,7 @@ const ShiftManagement: React.FC = () => {
         </Grid>
       </Grid>
       
-      {/* Search and filter */}
+      {/* Search */}
       <Card 
         elevation={0}
         sx={{ 
@@ -409,13 +278,13 @@ const ShiftManagement: React.FC = () => {
       >
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Search shifts"
                 value={searchQuery}
                 onChange={handleSearchChange}
-                placeholder="Search by name, location, type..."
+                placeholder="Search by name"
                 size="small"
                 InputProps={{
                   startAdornment: (
@@ -425,32 +294,6 @@ const ShiftManagement: React.FC = () => {
                   ),
                 }}
               />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel id="filter-type-label">Filter by Type</InputLabel>
-                <Select
-                  labelId="filter-type-label"
-                  value={filterType}
-                  label="Filter by Type"
-                  onChange={handleFilterTypeChange}
-                  startAdornment={
-                    <Box sx={{ mr: 1, color: 'text.secondary' }}>
-                      <FilterIcon fontSize="small" />
-                    </Box>
-                  }
-                >
-                  <MenuItem value="all">All Types</MenuItem>
-                  {shiftTypes.map(type => (
-                    <MenuItem key={type} value={type}>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        {getTypeIcon(type)}
-                        <Box sx={{ ml: 1 }}>{type}</Box>
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
             </Grid>
           </Grid>
         </CardContent>
@@ -479,7 +322,7 @@ const ShiftManagement: React.FC = () => {
             <Typography variant="h6" gutterBottom>No shifts found</Typography>
             <Typography variant="body2" color="text.secondary" paragraph>
               {shifts.length > 0 
-                ? 'No shifts match your filter criteria. Try adjusting your filters.'
+                ? 'No shifts match your search criteria. Try adjusting your search.'
                 : 'Create your first shift template to get started'}
             </Typography>
             <Button
@@ -498,8 +341,6 @@ const ShiftManagement: React.FC = () => {
                 <TableRow>
                   <TableCell>Name</TableCell>
                   <TableCell>Time</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Location</TableCell>
                   <TableCell>Is Default</TableCell>
                   <TableCell align="center">Actions</TableCell>
                 </TableRow>
@@ -512,21 +353,6 @@ const ShiftManagement: React.FC = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <TimeIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
                         {shift.startTime} - {shift.endTime}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip 
-                        icon={getTypeIcon(shift.type)}
-                        label={shift.type} 
-                        color={getTypeColor(shift.type)}
-                        size="small" 
-                        sx={{ fontWeight: 500 }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <LocationIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                        {shift.location}
                       </Box>
                     </TableCell>
                     <TableCell>

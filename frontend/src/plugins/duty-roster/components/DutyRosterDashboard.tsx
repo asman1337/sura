@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import {
-  Box,
+import { 
+  Box, 
   Card,
   Grid,
   List,
@@ -12,7 +12,7 @@ import {
   useTheme,
   ListItem,
   IconButton,
-  Typography,
+  Typography, 
   CardHeader,
   CardContent,
   ListItemText,
@@ -273,8 +273,8 @@ const DutyRosterDashboard: React.FC = () => {
               </Box>
             </CardContent>
           </Card>
-        </Grid>
-        
+          </Grid>
+          
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card 
             component={RouterLink}
@@ -319,8 +319,8 @@ const DutyRosterDashboard: React.FC = () => {
               </Box>
             </CardContent>
           </Card>
-        </Grid>
-        
+          </Grid>
+          
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card 
             component={RouterLink}
@@ -365,8 +365,8 @@ const DutyRosterDashboard: React.FC = () => {
               </Box>
             </CardContent>
           </Card>
-        </Grid>
-        
+          </Grid>
+          
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card 
             elevation={0}
