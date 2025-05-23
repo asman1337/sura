@@ -7,10 +7,9 @@ import {
   Tooltip, Link, Breadcrumbs, Avatar, Paper, ToggleButtonGroup, ToggleButton
 } from '@mui/material';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
-import { PickersDay } from '@mui/x-date-pickers/PickersDay';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { format, isSameDay, addMonths, subMonths } from 'date-fns';
+import { format, addMonths, subMonths } from 'date-fns';
 import { useData } from '../../../core/data/data-context';
 import { DutyRosterRepository } from '../repositories/duty-roster-repository';
 import { DutyAssignmentRepository } from '../repositories/duty-assignment-repository';
@@ -101,85 +100,6 @@ const AssignmentCalendar: React.FC = () => {
       console.error('Error fetching assignments:', err);
       setError('Failed to load assignments');
       setLoading(false);
-    }
-  };
-
-  // Custom day renderer for the calendar
-  const renderDay = (day: Date | null, _selectedDays: Array<Date> | null, pickersDayProps: any) => {
-    try {
-      // Check if day is valid before processing
-      if (!day) {
-        return <PickersDay {...pickersDayProps} day={new Date()} />;
-      }
-      
-      // Explicit check for getTime function before using it
-      if (typeof day.getTime !== 'function') {
-        console.warn('Day is not a proper Date object:', day);
-        return <PickersDay {...pickersDayProps} day={new Date()} />;
-      }
-      
-      let formattedDate;
-      try {
-        formattedDate = format(day, 'yyyy-MM-dd');
-      } catch (err) {
-        console.warn('Error formatting date:', err);
-        return <PickersDay {...pickersDayProps} day={day} />;
-      }
-      
-      const assignments = dateAssignmentsMap[formattedDate] || [];
-      const assignmentCount = assignments.length;
-      const hasAssignments = assignmentCount > 0;
-      let isSelected = false;
-      
-      try {
-        isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
-      } catch (err) {
-        console.warn('Error comparing dates:', err);
-      }
-      
-      // Simplified rendering with fewer style variations to avoid potential issues
-      return (
-        <Box sx={{ position: 'relative' }}>
-          <PickersDay 
-            {...pickersDayProps} 
-            day={day} 
-            selected={isSelected}
-            sx={{ 
-              ...(isSelected && {
-                backgroundColor: alpha(theme.palette.primary.main, 0.2),
-              }),
-              ...(hasAssignments && {
-                fontWeight: 'bold',
-              })
-            }}
-          />
-          {hasAssignments && (
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: 2,
-                left: 0,
-                right: 0,
-                display: 'flex',
-                justifyContent: 'center'
-              }}
-            >
-              <Box
-                sx={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  bgcolor: theme.palette.primary.main
-                }}
-              />
-            </Box>
-          )}
-        </Box>
-      );
-    } catch (error) {
-      console.error('Error rendering calendar day:', error);
-      // Fallback to default rendering in case of any error
-      return <PickersDay {...pickersDayProps} day={new Date()} />;
     }
   };
 
