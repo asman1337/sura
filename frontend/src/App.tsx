@@ -11,6 +11,7 @@ import './App.css'
 // Import plugins - in a real app, these would be loaded dynamically
 import MalkhanaPlugin from './plugins/malkhana'
 import DutyRosterPlugin from './plugins/duty-roster'
+import RecordsPlugin from './plugins/records'
 
 // Create the store
 const store = createAppStore()
@@ -39,6 +40,7 @@ function AppShell() {
   const pluginsToLoad = useMemo(() => [
     MalkhanaPlugin,
     DutyRosterPlugin,
+    RecordsPlugin,
     // Add more plugins here
   ], []); // Empty dependency array ensures this is only computed once
 
