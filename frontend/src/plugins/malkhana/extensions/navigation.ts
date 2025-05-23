@@ -7,22 +7,27 @@ const navigationExtension = {
     
     // Check if this navigation item is already registered
     const existingNavItems = plugin.getExtensionPoints<NavigationItem>('navigation:main');
-    const navPath = '/malkhana';
+    console.log(`Found ${existingNavItems.length} existing navigation items`);
     
-    const hasExistingNavItem = existingNavItems.some(
-      item => item.data.path === navPath
+    const navPath = '/malkhana';
+    const navId = 'malkhana-main';
+    
+    // Check if navItem with this ID or path already exists
+    const hasNavItem = existingNavItems.some(
+      item => (item.data.id === navId || item.data.path === navPath)
     );
     
-    if (hasExistingNavItem) {
+    if (hasNavItem) {
       console.log(`Navigation item for path "${navPath}" already registered for plugin ${plugin.id}, skipping registration`);
       return;
     }
     
     // Register a navigation item for the plugin
+    console.log(`Registering navigation item for path "${navPath}" for plugin ${plugin.id}`);
     const extensionId = plugin.registerExtensionPoint<NavigationItem>(
       'navigation:main',
       {
-        id: 'malkhana-main',
+        id: navId,
         path: navPath,
         title: 'Malkhana',
         group: 'management',
@@ -34,10 +39,6 @@ const navigationExtension = {
     );
     
     console.log('Malkhana navigation registered with ID:', extensionId);
-    
-    // Check if the extension was registered successfully
-    const extensions = plugin.getExtensionPoints<NavigationItem>('navigation:main');
-    console.log('Current navigation extensions for plugin:', extensions);
     
     // Optional cleanup function
     return async () => {

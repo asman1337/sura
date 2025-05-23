@@ -264,11 +264,22 @@ export default {
   initialize: (plugin: Plugin) => {
     console.log('Malkhana widgets initialized for plugin:', plugin.id);
     
-    // Check if widgets are already registered
+    // Get existing widgets to check for duplicates
     const existingWidgets = plugin.getExtensionPoints<DashboardWidget>('dashboard:widgets');
+    console.log(`Found ${existingWidgets.length} existing widget extensions`);
+    
+    // Check if a widget with a specific title already exists
+    const hasWidget = (title: string) => {
+      return existingWidgets.some(widget => 
+        widget.data && 
+        'title' in widget.data && 
+        widget.data.title === title
+      );
+    };
     
     // Register Recent Items widget if not already registered
-    if (!existingWidgets.some(widget => widget.data.title === 'Malkhana Items')) {
+    if (!hasWidget('Malkhana Items')) {
+      console.log('Registering Malkhana Items widget');
       const recentItemsId = plugin.registerExtensionPoint<DashboardWidget>(
         'dashboard:widgets',
         {
@@ -279,10 +290,13 @@ export default {
         { priority: 10 }
       );
       console.log(`Registered Recent Items widget with ID: ${recentItemsId}`);
+    } else {
+      console.log('Malkhana Items widget already registered, skipping');
     }
     
     // Register Stats widget if not already registered
-    if (!existingWidgets.some(widget => widget.data.title === 'Malkhana Stats')) {
+    if (!hasWidget('Malkhana Stats')) {
+      console.log('Registering Malkhana Stats widget');
       const statsId = plugin.registerExtensionPoint<DashboardWidget>(
         'dashboard:widgets',
         {
@@ -293,6 +307,8 @@ export default {
         { priority: 20 }
       );
       console.log(`Registered Stats widget with ID: ${statsId}`);
+    } else {
+      console.log('Malkhana Stats widget already registered, skipping');
     }
     
     // Optional cleanup function

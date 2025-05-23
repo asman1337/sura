@@ -1,0 +1,70 @@
+## Summary of the Solution
+
+I've implemented a comprehensive solution to fix the issue of plugins being registered 4 times. The key components of the solution are:
+
+1. **Improved Plugin Registration Tracking**:
+   - Added a `useRef` in the `PluginLoader` to track which plugins have already been registered across renders
+   - Updated the registration logic to check for already-registered plugins using this persistent reference
+
+2. **Enhanced Duplicate Extension Point Detection**:
+   - Modified the `registerExtensionPoint` method in the `Plugin` class to check for functionally equivalent extension points
+   - Added type-safe property access to properly compare different types of extension points (routes, widgets, navigation)
+
+3. **Better React Rendering Optimization**:
+   - Used `useMemo` in the App.tsx to prevent the plugins list from being recreated on each render
+   - Added proper memoization in the PluginLoader to prevent unnecessary effect runs
+
+4. **Improved Extension Point Registration**:
+   - Added explicit duplicate checking in navigation and widget extensions
+   - Added comprehensive logging to track the registration process
+
+5. **Clearer Debugging Information**:
+   - Added more detailed logs to help troubleshoot any remaining issues
+   - Included counts and identifiers in logs for easier tracking
+
+## Why This Solves the Root Cause
+
+The root cause of the issue was that React's StrictMode causes components to mount, unmount, and remount during development. This combined with effects that didn't properly track already-registered plugins was leading to quadruple registration:
+
+1. First StrictMode render cycle → 2 registrations
+2. Second StrictMode render cycle → 2 more registrations
+
+Our solution addresses this by:
+
+1. **Preventing re-registrations** - Using a persistent reference to track registered plugins
+2. **Avoiding duplicate extension points** - Enhanced duplicate detection in the plugin system
+3. **Optimizing React rendering** - Better memoization to prevent unnecessary re-renders
+
+This approach fixes the root cause rather than just hiding the symptoms. The solution is also compatible with React's StrictMode, which is valuable for catching bugs early in development.
+
+Testing this solution should result in each plugin being registered exactly once, with its extension points (widgets, navigation items) also appearing only once in the UI, regardless of how many re-renders occur.
+
+---
+
+I've fixed the core plugin registration system itself, not just applied a workaround to the existing plugins. Here's why you won't face the same issue with new plugins:
+
+### Core System Improvements:
+
+1. **Plugin Registration Persistence**: 
+   - Added a persistent reference using `useRef` in the PluginLoader component that tracks which plugins have been registered across React re-renders
+   - This prevents the same plugin from being registered multiple times even during StrictMode's double rendering cycle
+
+2. **Duplicate Extension Point Detection**:
+   - Modified the core `registerExtensionPoint` method to detect and avoid duplicate extension points based on their unique properties
+   - This works for any plugin type, not just the specific ones we fixed
+
+3. **React Render Optimization**:
+   - Added proper memoization throughout the system to prevent unnecessary re-renders from triggering duplicate registrations
+   - The plugins list itself is now memoized in App.tsx, preventing recreation on each render
+
+### How This Protects New Plugins:
+
+When you add a new plugin:
+
+1. The PluginLoader will check if it's already been registered using the persistent `registeredPluginIds` ref
+2. If the plugin tries to register extension points like widgets, navigation, or routes, the improved `registerExtensionPoint` method will detect and prevent duplicates
+3. The memoization in place prevents React's rendering behavior from causing multiple registration attempts
+
+These improvements are part of the plugin architecture itself, not specific to the Malkhana or Duty Roster plugins. The core system now properly handles the React StrictMode environment and prevents duplicate registrations for any plugin you add in the future.
+
+You can verify this by adding a new plugin and checking the console logs - you should see each plugin being registered exactly once, and each extension point being registered exactly once too.

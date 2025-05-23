@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Provider as ReduxProvider } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
 import { PluginProvider, PluginLoader } from './core/plugins'
@@ -15,12 +15,13 @@ import DutyRosterPlugin from './plugins/duty-roster'
 // Create the store
 const store = createAppStore()
 
-// List of plugins to load - ensure each plugin is included only once
-const pluginsToLoad = [
-  MalkhanaPlugin,
-  DutyRosterPlugin,
-  // Add more plugins here
-]
+// React Router future flags
+const routerOptions = {
+  future: {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true
+  }
+};
 
 // App configuration
 const dataConfig = {
@@ -30,17 +31,16 @@ const dataConfig = {
   syncInterval: 60000 // 1 minute
 } 
 
-// React Router future flags
-const routerOptions = {
-  future: {
-    v7_startTransition: true,
-    v7_relativeSplatPath: true
-  }
-};
-
 // App Shell handles app layout after plugins are loaded
 function AppShell() {
   const [pluginsReady, setPluginsReady] = useState(false)
+  
+  // Memoize plugins to prevent re-registration on re-renders
+  const pluginsToLoad = useMemo(() => [
+    MalkhanaPlugin,
+    DutyRosterPlugin,
+    // Add more plugins here
+  ], []); // Empty dependency array ensures this is only computed once
 
   // Handler for when plugins are loaded
   const handlePluginsLoaded = () => {

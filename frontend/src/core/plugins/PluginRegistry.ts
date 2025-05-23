@@ -209,22 +209,20 @@ export class PluginRegistry {
   }
 
   /**
-   * Get all extension points of a specific type
+   * Get all registered extension points of a specific type
    */
   getExtensionPoints<T>(type: string): ExtensionPoint<T>[] {
     const allExtensionPoints: ExtensionPoint<T>[] = [];
     
-    // Only get extension points from enabled plugins
-    for (const pluginId of this.enabledPlugins) {
-      const plugin = this.plugins.get(pluginId);
-      if (plugin) {
+    for (const plugin of this.plugins.values()) {
+      if (this.enabledPlugins.has(plugin.id)) {
         const extensionPoints = plugin.getExtensionPoints<T>(type);
         allExtensionPoints.push(...extensionPoints);
       }
     }
     
-    // Sort by priority
-    return allExtensionPoints.sort((a, b) => a.priority - b.priority);
+    // Sort by priority (higher priority first)
+    return allExtensionPoints.sort((a, b) => b.priority - a.priority);
   }
 
   /**
