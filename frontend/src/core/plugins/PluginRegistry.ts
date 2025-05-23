@@ -179,7 +179,7 @@ export class PluginRegistry {
   /**
    * Check if user has required permissions (simplified)
    */
-  private hasRequiredPermissions(permissions: string[]): boolean {
+  private hasRequiredPermissions(_permissions: string[]): boolean {
     // In a real application, this would check against the user's permissions
     // For now, just return true
     return true;

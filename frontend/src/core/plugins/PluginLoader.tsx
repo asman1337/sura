@@ -18,7 +18,7 @@ export const PluginLoader: React.FC<PluginLoaderProps> = ({
   fallback = <div>Loading plugins...</div>,
   children,
 }) => {
-  const { registerPlugin, enabledPlugins } = usePlugins();
+  const { registerPlugin } = usePlugins();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
