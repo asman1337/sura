@@ -135,6 +135,7 @@ export interface RecordFormConfig {
   icon: string;
   type: RecordType;
   fields: FieldConfig[];
+  disabled?: boolean;
 }
 
 // Field configuration for dynamic forms
@@ -207,6 +208,7 @@ export interface CreateStolenProperty extends CreateRecordBase {
   dateOfRemittance?: string;
   disposalMethod?: string;
   photoUrls?: string[];
+  disabled?: boolean;
 }
 
 // Creation type union

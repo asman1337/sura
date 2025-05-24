@@ -205,12 +205,20 @@ const StolenPropertyForm: React.FC = () => {
         // Update existing record
         await updateRecord(id, cleanedData);
         setFormSuccess('Stolen property record updated successfully');
-        setTimeout(() => navigate(`/records/stolen-property/${id}`), 1500);
+        if (id) {
+          setTimeout(() => navigate(`/records/stolen-property/${id}`), 1000);
+        } else {
+          setTimeout(() => navigate(`/records/stolen-property`), 1000);
+        }
       } else {
         // Create new record
         const result = await createRecord(cleanedData);
         setFormSuccess('Stolen property record created successfully');
-        setTimeout(() => navigate(`/records/stolen-property/${result.id}`), 1500);
+        if (result && result?.id) {
+          setTimeout(() => navigate(`/records/stolen-property/${result.id}`), 1000);
+        } else {
+          setTimeout(() => navigate(`/records/type/stolen-property`), 1000);
+        }
       }
     } catch (err) {
       console.error('Error submitting form:', err);

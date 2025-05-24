@@ -34,17 +34,21 @@ import { useRecords } from '../hooks/useRecords';
 import { useData } from '../../../core/data';
 import { setGlobalApiInstance } from '../services';
 import { RecordFormConfig } from '../types';
+
+// If RecordFormConfig doesn't already have a disabled property,
+// it should be updated in the types file as well
 import { PageContainer } from './common';
 
 // Available record types with their configurations
-const recordTypes: RecordFormConfig[] = [
+export const recordTypes: RecordFormConfig[] = [
   {
     id: 'ud_case',
     title: 'UD Case Register',
     description: 'Register for unnatural death cases',
     icon: 'ArticleIcon',
     type: 'ud_case',
-    fields: []
+    fields: [],
+    disabled: false
   },
   {
     id: 'stolen_property',
@@ -52,31 +56,35 @@ const recordTypes: RecordFormConfig[] = [
     description: 'Register for stolen property records',
     icon: 'InventoryIcon',
     type: 'stolen_property',
-    fields: []
+    fields: [],
+    disabled: false
   },
   {
     id: 'general_diary',
     title: 'General Diary',
-    description: 'Daily station diary records',
+    description: 'Daily station diary records (Coming soon)',
     icon: 'BookIcon',
     type: 'general_diary',
-    fields: []
+    fields: [],
+    disabled: true
   },
   {
     id: 'fir',
     title: 'FIR Register',
-    description: 'First Information Reports',
+    description: 'First Information Reports (Coming soon)',
     icon: 'ReportIcon',
     type: 'fir',
-    fields: []
+    fields: [],
+    disabled: true
   },
   {
     id: 'arrest_memo',
     title: 'Arrest Memo',
-    description: 'Records of arrests made',
+    description: 'Records of arrests made (Coming soon)',
     icon: 'PersonIcon',
     type: 'arrest_memo',
-    fields: []
+    fields: [],
+    disabled: true
   }
 ];
 
@@ -257,7 +265,7 @@ const RecordsDashboard: React.FC = () => {
         </Grid>
         
         {/* Dynamic stats cards based on record types */}
-        {['ud_case', 'stolen_property', 'fir'].map((recordType, index) => {
+        {['ud_case', 'stolen_property'].map((recordType, index) => {
           // Map colors to indices
           const colorMappings = [
             theme.palette.success.main,
@@ -367,7 +375,7 @@ const RecordsDashboard: React.FC = () => {
                                 color="text.primary"
                                 sx={{ display: 'block', fontWeight: 500 }}
                               >
-                                {(record as any).type === 'ud_case' ? 'UD Case' : 
+                                {(record as any).type === 'ud_case' ? 'UD Case' :
                                  (record as any).type === 'stolen_property' ? 'Stolen Property' : 
                                  (record as any).type}
                               </Typography>
@@ -434,7 +442,7 @@ const RecordsDashboard: React.FC = () => {
             <Divider />
             <CardContent>
               <Grid container spacing={2}>
-                {recordTypes.map((recordType) => (
+                {recordTypes.filter(i => i.disabled !== null && !i.disabled).map((recordType) => (
                   <Grid size={{ xs: 6, sm: 4 }} key={recordType.id}>
                     <Paper
                       elevation={0}

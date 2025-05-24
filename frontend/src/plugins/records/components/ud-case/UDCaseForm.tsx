@@ -239,12 +239,17 @@ const UDCaseForm: React.FC = () => {
         // Update existing record
         await updateRecord(id, formData);
         setFormSuccess('UD case updated successfully');
-        setTimeout(() => navigate(`/records/ud-case/${id}`), 1500);
+        setTimeout(() => navigate(`/records/ud-case/${id}`), 1000);
       } else {
         // Create new record
         const result = await createRecord(formData);
+        console.log('UD case created:', result);
         setFormSuccess('UD case created successfully');
-        setTimeout(() => navigate(`/records/ud-case/${result.id}`), 1500);
+        if (result && result?.id) {
+          setTimeout(() => navigate(`/records/ud-case/${result.id}`), 1000);
+        } else {
+          setTimeout(() => navigate(`/records/type/ud_case`), 1000);
+        }
       }
     } catch (err) {
       console.error('Error submitting form:', err);
