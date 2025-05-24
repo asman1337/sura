@@ -15,6 +15,9 @@ export enum CashSource {
   FINES = 'FINES',
   FEES = 'FEES',
   BAIL = 'BAIL',
+  GOVT_ALLOCATION = 'GOVT_ALLOCATION', // Monthly budget allocation
+  DEPT_FUNDS = 'DEPT_FUNDS', // Department funds
+  REIMBURSEMENT = 'REIMBURSEMENT', // Reimbursed expenses
   OTHER = 'OTHER'
 }
 
@@ -25,6 +28,10 @@ export enum DisbursementPurpose {
   TRANSFER_TO_TREASURY = 'TRANSFER_TO_TREASURY',
   COURT_DEPOSIT = 'COURT_DEPOSIT',
   EXPENSES = 'EXPENSES',
+  SALARY_ADVANCE = 'SALARY_ADVANCE', // Salary advances
+  PETROL = 'PETROL', // Fuel expenses
+  OFFICE_SUPPLIES = 'OFFICE_SUPPLIES', // Office supplies
+  MAINTENANCE = 'MAINTENANCE', // Facility maintenance
   OTHER = 'OTHER'
 }
 

@@ -88,6 +88,14 @@ const TransactionDetail: React.FC = () => {
     }).format(amount);
   };
 
+  // Format enum values for display
+  const formatEnumValue = (value: string): string => {
+    if (!value) return '';
+    return value.split('_').map(word => 
+      word.charAt(0) + word.slice(1).toLowerCase()
+    ).join(' ');
+  };
+
   // Handle delete dialog
   const handleOpenDeleteDialog = () => setDeleteDialogOpen(true);
   const handleCloseDeleteDialog = () => setDeleteDialogOpen(false);
@@ -232,7 +240,7 @@ const TransactionDetail: React.FC = () => {
                       Source
                     </Typography>
                     <Typography variant="body1">
-                      {transaction.source.replace('_', ' ')}
+                      {formatEnumValue(transaction.source)}
                     </Typography>
                   </Grid>
                 )}
@@ -243,7 +251,7 @@ const TransactionDetail: React.FC = () => {
                       Purpose
                     </Typography>
                     <Typography variant="body1">
-                      {transaction.purpose.replace('_', ' ')}
+                      {formatEnumValue(transaction.purpose)}
                     </Typography>
                   </Grid>
                 )}

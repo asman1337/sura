@@ -16,7 +16,8 @@ import {
   Select,
   Divider,
   Alert,
-  InputAdornment
+  InputAdornment,
+  ListSubheader
 } from '@mui/material';
 import { 
   Save as SaveIcon, 
@@ -200,6 +201,52 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ isEditing = false }) 
     return 'An error occurred';
   };
 
+  // Helper function to format enum values for display
+  const formatEnumValue = (value: string): string => {
+    return value.split('_').map(word => 
+      word.charAt(0) + word.slice(1).toLowerCase()
+    ).join(' ');
+  };
+
+  // Group cash sources by category
+  const cashSourceGroups = {
+    'Case Related': [
+      CashSource.SEIZED,
+      CashSource.FROM_ACCUSED,
+      CashSource.FINES,
+      CashSource.FEES,
+      CashSource.BAIL
+    ],
+    'Department/Government': [
+      CashSource.GOVT_ALLOCATION,
+      CashSource.DEPT_FUNDS,
+      CashSource.REIMBURSEMENT
+    ],
+    'Other': [
+      CashSource.OTHER
+    ]
+  };
+
+  // Group disbursement purposes by category
+  const purposeGroups = {
+    'Case Related': [
+      DisbursementPurpose.RETURN_TO_OWNER,
+      DisbursementPurpose.COURT_DEPOSIT,
+      DisbursementPurpose.TRANSFER_TO_TREASURY
+    ],
+    'Department Expenses': [
+      DisbursementPurpose.TRAVEL_ALLOWANCE,
+      DisbursementPurpose.SALARY_ADVANCE,
+      DisbursementPurpose.PETROL,
+      DisbursementPurpose.OFFICE_SUPPLIES,
+      DisbursementPurpose.MAINTENANCE,
+      DisbursementPurpose.EXPENSES
+    ],
+    'Other': [
+      DisbursementPurpose.OTHER
+    ]
+  };
+
   return (
     <PageContainer>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -320,11 +367,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ isEditing = false }) 
                           label="Source"
                           onChange={handleSelectChange}
                         >
-                          {Object.values(CashSource).map(source => (
-                            <MenuItem key={source} value={source}>
-                              {source.replace('_', ' ')}
-                            </MenuItem>
-                          ))}
+                          {Object.entries(cashSourceGroups).map(([groupName, sources]) => [
+                            <ListSubheader key={`group-${groupName}`}>
+                              {groupName}
+                            </ListSubheader>,
+                            ...sources.map(source => (
+                              <MenuItem key={source} value={source}>
+                                {formatEnumValue(source)}
+                              </MenuItem>
+                            ))
+                          ])}
                         </Select>
                       </FormControl>
                     </Grid>
@@ -342,11 +394,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ isEditing = false }) 
                           label="Purpose"
                           onChange={handleSelectChange}
                         >
-                          {Object.values(DisbursementPurpose).map(purpose => (
-                            <MenuItem key={purpose} value={purpose}>
-                              {purpose.replace('_', ' ')}
-                            </MenuItem>
-                          ))}
+                          {Object.entries(purposeGroups).map(([groupName, purposes]) => [
+                            <ListSubheader key={`group-${groupName}`}>
+                              {groupName}
+                            </ListSubheader>,
+                            ...purposes.map(purpose => (
+                              <MenuItem key={purpose} value={purpose}>
+                                {formatEnumValue(purpose)}
+                              </MenuItem>
+                            ))
+                          ])}
                         </Select>
                       </FormControl>
                     </Grid>

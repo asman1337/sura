@@ -116,6 +116,14 @@ const CashRegistryDashboard: React.FC = () => {
     }).format(amount);
   };
   
+  // Format enum values for display
+  const formatEnumValue = (value: string): string => {
+    if (!value) return '';
+    return value.split('_').map(word => 
+      word.charAt(0) + word.slice(1).toLowerCase()
+    ).join(' ');
+  };
+  
   // Show initialization progress
   if (!api) {
     return (
@@ -317,7 +325,7 @@ const CashRegistryDashboard: React.FC = () => {
                     >
                       <ListItemText 
                         primary={entry.documentNumber}
-                        secondary={`${entry.source || 'N/A'} ${entry.caseReference ? `- Case: ${entry.caseReference}` : ''}`}
+                        secondary={`${entry.source ? formatEnumValue(entry.source) : 'N/A'} ${entry.caseReference ? `- Case: ${entry.caseReference}` : ''}`}
                       />
                     </ListItem>
                     <Divider component="li" />
@@ -361,7 +369,7 @@ const CashRegistryDashboard: React.FC = () => {
                     >
                       <ListItemText 
                         primary={entry.documentNumber}
-                        secondary={`${entry.purpose || 'N/A'} ${entry.caseReference ? `- Case: ${entry.caseReference}` : ''}`}
+                        secondary={`${entry.purpose ? formatEnumValue(entry.purpose) : 'N/A'} ${entry.caseReference ? `- Case: ${entry.caseReference}` : ''}`}
                       />
                     </ListItem>
                     <Divider component="li" />
