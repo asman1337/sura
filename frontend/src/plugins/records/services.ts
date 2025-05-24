@@ -266,7 +266,7 @@ export class RecordsService {
       }
       
       const response = await this.api.get(endpoint);
-      return response.data;
+      return response.data || response;
     } catch (error) {
       console.error(`Error fetching record ${id}:`, error);
       throw error;

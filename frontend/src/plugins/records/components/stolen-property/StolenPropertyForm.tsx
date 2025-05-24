@@ -15,12 +15,19 @@ import {
   Typography,
   Alert,
   Paper,
-  InputAdornment
+  InputAdornment,
+  FormHelperText,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useRecords } from '../../hooks/useRecords';
 import { StolenPropertyRecord, CreateStolenProperty } from '../../types';
 import { formatDate } from '../../utils/formatters';
 import { PageContainer } from '../common';
+import { useData } from '../../../../core/data';
 
 const StolenPropertyForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +36,7 @@ const StolenPropertyForm: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { auth } = useData();
   
   const initialFormState: CreateStolenProperty = {
     type: 'stolen_property',
@@ -48,7 +56,11 @@ const StolenPropertyForm: React.FC = () => {
     receivedBy: '',
     recoveryStatus: 'reported',
     recoveryDate: '',
-    photoUrls: []
+    photoUrls: [],
+    isSold: false,
+    soldPrice: 0,
+    dateOfRemittance: '',
+    disposalMethod: ''
   };
   
   const [formData, setFormData] = useState<CreateStolenProperty>(initialFormState);
@@ -97,6 +109,19 @@ const StolenPropertyForm: React.FC = () => {
     setFormData(prev => ({ ...prev, [name as string]: value }));
   };
   
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: checked }));
+  };
+  
+  const handleDateChange = (name: string, date: Date | null) => {
+    if (date) {
+      setFormData(prev => ({ 
+        ...prev, 
+        [name]: date.toISOString().split('T')[0]
+      }));
+    }
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,15 +153,62 @@ const StolenPropertyForm: React.FC = () => {
         throw new Error('Date of receipt is required');
       }
       
+      // Clean up the data before submission
+      const cleanedData = { ...formData };
+      
+      // Remove recovery date if status is not 'recovered' or it's empty
+      if (cleanedData.recoveryStatus !== 'recovered' || !cleanedData.recoveryDate) {
+        delete cleanedData.recoveryDate;
+      }
+      
+      // Handle disposal-related fields
+      if (!cleanedData.isSold) {
+        delete cleanedData.soldPrice;
+        delete cleanedData.dateOfRemittance;
+        delete cleanedData.disposalMethod;
+      } else {
+        // If it's sold but some fields are empty, provide default values
+        if (cleanedData.soldPrice === 0) {
+          cleanedData.soldPrice = 0;
+        }
+        
+        // Remove empty string fields for dates
+        if (!cleanedData.dateOfRemittance) {
+          delete cleanedData.dateOfRemittance;
+        }
+        
+        if (!cleanedData.disposalMethod) {
+          delete cleanedData.disposalMethod;
+        }
+      }
+      
+      // Remove other empty string fields
+      if (!cleanedData.ownerName) delete cleanedData.ownerName;
+      if (!cleanedData.ownerContact) delete cleanedData.ownerContact;
+      if (!cleanedData.linkedCaseNumber) delete cleanedData.linkedCaseNumber;
+      if (!cleanedData.receivedBy) delete cleanedData.receivedBy;
+      if (!cleanedData.remarks) delete cleanedData.remarks;
+      if (!cleanedData.notes) delete cleanedData.notes;
+      
+      // Remove empty arrays
+      if (cleanedData.photoUrls && cleanedData.photoUrls.length === 0) {
+        delete cleanedData.photoUrls;
+      }
+
+      const unitId = auth.getCurrentUser()?.primaryUnit?.id;
+      if (unitId) {
+        cleanedData.unitId = unitId;
+      }
+      
       // Submit form data
       if (id) {
         // Update existing record
-        await updateRecord(id, formData);
+        await updateRecord(id, cleanedData);
         setFormSuccess('Stolen property record updated successfully');
         setTimeout(() => navigate(`/records/stolen-property/${id}`), 1500);
       } else {
         // Create new record
-        const result = await createRecord(formData);
+        const result = await createRecord(cleanedData);
         setFormSuccess('Stolen property record created successfully');
         setTimeout(() => navigate(`/records/stolen-property/${result.id}`), 1500);
       }
@@ -187,291 +259,397 @@ const StolenPropertyForm: React.FC = () => {
         </Alert>
       )}
       
-      <Paper component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
-        <Grid container spacing={3}>
-          {/* Property Information */}
-          <Grid size={{ xs: 12 }}>
-            <Typography variant="h6" gutterBottom>
-              Property Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-          
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              required
-              fullWidth
-              label="Property ID"
-              name="propertyId"
-              value={formData.propertyId}
-              onChange={handleChange}
-              disabled={isSubmitting}
-            />
-          </Grid>
-          
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth required>
-              <InputLabel>Property Source</InputLabel>
-              <Select
-                name="propertySource"
-                value={formData.propertySource}
-                onChange={handleSelectChange}
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <Paper component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
+          <Grid container spacing={3}>
+            {/* Property Information */}
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="h6" gutterBottom>
+                Property Information
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                required
+                fullWidth
+                label="Property ID"
+                name="propertyId"
+                value={formData.propertyId}
+                onChange={handleChange}
                 disabled={isSubmitting}
-                label="Property Source"
-              >
-                <MenuItem value="stolen">Stolen</MenuItem>
-                <MenuItem value="intestate">Intestate</MenuItem>
-                <MenuItem value="unclaimed">Unclaimed</MenuItem>
-                <MenuItem value="suspicious">Suspicious</MenuItem>
-                <MenuItem value="exhibits">Exhibits</MenuItem>
-                <MenuItem value="others">Others</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              required
-              fullWidth
-              label="Property Type"
-              name="propertyType"
-              value={formData.propertyType}
-              onChange={handleChange}
-              disabled={isSubmitting}
-            />
-          </Grid>
-          
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              required
-              fullWidth
-              label="Estimated Value"
-              name="estimatedValue"
-              type="number"
-              value={formData.estimatedValue}
-              onChange={handleChange}
-              disabled={isSubmitting}
-              InputProps={{
-                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-              }}
-            />
-          </Grid>
-          
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              required
-              fullWidth
-              label="Description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              disabled={isSubmitting}
-              multiline
-              rows={3}
-            />
-          </Grid>
-          
-          {/* Incident Information */}
-          <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Incident Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-          
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              required
-              fullWidth
-              label="Found By"
-              name="foundBy"
-              value={formData.foundBy}
-              onChange={handleChange}
-              disabled={isSubmitting}
-            />
-          </Grid>
-          
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              required
-              fullWidth
-              label="Date of Theft/Finding"
-              name="dateOfTheft"
-              type="date"
-              value={formData.dateOfTheft}
-              onChange={handleChange}
-              disabled={isSubmitting}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              required
-              fullWidth
-              label="Location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              disabled={isSubmitting}
-            />
-          </Grid>
-          
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label="Linked Case Number"
-              name="linkedCaseNumber"
-              value={formData.linkedCaseNumber || ''}
-              onChange={handleChange}
-              disabled={isSubmitting}
-            />
-          </Grid>
-          
-          {/* Owner Information */}
-          <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Owner Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-          
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label="Owner Name"
-              name="ownerName"
-              value={formData.ownerName || ''}
-              onChange={handleChange}
-              disabled={isSubmitting}
-            />
-          </Grid>
-          
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label="Owner Contact"
-              name="ownerContact"
-              value={formData.ownerContact || ''}
-              onChange={handleChange}
-              disabled={isSubmitting}
-            />
-          </Grid>
-          
-          {/* Receipt Information */}
-          <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Receipt Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-          
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              required
-              fullWidth
-              label="Date of Receipt"
-              name="dateOfReceipt"
-              type="date"
-              value={formData.dateOfReceipt}
-              onChange={handleChange}
-              disabled={isSubmitting}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label="Received By"
-              name="receivedBy"
-              value={formData.receivedBy || ''}
-              onChange={handleChange}
-              disabled={isSubmitting}
-            />
-          </Grid>
-          
-          {/* Recovery Information */}
-          <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Recovery Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-          
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Recovery Status</InputLabel>
-              <Select
-                name="recoveryStatus"
-                value={formData.recoveryStatus}
-                onChange={handleSelectChange}
+                helperText="Unique identifier for this property"
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FormControl fullWidth required>
+                <InputLabel>Property Source</InputLabel>
+                <Select
+                  name="propertySource"
+                  value={formData.propertySource}
+                  onChange={handleSelectChange}
+                  disabled={isSubmitting}
+                  label="Property Source"
+                >
+                  <MenuItem value="stolen">Stolen</MenuItem>
+                  <MenuItem value="intestate">Intestate</MenuItem>
+                  <MenuItem value="unclaimed">Unclaimed</MenuItem>
+                  <MenuItem value="suspicious">Suspicious</MenuItem>
+                  <MenuItem value="exhibits">Exhibits</MenuItem>
+                  <MenuItem value="others">Others</MenuItem>
+                </Select>
+                <FormHelperText>Source of the property as per PBR Form 17</FormHelperText>
+              </FormControl>
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                required
+                fullWidth
+                label="Property Type"
+                name="propertyType"
+                value={formData.propertyType}
+                onChange={handleChange}
                 disabled={isSubmitting}
-                label="Recovery Status"
+                helperText="Type/category of the property (e.g., Jewelry, Electronics)"
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                required
+                fullWidth
+                label="Estimated Value"
+                name="estimatedValue"
+                type="number"
+                value={formData.estimatedValue}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+                helperText="Approximate market value of the property"
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                required
+                fullWidth
+                label="Description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                multiline
+                rows={3}
+                helperText="Detailed description of the property including make, model, serial number, etc."
+              />
+            </Grid>
+            
+            {/* Incident Information */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Incident Information
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                required
+                fullWidth
+                label="Found By"
+                name="foundBy"
+                value={formData.foundBy}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                helperText="Name of person who found/reported the property"
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <DatePicker
+                label="Date of Theft/Finding"
+                value={formData.dateOfTheft ? new Date(formData.dateOfTheft) : null}
+                onChange={(date) => handleDateChange('dateOfTheft', date)}
+                slotProps={{
+                  textField: {
+                    required: true,
+                    fullWidth: true,
+                    disabled: isSubmitting,
+                    helperText: "Date when property was stolen or found"
+                  }
+                }}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                required
+                fullWidth
+                label="Location"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                helperText="Location where property was stolen/found"
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Linked Case Number"
+                name="linkedCaseNumber"
+                value={formData.linkedCaseNumber || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                helperText="Related FIR/UD Case number if applicable"
+              />
+            </Grid>
+            
+            {/* Owner Information */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Owner Information
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Owner Name"
+                name="ownerName"
+                value={formData.ownerName || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                helperText="Name of the property owner if known"
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Owner Contact"
+                name="ownerContact"
+                value={formData.ownerContact || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                helperText="Contact number of the property owner"
+              />
+            </Grid>
+            
+            {/* Receipt Information */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Receipt Information
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <DatePicker
+                label="Date of Receipt"
+                value={formData.dateOfReceipt ? new Date(formData.dateOfReceipt) : null}
+                onChange={(date) => handleDateChange('dateOfReceipt', date)}
+                slotProps={{
+                  textField: {
+                    required: true,
+                    fullWidth: true,
+                    disabled: isSubmitting,
+                    helperText: "Date when property was received at police station"
+                  }
+                }}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Received By"
+                name="receivedBy"
+                value={formData.receivedBy || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                helperText="Officer who received the property"
+              />
+            </Grid>
+            
+            {/* Recovery Information */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Recovery Information
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel>Recovery Status</InputLabel>
+                <Select
+                  name="recoveryStatus"
+                  value={formData.recoveryStatus || 'reported'}
+                  onChange={handleSelectChange}
+                  disabled={isSubmitting}
+                  label="Recovery Status"
+                >
+                  <MenuItem value="reported">Reported</MenuItem>
+                  <MenuItem value="investigation">Under Investigation</MenuItem>
+                  <MenuItem value="recovered">Recovered</MenuItem>
+                  <MenuItem value="closed">Closed</MenuItem>
+                </Select>
+                <FormHelperText>Current status of property recovery</FormHelperText>
+              </FormControl>
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <DatePicker
+                label="Recovery Date"
+                value={formData.recoveryDate ? new Date(formData.recoveryDate) : null}
+                onChange={(date) => handleDateChange('recoveryDate', date)}
+                disabled={formData.recoveryStatus !== 'recovered'}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    disabled: isSubmitting || formData.recoveryStatus !== 'recovered',
+                    helperText: "Date when property was recovered (if applicable)"
+                  }
+                }}
+              />
+            </Grid>
+            
+            {/* Disposal Information */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Disposal Information
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.isSold || false}
+                    onChange={handleCheckboxChange}
+                    name="isSold"
+                    disabled={isSubmitting}
+                  />
+                }
+                label="Property Sold/Disposed"
+              />
+              <FormHelperText>Mark if property has been sold or disposed</FormHelperText>
+            </Grid>
+            
+            {formData.isSold && (
+              <>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Sold Price"
+                    name="soldPrice"
+                    type="number"
+                    value={formData.soldPrice || 0}
+                    onChange={handleChange}
+                    disabled={isSubmitting}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                    }}
+                    helperText="Amount received from sale"
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <DatePicker
+                    label="Date of Remittance"
+                    value={formData.dateOfRemittance ? new Date(formData.dateOfRemittance) : null}
+                    onChange={(date) => handleDateChange('dateOfRemittance', date)}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        disabled: isSubmitting,
+                        helperText: "Date when sale amount was remitted"
+                      }
+                    }}
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Disposal Method"
+                    name="disposalMethod"
+                    value={formData.disposalMethod || ''}
+                    onChange={handleChange}
+                    disabled={isSubmitting}
+                    helperText="Method used for disposal (e.g., Auction, Court Order)"
+                  />
+                </Grid>
+              </>
+            )}
+            
+            {/* Additional Information */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Additional Information
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 12 }}>
+              <TextField
+                fullWidth
+                label="Remarks"
+                name="remarks"
+                value={formData.remarks || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                multiline
+                rows={2}
+                helperText="Official remarks about this property record"
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 12 }}>
+              <TextField
+                fullWidth
+                label="Notes"
+                name="notes"
+                value={formData.notes || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                multiline
+                rows={2}
+                helperText="Additional notes or comments"
+              />
+            </Grid>
+            
+            {/* Form Actions */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
+              <Button
+                variant="outlined"
+                onClick={() => navigate(-1)}
+                disabled={isSubmitting}
               >
-                <MenuItem value="reported">Reported</MenuItem>
-                <MenuItem value="investigation">Under Investigation</MenuItem>
-                <MenuItem value="recovered">Recovered</MenuItem>
-                <MenuItem value="closed">Closed</MenuItem>
-              </Select>
-            </FormControl>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={isSubmitting}
+                startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
+              >
+                {isSubmitting ? 'Saving...' : id ? 'Update Property Record' : 'Create Property Record'}
+              </Button>
+            </Grid>
           </Grid>
-          
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label="Recovery Date"
-              name="recoveryDate"
-              type="date"
-              value={formData.recoveryDate || ''}
-              onChange={handleChange}
-              disabled={isSubmitting || formData.recoveryStatus !== 'recovered'}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          
-          {/* Additional Information */}
-          <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Additional Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-          
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label="Remarks"
-              name="remarks"
-              value={formData.remarks || ''}
-              onChange={handleChange}
-              disabled={isSubmitting}
-              multiline
-              rows={2}
-            />
-          </Grid>
-          
-          {/* Form Actions */}
-          <Grid size={{ xs: 12 }} sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
-            <Button
-              variant="outlined"
-              onClick={() => navigate(-1)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              disabled={isSubmitting}
-              startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
-            >
-              {isSubmitting ? 'Saving...' : id ? 'Update Property Record' : 'Create Property Record'}
-            </Button>
-          </Grid>
-        </Grid>
-      </Paper>
+        </Paper>
+      </LocalizationProvider>
     </PageContainer>
   );
 };

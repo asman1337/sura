@@ -61,7 +61,6 @@ export class StolenPropertyService {
     const queryBuilder = this.stolenPropertyRepository
       .createQueryBuilder('property')
       .leftJoinAndSelect('property.unit', 'unit')
-      .leftJoinAndSelect('unit.organization', 'organization')
       .where('property.isActive = :isActive', { isActive: true });
       
     // Apply filters if provided
@@ -104,7 +103,7 @@ export class StolenPropertyService {
   async findOne(id: string): Promise<StolenPropertyRecord> {
     const record = await this.stolenPropertyRepository.findOne({
       where: { id },
-      relations: ['createdBy', 'lastModifiedBy', 'unit', 'unit.organization'],
+      relations: ['createdBy', 'lastModifiedBy', 'unit'],
     });
     
     if (!record) {
@@ -120,7 +119,7 @@ export class StolenPropertyService {
   async findByPropertyId(propertyId: string): Promise<StolenPropertyRecord> {
     const record = await this.stolenPropertyRepository.findOne({
       where: { propertyId },
-      relations: ['createdBy', 'lastModifiedBy', 'unit', 'unit.organization'],
+      relations: ['createdBy', 'lastModifiedBy', 'unit'],
     });
     
     if (!record) {

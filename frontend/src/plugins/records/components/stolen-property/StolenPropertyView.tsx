@@ -510,9 +510,9 @@ const StolenPropertyView: React.FC = () => {
         <Grid size={{ xs: 12 }}>
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              Created: {formatDate(property.createdAt)} by {typeof property.createdBy === 'string' ? property.createdBy : property.createdBy.name}
+              Created: {formatDate(property.createdAt)} by {typeof property.createdBy === 'string' ? property.createdBy : property.createdBy.firstName + ' ' + property.createdBy.lastName}
               {property.lastModifiedBy && 
-                ` • Last Modified: ${formatDate(property.updatedAt)} by ${typeof property.lastModifiedBy === 'string' ? property.lastModifiedBy : property.lastModifiedBy.name}`
+                ` • Last Modified: ${formatDate(property.updatedAt)} by ${typeof property.lastModifiedBy === 'string' ? property.lastModifiedBy : property.lastModifiedBy.firstName + ' ' + property.lastModifiedBy.lastName}`
               }
             </Typography>
           </Paper>
