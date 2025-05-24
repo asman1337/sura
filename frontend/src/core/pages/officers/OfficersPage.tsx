@@ -27,7 +27,14 @@ import {
   Avatar,
   useTheme,
   alpha,
-  Tooltip
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
+  Stack,
+  SelectChangeEvent
 } from '@mui/material';
 import { 
   Search as SearchIcon, 
@@ -39,7 +46,8 @@ import {
   Email as EmailIcon,
   Phone as PhoneIcon,
   FilterList as FilterListIcon,
-  Work as WorkIcon
+  Close as CloseIcon,
+  Save as SaveIcon
 } from '@mui/icons-material';
 import { useData } from '../../data';
 import { useOfficerRepository, Officer, OfficerFilters } from '../../data';
@@ -58,6 +66,13 @@ const OfficersPage: React.FC = () => {
     isActive: true,
   });
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Modal states
+  const [selectedOfficer, setSelectedOfficer] = useState<Officer | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState<Partial<Officer>>({});
+  const [saving, setSaving] = useState(false);
   
   // Get current user and unit
   const userProfile = auth.getCurrentUser();
@@ -92,6 +107,7 @@ const OfficersPage: React.FC = () => {
     };
     
     loadUnitOfficers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userUnitId]); // Only depend on userUnitId
   
   // Filter and search officers
@@ -150,6 +166,84 @@ const OfficersPage: React.FC = () => {
     } finally {
       setLoading(false);
       loadingRef.current = false;
+    }
+  };
+  
+  // Open view details dialog
+  const handleViewDetails = (officer: Officer) => {
+    setSelectedOfficer(officer);
+    setViewDialogOpen(true);
+  };
+  
+  // Close view details dialog
+  const handleCloseViewDialog = () => {
+    setViewDialogOpen(false);
+    setSelectedOfficer(null);
+  };
+  
+  // Open edit dialog
+  const handleEdit = (officer: Officer) => {
+    setSelectedOfficer(officer);
+    setEditFormData({
+      firstName: officer.firstName,
+      lastName: officer.lastName,
+      email: officer.email,
+      phoneNumber: officer.phoneNumber || '',
+      isActive: officer.isActive
+    });
+    setEditDialogOpen(true);
+  };
+  
+  // Close edit dialog
+  const handleCloseEditDialog = () => {
+    setEditDialogOpen(false);
+    setSelectedOfficer(null);
+    setEditFormData({});
+  };
+  
+  // Handle form changes in edit dialog
+  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Handle select changes in edit dialog
+  const handleSelectChange = (e: SelectChangeEvent) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value === 'true' ? true : false
+    }));
+  };
+  
+  // Handle save edited officer
+  const handleSaveOfficer = async () => {
+    if (!selectedOfficer) return;
+    
+    try {
+      setSaving(true);
+      
+      // Manual patch since we don't have direct access to the update method
+      const updatedData = { ...selectedOfficer, ...editFormData };
+      
+      // Simulate update by fetching full list and replacing the officer
+      // In a real app, you would call an API endpoint here
+      const updatedOfficers = officers.map(officer => 
+        officer.id === selectedOfficer.id ? updatedData : officer
+      );
+      
+      setOfficers(updatedOfficers);
+      
+      // Close dialog
+      handleCloseEditDialog();
+    } catch (err) {
+      console.error('Error updating officer:', err);
+      setErrorMessage('Failed to update officer');
+    } finally {
+      setSaving(false);
     }
   };
   
@@ -368,12 +462,12 @@ const OfficersPage: React.FC = () => {
                     <TableCell align="center">
                       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                         <Tooltip title="View details">
-                          <IconButton size="small" sx={{ mr: 1 }}>
+                          <IconButton size="small" sx={{ mr: 1 }} onClick={() => handleViewDetails(officer)}>
                             <VisibilityIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Edit officer">
-                          <IconButton size="small">
+                          <IconButton size="small" onClick={() => handleEdit(officer)}>
                             <EditIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -386,6 +480,204 @@ const OfficersPage: React.FC = () => {
           </Table>
         </TableContainer>
       </Card>
+      
+      {/* View Details Dialog */}
+      <Dialog 
+        open={viewDialogOpen} 
+        onClose={handleCloseViewDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6">Officer Details</Typography>
+          <IconButton onClick={handleCloseViewDialog} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent>
+          {selectedOfficer && (
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+                  <Avatar
+                    src={selectedOfficer.profilePhotoUrl}
+                    alt={`${selectedOfficer.firstName} ${selectedOfficer.lastName}`}
+                    sx={{ width: 120, height: 120, mb: 2 }}
+                  >
+                    {selectedOfficer.firstName?.charAt(0) || 'O'}
+                  </Avatar>
+                  <Typography variant="h6">
+                    {selectedOfficer.firstName} {selectedOfficer.lastName}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {selectedOfficer.rank?.name || ''}
+                  </Typography>
+                  <Chip 
+                    label={selectedOfficer.isActive ? 'Active' : 'Inactive'} 
+                    color={selectedOfficer.isActive ? 'success' : 'default'}
+                    size="small"
+                    sx={{ mt: 1 }}
+                  />
+                </Box>
+              </Grid>
+              
+              <Grid size={{ xs: 12, md: 8 }}>
+                <Stack spacing={2}>
+                  <Box>
+                    <Typography variant="subtitle2" color="textSecondary">Badge Number</Typography>
+                    <Typography variant="body1">{selectedOfficer.badgeNumber}</Typography>
+                  </Box>
+                  
+                  <Box>
+                    <Typography variant="subtitle2" color="textSecondary">Email</Typography>
+                    <Typography variant="body1">{selectedOfficer.email}</Typography>
+                  </Box>
+                  
+                  {selectedOfficer.phoneNumber && (
+                    <Box>
+                      <Typography variant="subtitle2" color="textSecondary">Phone</Typography>
+                      <Typography variant="body1">{selectedOfficer.phoneNumber}</Typography>
+                    </Box>
+                  )}
+                  
+                  {selectedOfficer.department && (
+                    <Box>
+                      <Typography variant="subtitle2" color="textSecondary">Department</Typography>
+                      <Typography variant="body1">{selectedOfficer.department.name}</Typography>
+                    </Box>
+                  )}
+                  
+                  {selectedOfficer.primaryUnit && (
+                    <Box>
+                      <Typography variant="subtitle2" color="textSecondary">Unit</Typography>
+                      <Typography variant="body1">{selectedOfficer.primaryUnit.name}</Typography>
+                    </Box>
+                  )}
+                  
+                  {selectedOfficer.reportingOfficer && (
+                    <Box>
+                      <Typography variant="subtitle2" color="textSecondary">Reports To</Typography>
+                      <Typography variant="body1">
+                        {selectedOfficer.reportingOfficer.firstName} {selectedOfficer.reportingOfficer.lastName}
+                      </Typography>
+                    </Box>
+                  )}
+                  
+                  {selectedOfficer.dateOfJoining && (
+                    <Box>
+                      <Typography variant="subtitle2" color="textSecondary">Date of Joining</Typography>
+                      <Typography variant="body1">
+                        {new Date(selectedOfficer.dateOfJoining).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                  )}
+                </Stack>
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseViewDialog}>Close</Button>
+          {selectedOfficer && (
+            <Button 
+              variant="outlined" 
+              startIcon={<EditIcon />} 
+              onClick={() => {
+                handleCloseViewDialog();
+                handleEdit(selectedOfficer);
+              }}
+            >
+              Edit
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+      
+      {/* Edit Dialog */}
+      <Dialog 
+        open={editDialogOpen} 
+        onClose={handleCloseEditDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6">Edit Officer</Typography>
+          <IconButton onClick={handleCloseEditDialog} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent>
+          {selectedOfficer && (
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  name="firstName"
+                  value={editFormData.firstName || ''}
+                  onChange={handleEditFormChange}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  name="lastName"
+                  value={editFormData.lastName || ''}
+                  onChange={handleEditFormChange}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={editFormData.email || ''}
+                  onChange={handleEditFormChange}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Phone Number"
+                  name="phoneNumber"
+                  value={editFormData.phoneNumber || ''}
+                  onChange={handleEditFormChange}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <FormControl fullWidth>
+                  <InputLabel id="status-label">Status</InputLabel>
+                  <Select
+                    labelId="status-label"
+                    name="isActive"
+                    value={String(editFormData.isActive === undefined ? selectedOfficer.isActive : editFormData.isActive)}
+                    label="Status"
+                    onChange={handleSelectChange}
+                  >
+                    <MenuItem value="true">Active</MenuItem>
+                    <MenuItem value="false">Inactive</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditDialog}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleSaveOfficer}
+            disabled={saving}
+            startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
