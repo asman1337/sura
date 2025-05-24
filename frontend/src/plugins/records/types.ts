@@ -5,10 +5,31 @@
 // Base Record interface
 export interface BaseRecord {
   id: string;
+  type: RecordType;
   createdAt: string;
   updatedAt: string;
-  createdBy: string;
+  createdBy: Officer | string;
+  lastModifiedBy?: Officer | string;
   status: RecordStatus;
+  unitId: string;
+  unit?: Unit;
+  remarks?: string;
+  notes?: string;
+  isActive: boolean;
+}
+
+// Officer interface (simplified)
+export interface Officer {
+  id: string;
+  name: string;
+  rank?: string;
+}
+
+// Unit interface (simplified)
+export interface Unit {
+  id: string;
+  name: string;
+  organization?: any;
 }
 
 // Record status types
@@ -27,33 +48,57 @@ export interface UDCaseRecord extends BaseRecord {
   type: 'ud_case';
   caseNumber: string;
   dateOfOccurrence: string;
-  description: string;
+  deceasedName?: string;
+  deceasedAddress?: string;
+  identificationStatus?: 'identified' | 'unidentified' | 'partial';
+  informantName: string;
+  informantAddress: string;
+  informantContact?: string;
+  informantRelation?: string;
+  apparentCauseOfDeath: string;
   location: string;
-  assignedOfficer: string;
-  status: RecordStatus;
-  remarks?: string;
+  assignedOfficerId: string;
+  assignedOfficer?: Officer;
+  postMortemDate?: string;
+  postMortemDoctor?: string;
+  postMortemHospital?: string;
+  photoUrls?: string[];
+  investigationStatus?: 'pending' | 'investigation' | 'closed';
+  description?: string;
+  additionalDetails?: { [key: string]: any };
 }
 
 // Stolen Property Record
 export interface StolenPropertyRecord extends BaseRecord {
   type: 'stolen_property';
   propertyId: string;
+  propertySource?: 'stolen' | 'intestate' | 'unclaimed' | 'suspicious' | 'exhibits' | 'others';
   propertyType: string;
   description: string;
   estimatedValue: number;
+  foundBy: string;
   dateOfTheft: string;
   location: string;
   ownerName?: string;
   ownerContact?: string;
-  status: RecordStatus;
   linkedCaseNumber?: string;
+  dateOfReceipt: string;
+  receivedBy?: string;
+  recoveryStatus?: 'reported' | 'investigation' | 'recovered' | 'closed';
+  recoveryDate?: string;
+  isSold?: boolean;
+  soldPrice?: number;
+  dateOfRemittance?: string;
+  disposalMethod?: string;
+  photoUrls?: string[];
+  additionalDetails?: { [key: string]: any };
 }
 
 // Generic Record Type
 export type RecordType = 'ud_case' | 'stolen_property' | 'general_diary' | 'fir' | 'arrest_memo';
 
 // Union type for all record types
-export type Record = UDCaseRecord | StolenPropertyRecord;
+export type RecordData = UDCaseRecord | StolenPropertyRecord;
 
 // Record form settings
 export interface RecordFormConfig {
@@ -80,4 +125,62 @@ export interface FieldConfig {
     min?: number;
     max?: number;
   };
-} 
+}
+
+// Record creation types
+export interface CreateRecordBase {
+  type: RecordType;
+  unitId: string;
+  status?: RecordStatus;
+  remarks?: string;
+  notes?: string;
+}
+
+export interface CreateUDCase extends CreateRecordBase {
+  type: 'ud_case';
+  caseNumber: string;
+  dateOfOccurrence: string;
+  deceasedName?: string;
+  deceasedAddress?: string;
+  identificationStatus?: 'identified' | 'unidentified' | 'partial';
+  informantName: string;
+  informantAddress: string;
+  informantContact?: string;
+  informantRelation?: string;
+  apparentCauseOfDeath: string;
+  location: string;
+  assignedOfficerId: string;
+  postMortemDate?: string;
+  postMortemDoctor?: string;
+  postMortemHospital?: string;
+  photoUrls?: string[];
+  investigationStatus?: 'pending' | 'investigation' | 'closed';
+  description?: string;
+}
+
+export interface CreateStolenProperty extends CreateRecordBase {
+  type: 'stolen_property';
+  propertyId: string;
+  propertySource?: 'stolen' | 'intestate' | 'unclaimed' | 'suspicious' | 'exhibits' | 'others';
+  propertyType: string;
+  description: string;
+  estimatedValue: number;
+  foundBy: string;
+  dateOfTheft: string;
+  location: string;
+  ownerName?: string;
+  ownerContact?: string;
+  linkedCaseNumber?: string;
+  dateOfReceipt: string;
+  receivedBy?: string;
+  recoveryStatus?: 'reported' | 'investigation' | 'recovered' | 'closed';
+  recoveryDate?: string;
+  isSold?: boolean;
+  soldPrice?: number;
+  dateOfRemittance?: string;
+  disposalMethod?: string;
+  photoUrls?: string[];
+}
+
+// Creation type union
+export type CreateRecord = CreateUDCase | CreateStolenProperty; 

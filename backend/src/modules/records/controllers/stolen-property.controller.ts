@@ -15,6 +15,8 @@ import { StolenPropertyService } from '../services/stolen-property.service';
 import { CreateStolenPropertyDto } from '../dto/create-stolen-property.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { UnitId } from '../../../common/decorators/unit.decorator';
+import { UserId } from '../../../common/decorators/user.decorator';
 
 @ApiTags('stolen-property')
 @Controller('stolen-property')
@@ -27,8 +29,19 @@ export class StolenPropertyController {
    */
   @Post()
   @ApiOperation({ summary: 'Create a new stolen property record' })
-  async create(@Body(new ValidationPipe({ whitelist: true })) createStolenPropertyDto: CreateStolenPropertyDto) {
-    return this.stolenPropertyService.create(createStolenPropertyDto);
+  async create(
+    @Body(new ValidationPipe({ whitelist: true })) createStolenPropertyDto: CreateStolenPropertyDto,
+    @UserId() userId: string,
+    @UnitId() unitId: string
+  ) {
+    // Set creator and unit information
+    const newProperty = {
+      ...createStolenPropertyDto,
+      createdById: userId,
+      unitId: createStolenPropertyDto.unitId || unitId
+    };
+    
+    return this.stolenPropertyService.create(newProperty);
   }
 
   /**
@@ -44,7 +57,8 @@ export class StolenPropertyController {
   @ApiQuery({ name: 'skip', required: false })
   @ApiQuery({ name: 'take', required: false })
   async findAll(
-    @Query('unitId') unitId?: string,
+    @Query('unitId') queryUnitId?: string,
+    @UnitId() unitIdFromDecorator?: string | null,
     @Query('status') status?: string,
     @Query('propertyType') propertyType?: string,
     @Query('propertySource') propertySource?: string,
@@ -52,6 +66,9 @@ export class StolenPropertyController {
     @Query('skip') skip?: number,
     @Query('take') take?: number,
   ) {
+    // Use unit ID from query first, then from decorator if available
+    const unitId = queryUnitId || unitIdFromDecorator || undefined;
+    
     return this.stolenPropertyService.findAll({
       unitId,
       status,
@@ -64,15 +81,6 @@ export class StolenPropertyController {
   }
 
   /**
-   * Get a specific stolen property record by ID
-   */
-  @Get(':id')
-  @ApiOperation({ summary: 'Find one stolen property record by ID' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.stolenPropertyService.findOne(id);
-  }
-
-  /**
    * Get a stolen property record by property ID
    */
   @Get('property-id/:propertyId')
@@ -82,15 +90,31 @@ export class StolenPropertyController {
   }
 
   /**
+   * Get a specific stolen property record by ID
+   */
+  @Get(':id')
+  @ApiOperation({ summary: 'Find one stolen property record by ID' })
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.stolenPropertyService.findOne(id);
+  }
+
+  /**
    * Update a stolen property record
    */
   @Patch(':id')
   @ApiOperation({ summary: 'Update a stolen property record' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body(new ValidationPipe({ whitelist: true })) updateStolenPropertyDto: Partial<CreateStolenPropertyDto>
+    @Body(new ValidationPipe({ whitelist: true })) updateStolenPropertyDto: Partial<CreateStolenPropertyDto>,
+    @UserId() userId: string
   ) {
-    return this.stolenPropertyService.update(id, updateStolenPropertyDto);
+    // Add last modified by information
+    const updatedProperty = {
+      ...updateStolenPropertyDto,
+      lastModifiedById: userId
+    };
+    
+    return this.stolenPropertyService.update(id, updatedProperty);
   }
 
   /**
@@ -100,9 +124,16 @@ export class StolenPropertyController {
   @ApiOperation({ summary: 'Mark a stolen property as recovered' })
   async markAsRecovered(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() recoveryDetails: { recoveryDate: string; remarks?: string; notes?: string }
+    @Body() recoveryDetails: { recoveryDate: string; remarks?: string; notes?: string },
+    @UserId() userId: string
   ) {
-    return this.stolenPropertyService.markAsRecovered(id, recoveryDetails);
+    // Add the user who performed the action
+    const details = {
+      ...recoveryDetails,
+      lastModifiedById: userId
+    };
+    
+    return this.stolenPropertyService.markAsRecovered(id, details);
   }
 
   /**
@@ -119,8 +150,15 @@ export class StolenPropertyController {
       remarks?: string;
       notes?: string;
     },
+    @UserId() userId: string
   ) {
-    return this.stolenPropertyService.markAsSold(id, saleDetails);
+    // Add the user who performed the action
+    const details = {
+      ...saleDetails,
+      lastModifiedById: userId
+    };
+    
+    return this.stolenPropertyService.markAsSold(id, details);
   }
 
   /**
@@ -128,7 +166,12 @@ export class StolenPropertyController {
    */
   @Delete(':id')
   @ApiOperation({ summary: 'Remove a stolen property record' })
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UserId() userId: string
+  ) {
+    // Track who is deleting the record
+    await this.stolenPropertyService.update(id, { lastModifiedById: userId });
     return this.stolenPropertyService.remove(id);
   }
 } 

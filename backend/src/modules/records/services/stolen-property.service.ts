@@ -133,7 +133,7 @@ export class StolenPropertyService {
   /**
    * Update a stolen property record
    */
-  async update(id: string, updateStolenPropertyDto: Partial<CreateStolenPropertyDto>): Promise<StolenPropertyRecord> {
+  async update(id: string, updateStolenPropertyDto: any): Promise<StolenPropertyRecord> {
     // Use base service to update common fields
     await this.recordsService.update(id, updateStolenPropertyDto);
     
@@ -231,6 +231,7 @@ export class StolenPropertyService {
     recoveryDate: string;
     remarks?: string;
     notes?: string;
+    lastModifiedById?: string;
   }): Promise<StolenPropertyRecord> {
     const property = await this.findOne(id);
     
@@ -245,6 +246,10 @@ export class StolenPropertyService {
       property.notes = recoveryDetails.notes;
     }
     
+    if (recoveryDetails.lastModifiedById) {
+      property.lastModifiedById = recoveryDetails.lastModifiedById;
+    }
+    
     return this.stolenPropertyRepository.save(property);
   }
   
@@ -257,6 +262,7 @@ export class StolenPropertyService {
     disposalMethod: string;
     remarks?: string;
     notes?: string;
+    lastModifiedById?: string;
   }): Promise<StolenPropertyRecord> {
     const property = await this.findOne(id);
     
@@ -271,6 +277,10 @@ export class StolenPropertyService {
     
     if (saleDetails.notes) {
       property.notes = saleDetails.notes;
+    }
+    
+    if (saleDetails.lastModifiedById) {
+      property.lastModifiedById = saleDetails.lastModifiedById;
     }
     
     return this.stolenPropertyRepository.save(property);

@@ -27,7 +27,6 @@ export class RecordsService {
     const queryBuilder = this.recordsRepository
       .createQueryBuilder('record')
       .leftJoinAndSelect('record.unit', 'unit')
-      .leftJoinAndSelect('unit.organization', 'organization')
       .where('record.isActive = :isActive', { isActive: true });
       
     // Apply filters if provided
@@ -62,7 +61,7 @@ export class RecordsService {
   async findOne(id: string): Promise<BaseRecord> {
     const record = await this.recordsRepository.findOne({ 
       where: { id },
-      relations: ['createdBy', 'lastModifiedBy', 'unit', 'unit.organization']
+      relations: ['createdBy', 'lastModifiedBy', 'unit']
     });
     
     if (!record) {

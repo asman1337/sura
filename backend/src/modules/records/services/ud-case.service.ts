@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UDCaseRecord } from '../entities/ud-case.entity';
@@ -7,6 +7,7 @@ import { RecordsService } from './records.service';
 
 @Injectable()
 export class UDCaseService {
+  private readonly logger = new Logger(UDCaseService.name);
   constructor(
     @InjectRepository(UDCaseRecord)
     private udCaseRepository: Repository<UDCaseRecord>,
@@ -50,14 +51,15 @@ export class UDCaseService {
     identificationStatus?: string;
     skip?: number;
     take?: number;
-  }): Promise<{ records: UDCaseRecord[]; total: number }> {
+  }): Promise<{ records: any[]; total: number }> {
     const { unitId, status, investigationStatus, identificationStatus, skip = 0, take = 10 } = options || {};
+    
+    this.logger.debug('unitId --- ', unitId);
     
     const queryBuilder = this.udCaseRepository
       .createQueryBuilder('udCase')
       .leftJoinAndSelect('udCase.assignedOfficer', 'officer')
       .leftJoinAndSelect('udCase.unit', 'unit')
-      .leftJoinAndSelect('unit.organization', 'organization')
       .where('udCase.isActive = :isActive', { isActive: true });
       
     // Apply filters if provided
@@ -96,7 +98,7 @@ export class UDCaseService {
   async findOne(id: string): Promise<UDCaseRecord> {
     const record = await this.udCaseRepository.findOne({
       where: { id },
-      relations: ['assignedOfficer', 'createdBy', 'lastModifiedBy', 'unit', 'unit.organization'],
+      relations: ['assignedOfficer', 'createdBy', 'lastModifiedBy', 'unit'],
     });
     
     if (!record) {
@@ -112,7 +114,7 @@ export class UDCaseService {
   async findByCaseNumber(caseNumber: string): Promise<UDCaseRecord> {
     const record = await this.udCaseRepository.findOne({
       where: { caseNumber },
-      relations: ['assignedOfficer', 'createdBy', 'lastModifiedBy', 'unit', 'unit.organization'],
+      relations: ['assignedOfficer', 'createdBy', 'lastModifiedBy', 'unit'],
     });
     
     if (!record) {
@@ -125,7 +127,7 @@ export class UDCaseService {
   /**
    * Update a UD case record
    */
-  async update(id: string, updateUDCaseDto: Partial<CreateUDCaseDto>): Promise<UDCaseRecord> {
+  async update(id: string, updateUDCaseDto: any): Promise<UDCaseRecord> {
     // Use base service to update common fields
     await this.recordsService.update(id, updateUDCaseDto);
     

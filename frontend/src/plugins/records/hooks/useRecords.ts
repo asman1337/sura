@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useRecordsApi } from './index';
-import { Record, RecordsStats, RecordType } from '../types';
+import { RecordData, RecordsStats, RecordType, CreateRecord } from '../types';
 
 /**
  * Hook for working with records data
  */
 export const useRecords = (recordType?: RecordType) => {
   const recordsApi = useRecordsApi();
-  const [records, setRecords] = useState<Record[]>([]);
+  const [records, setRecords] = useState<RecordData[]>([]);
   const [stats, setStats] = useState<RecordsStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +20,7 @@ export const useRecords = (recordType?: RecordType) => {
       try {
         setLoading(true);
         
-        let result: Record[];
+        let result: RecordData[];
         if (recordType) {
           result = await recordsApi.getRecordsByType(recordType);
         } else {
@@ -81,8 +81,25 @@ export const useRecords = (recordType?: RecordType) => {
     }
   };
 
+  // Function to get a single record
+  const getRecord = async (id: string, type?: RecordType) => {
+    if (!recordsApi.isReady) throw new Error('API not ready');
+    
+    try {
+      setLoading(true);
+      const result = await recordsApi.getRecordById(id, type);
+      return result;
+    } catch (err) {
+      console.error(`Error getting record ${id}:`, err);
+      setError(`Failed to get record ${id}`);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Function to create a new record
-  const createRecord = async (record: Omit<Record, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const createRecord = async (record: CreateRecord) => {
     if (!recordsApi.isReady) throw new Error('API not ready');
     
     try {
@@ -107,7 +124,7 @@ export const useRecords = (recordType?: RecordType) => {
   };
 
   // Function to update a record
-  const updateRecord = async (recordId: string, data: Partial<Record>) => {
+  const updateRecord = async (recordId: string, data: Partial<RecordData>) => {
     if (!recordsApi.isReady) throw new Error('API not ready');
     
     try {
@@ -130,12 +147,12 @@ export const useRecords = (recordType?: RecordType) => {
   };
 
   // Function to delete a record
-  const deleteRecord = async (recordId: string) => {
+  const deleteRecord = async (recordId: string, type?: RecordType) => {
     if (!recordsApi.isReady) throw new Error('API not ready');
     
     try {
       setLoading(true);
-      await recordsApi.deleteRecord(recordId);
+      await recordsApi.deleteRecord(recordId, type);
       
       // Update local state
       setRecords(prev => prev.filter(item => item.id !== recordId));
@@ -154,15 +171,74 @@ export const useRecords = (recordType?: RecordType) => {
     }
   };
 
+  // Function to mark property as recovered
+  const markAsRecovered = async (propertyId: string, recoveryDetails: {
+    recoveryDate: string;
+    remarks?: string;
+    notes?: string;
+  }) => {
+    if (!recordsApi.isReady) throw new Error('API not ready');
+    
+    try {
+      setLoading(true);
+      const result = await recordsApi.markPropertyAsRecovered(propertyId, recoveryDetails);
+      
+      // Update local state
+      setRecords(prev => 
+        prev.map(item => item.id === propertyId ? result : item)
+      );
+      
+      return result;
+    } catch (err) {
+      console.error(`Error marking property ${propertyId} as recovered:`, err);
+      setError('Failed to mark property as recovered');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Function to mark property as sold
+  const markAsSold = async (propertyId: string, saleDetails: {
+    soldPrice: number;
+    dateOfRemittance: string;
+    disposalMethod: string;
+    remarks?: string;
+    notes?: string;
+  }) => {
+    if (!recordsApi.isReady) throw new Error('API not ready');
+    
+    try {
+      setLoading(true);
+      const result = await recordsApi.markPropertyAsSold(propertyId, saleDetails);
+      
+      // Update local state
+      setRecords(prev => 
+        prev.map(item => item.id === propertyId ? result : item)
+      );
+      
+      return result;
+    } catch (err) {
+      console.error(`Error marking property ${propertyId} as sold:`, err);
+      setError('Failed to mark property as sold');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     records,
     stats,
     loading,
     error,
     refreshData,
+    getRecord,
     createRecord,
     updateRecord,
     deleteRecord,
+    markAsRecovered,
+    markAsSold,
     isReady: recordsApi.isReady
   };
 }; 

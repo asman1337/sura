@@ -74,7 +74,7 @@ const RecentRecordsWidget = () => {
                         `UD Case: ${(record as any).caseNumber}` : 
                         record.type === 'stolen_property' ?
                         `Property: ${(record as any).propertyId}` :
-                        `Record #${record.id}`
+                        `Record #${(record as any).id}`
                       }
                     </RouterLink>
                   }

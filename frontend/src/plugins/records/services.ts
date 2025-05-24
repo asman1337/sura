@@ -1,5 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
-import { Record, RecordsStats, RecordType, UDCaseRecord, StolenPropertyRecord } from './types';
+import { RecordData, RecordsStats, RecordType, StolenPropertyRecord } from './types';
 
 // Global API instance for reuse
 let globalApiInstance: any = null;
@@ -11,6 +10,7 @@ export const setGlobalApiInstance = (apiInstance: any) => {
 export class RecordsService {
   private api: any;
   private isInitialized: boolean = false;
+  private baseUrl = '';  // Removed '/api' prefix
 
   constructor(api?: any) {
     this.api = api || globalApiInstance;
@@ -30,180 +30,223 @@ export class RecordsService {
   }
 
   // Fetch all records
-  async getAllRecords(): Promise<Record[]> {
-    // In a real app, this would be an API call
-    // For now, return mock data
-    await this.simulateNetworkDelay();
-    return this.getMockRecords();
+  async getAllRecords(): Promise<RecordData[]> {
+    if (!this.isReady) {
+      throw new Error('API not initialized');
+    }
+
+    try {
+      const response = await this.api.get(`${this.baseUrl}/records`);
+      return response.data.records || [];
+    } catch (error) {
+      console.error('Error fetching records:', error);
+      throw error;
+    }
   }
 
   // Fetch records by type
-  async getRecordsByType(type: RecordType): Promise<Record[]> {
-    await this.simulateNetworkDelay();
-    const allRecords = this.getMockRecords();
-    return allRecords.filter(record => record.type === type);
+  async getRecordsByType(type: RecordType): Promise<RecordData[]> {
+    if (!this.isReady) {
+      throw new Error('API not initialized');
+    }
+
+    try {
+      let endpoint = '';
+      
+      switch (type) {
+        case 'ud_case':
+          endpoint = `${this.baseUrl}/ud-cases`;
+          break;
+        case 'stolen_property':
+          endpoint = `${this.baseUrl}/stolen-property`;
+          break;
+        default:
+          endpoint = `${this.baseUrl}/records?type=${type}`;
+      }
+      
+      const response = await this.api.get(endpoint);
+      return response.data.records || [];
+    } catch (error) {
+      console.error(`Error fetching ${type} records:`, error);
+      throw error;
+    }
   }
 
   // Get statistics
   async getStats(): Promise<RecordsStats> {
-    await this.simulateNetworkDelay();
-    
-    const allRecords = this.getMockRecords();
-    const recordsByType: { [key: string]: number } = {};
-    
-    // Count records by type
-    allRecords.forEach(record => {
-      if (recordsByType[record.type]) {
-        recordsByType[record.type]++;
-      } else {
-        recordsByType[record.type] = 1;
-      }
-    });
-    
-    return {
-      totalRecords: allRecords.length,
-      recordsByType,
-      recentlyAdded: 5, // Mock data
-      archivedRecords: 2 // Mock data
-    };
+    if (!this.isReady) {
+      throw new Error('API not initialized');
+    }
+
+    try {
+      const response = await this.api.get(`${this.baseUrl}/records/stats`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching records stats:', error);
+      throw error;
+    }
   }
 
   // Create a record
-  async createRecord(record: Omit<Record, 'id' | 'createdAt' | 'updatedAt'>): Promise<Record> {
-    await this.simulateNetworkDelay();
-    
-    const newRecord = {
-      ...record,
-      id: uuidv4(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    } as Record;
-    
-    return newRecord;
+  async createRecord(record: Partial<RecordData>): Promise<RecordData> {
+    if (!this.isReady) {
+      throw new Error('API not initialized');
+    }
+
+    try {
+      let endpoint = '';
+      
+      switch (record.type) {
+        case 'ud_case':
+          endpoint = `${this.baseUrl}/ud-cases`;
+          break;
+        case 'stolen_property':
+          endpoint = `${this.baseUrl}/stolen-property`;
+          break;
+        default:
+          throw new Error(`Unsupported record type: ${record.type}`);
+      }
+      
+      const response = await this.api.post(endpoint, record);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating record:', error);
+      throw error;
+    }
+  }
+
+  // Get record by ID
+  async getRecordById(id: string, type?: RecordType): Promise<RecordData> {
+    if (!this.isReady) {
+      throw new Error('API not initialized');
+    }
+
+    try {
+      let endpoint = '';
+      
+      if (type) {
+        switch (type) {
+          case 'ud_case':
+            endpoint = `${this.baseUrl}/ud-cases/${id}`;
+            break;
+          case 'stolen_property':
+            endpoint = `${this.baseUrl}/stolen-property/${id}`;
+            break;
+          default:
+            endpoint = `${this.baseUrl}/records/${id}`;
+        }
+      } else {
+        endpoint = `${this.baseUrl}/records/${id}`;
+      }
+      
+      const response = await this.api.get(endpoint);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching record ${id}:`, error);
+      throw error;
+    }
   }
 
   // Update a record
-  async updateRecord(recordId: string, data: Partial<Record>): Promise<Record> {
-    await this.simulateNetworkDelay();
-    
-    const allRecords = this.getMockRecords();
-    const recordIndex = allRecords.findIndex(r => r.id === recordId);
-    
-    if (recordIndex === -1) {
-      throw new Error(`Record with ID ${recordId} not found`);
+  async updateRecord(recordId: string, data: Partial<RecordData>): Promise<RecordData> {
+    if (!this.isReady) {
+      throw new Error('API not initialized');
     }
-    
-    const updatedRecord = {
-      ...allRecords[recordIndex],
-      ...data,
-      updatedAt: new Date().toISOString()
-    };
-    
-    return updatedRecord as Record;
+
+    try {
+      let endpoint = '';
+      
+      switch (data.type) {
+        case 'ud_case':
+          endpoint = `${this.baseUrl}/ud-cases/${recordId}`;
+          break;
+        case 'stolen_property':
+          endpoint = `${this.baseUrl}/stolen-property/${recordId}`;
+          break;
+        default:
+          endpoint = `${this.baseUrl}/records/${recordId}`;
+      }
+      
+      const response = await this.api.patch(endpoint, data);
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating record ${recordId}:`, error);
+      throw error;
+    }
   }
 
   // Delete a record
-  async deleteRecord(recordId: string): Promise<boolean> {
-    await this.simulateNetworkDelay();
-    return true;
+  async deleteRecord(recordId: string, type?: RecordType): Promise<boolean> {
+    if (!this.isReady) {
+      throw new Error('API not initialized');
+    }
+
+    try {
+      let endpoint = '';
+      
+      if (type) {
+        switch (type) {
+          case 'ud_case':
+            endpoint = `${this.baseUrl}/ud-cases/${recordId}`;
+            break;
+          case 'stolen_property':
+            endpoint = `${this.baseUrl}/stolen-property/${recordId}`;
+            break;
+          default:
+            endpoint = `${this.baseUrl}/records/${recordId}`;
+        }
+      } else {
+        endpoint = `${this.baseUrl}/records/${recordId}`;
+      }
+      
+      await this.api.delete(endpoint);
+      return true;
+    } catch (error) {
+      console.error(`Error deleting record ${recordId}:`, error);
+      throw error;
+    }
   }
 
-  // Helper method for simulating API delay
-  private async simulateNetworkDelay(ms: number = 500): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  // Mark stolen property as recovered
+  async markPropertyAsRecovered(propertyId: string, recoveryDetails: {
+    recoveryDate: string;
+    remarks?: string;
+    notes?: string;
+  }): Promise<StolenPropertyRecord> {
+    if (!this.isReady) {
+      throw new Error('API not initialized');
+    }
+
+    try {
+      const endpoint = `${this.baseUrl}/stolen-property/${propertyId}/recover`;
+      const response = await this.api.patch(endpoint, recoveryDetails);
+      return response.data;
+    } catch (error) {
+      console.error(`Error marking property ${propertyId} as recovered:`, error);
+      throw error;
+    }
   }
 
-  // Generate mock records for testing
-  private getMockRecords(): Record[] {
-    const records: Record[] = [];
-    
-    // UD Case mock records
-    const udCaseRecords: UDCaseRecord[] = [
-      {
-        id: '1',
-        type: 'ud_case',
-        caseNumber: 'UD-2023-001',
-        dateOfOccurrence: '2023-01-15T10:30:00Z',
-        description: 'Unidentified body found near river',
-        location: 'Ganges River, North Bank',
-        assignedOfficer: 'Inspector Sharma',
-        createdAt: '2023-01-15T14:20:00Z',
-        updatedAt: '2023-01-15T18:45:00Z',
-        createdBy: 'admin',
-        status: 'active',
-        remarks: 'Autopsy pending'
-      },
-      {
-        id: '2',
-        type: 'ud_case',
-        caseNumber: 'UD-2023-002',
-        dateOfOccurrence: '2023-02-20T08:15:00Z',
-        description: 'Abandoned vehicle found',
-        location: 'Highway NH-8, Milestone 45',
-        assignedOfficer: 'SI Patel',
-        createdAt: '2023-02-20T10:30:00Z',
-        updatedAt: '2023-02-21T09:15:00Z',
-        createdBy: 'admin',
-        status: 'active'
-      }
-    ];
-    
-    // Stolen property mock records
-    const stolenPropertyRecords: StolenPropertyRecord[] = [
-      {
-        id: '3',
-        type: 'stolen_property',
-        propertyId: 'SP-2023-001',
-        propertyType: 'Vehicle',
-        description: 'Honda City, White, MH-01-AB-1234',
-        estimatedValue: 800000,
-        dateOfTheft: '2023-03-10T22:15:00Z',
-        location: 'Sector 18 Parking Lot',
-        ownerName: 'Raj Kumar',
-        ownerContact: '9876543210',
-        createdAt: '2023-03-11T09:20:00Z',
-        updatedAt: '2023-03-11T09:20:00Z',
-        createdBy: 'admin',
-        status: 'active',
-        linkedCaseNumber: 'FIR-2023-056'
-      },
-      {
-        id: '4',
-        type: 'stolen_property',
-        propertyId: 'SP-2023-002',
-        propertyType: 'Electronics',
-        description: 'iPhone 14 Pro, Black, IMEI: 123456789012345',
-        estimatedValue: 120000,
-        dateOfTheft: '2023-03-15T14:30:00Z',
-        location: 'Metro Station',
-        ownerName: 'Priya Singh',
-        ownerContact: '9876543211',
-        createdAt: '2023-03-15T18:45:00Z',
-        updatedAt: '2023-03-16T10:20:00Z',
-        createdBy: 'user1',
-        status: 'active',
-        linkedCaseNumber: 'FIR-2023-058'
-      },
-      {
-        id: '5',
-        type: 'stolen_property',
-        propertyId: 'SP-2023-003',
-        propertyType: 'Jewelry',
-        description: 'Gold necklace, 20 grams with pendant',
-        estimatedValue: 150000,
-        dateOfTheft: '2023-03-20T19:00:00Z',
-        location: 'Residential burglary, Sector 10',
-        ownerName: 'Meena Gupta',
-        ownerContact: '9876543212',
-        createdAt: '2023-03-21T10:15:00Z',
-        updatedAt: '2023-03-21T10:15:00Z',
-        createdBy: 'admin',
-        status: 'active',
-        linkedCaseNumber: 'FIR-2023-062'
-      }
-    ];
-    
-    return [...udCaseRecords, ...stolenPropertyRecords];
+  // Mark stolen property as sold
+  async markPropertyAsSold(propertyId: string, saleDetails: {
+    soldPrice: number;
+    dateOfRemittance: string;
+    disposalMethod: string;
+    remarks?: string;
+    notes?: string;
+  }): Promise<StolenPropertyRecord> {
+    if (!this.isReady) {
+      throw new Error('API not initialized');
+    }
+
+    try {
+      const endpoint = `${this.baseUrl}/stolen-property/${propertyId}/sell`;
+      const response = await this.api.patch(endpoint, saleDetails);
+      return response.data;
+    } catch (error) {
+      console.error(`Error marking property ${propertyId} as sold:`, error);
+      throw error;
+    }
   }
 }
 

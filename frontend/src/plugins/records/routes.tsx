@@ -3,6 +3,11 @@ import { RouteObject } from 'react-router-dom';
 import { Plugin } from '../../core/plugins';
 
 import RecordsDashboard from './components/RecordsDashboard';
+import UDCaseView from './components/ud-case/UDCaseView';
+import StolenPropertyView from './components/stolen-property/StolenPropertyView';
+import RecordsList from './components/RecordsList';
+import UDCaseForm from './components/ud-case/UDCaseForm';
+import StolenPropertyForm from './components/stolen-property/StolenPropertyForm';
 
 /**
  * Route extension point data interface
@@ -22,19 +27,43 @@ const RecordsRoutes: RouteObject[] = [
   },
   {
     path: '/records/create',
-    element: <div>Create Record Page (Coming Soon)</div>
+    element: <RecordsDashboard />
+  },
+  {
+    path: '/records/create/ud-case',
+    element: <UDCaseForm />
+  },
+  {
+    path: '/records/create/stolen-property',
+    element: <StolenPropertyForm />
   },
   {
     path: '/records/type/:recordType',
-    element: <div>Records by Type Page (Coming Soon)</div>
+    element: <RecordsList />
   },
   {
     path: '/records/view/:id',
-    element: <div>View Record Details Page (Coming Soon)</div>
+    element: <RecordsDashboard />
+  },
+  {
+    path: '/records/ud-case/:id',
+    element: <UDCaseView />
+  },
+  {
+    path: '/records/stolen-property/:id',
+    element: <StolenPropertyView />
   },
   {
     path: '/records/edit/:id',
-    element: <div>Edit Record Page (Coming Soon)</div>
+    element: <RecordsDashboard />
+  },
+  {
+    path: '/records/edit/ud-case/:id',
+    element: <UDCaseForm />
+  },
+  {
+    path: '/records/edit/stolen-property/:id',
+    element: <StolenPropertyForm />
   }
 ];
 

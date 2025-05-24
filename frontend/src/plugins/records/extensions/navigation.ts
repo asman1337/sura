@@ -28,10 +28,10 @@ const navigationExtension = {
       {
         id: navId,
         path: navPath,
-        title: 'Police Records',
+        title: 'Records',
         group: 'management',
         // We'll use the icon name and let the SidebarLayout handle rendering
-        icon: 'Description',
+        icon: 'Records',
         badgeCount: 0
       },
       { priority: 30 }
