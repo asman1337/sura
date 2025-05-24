@@ -6,40 +6,12 @@ import { Plugin } from '../../core/plugins';
 import {
   CashRegistryDashboard,
   TransactionDetail,
-  TransactionForm
+  TransactionForm,
+  ReceiptsList,
+  DisbursementsList,
+  DailyBalanceView,
+  BalanceHistory
 } from './components';
-
-// Receipts List (placeholder)
-const ReceiptsList: React.FC = () => (
-  <div>
-    <h1>Cash Receipts</h1>
-    <p>List of all cash receipt entries.</p>
-  </div>
-);
-
-// Disbursements List (placeholder)
-const DisbursementsList: React.FC = () => (
-  <div>
-    <h1>Cash Disbursements</h1>
-    <p>List of all cash disbursement entries.</p>
-  </div>
-);
-
-// Daily Balance (placeholder)
-const DailyBalanceView: React.FC = () => (
-  <div>
-    <h1>Daily Cash Balance</h1>
-    <p>View and create daily cash balances.</p>
-  </div>
-);
-
-// Daily Balance History (placeholder)
-const BalanceHistory: React.FC = () => (
-  <div>
-    <h1>Balance History</h1>
-    <p>Historical record of daily cash balances.</p>
-  </div>
-);
 
 /**
  * Route extension point data interface
