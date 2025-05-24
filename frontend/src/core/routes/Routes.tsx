@@ -4,6 +4,7 @@ import { useData } from '../data';
 import { usePlugins } from '../plugins';
 import { SidebarLayout } from '../components/layout';
 import LoadingScreen from '../components/LoadingScreen';
+import OfficersPage from '../pages/officers/OfficersPage';
 
 // Lazy load pages
 const DashboardPage = lazy(() => import('../pages/dashboard/DashboardPage'));
@@ -77,8 +78,8 @@ const Routes: React.FC = () => {
             <Suspense fallback={<LoadingScreen />}>
               <RouterRoutes>
                 <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="officers" element={<OfficersPage />} />
                 <Route path="profile" element={<ProfilePage />} />
-                <Route path="settings" element={<div>Settings Page</div>} />
                 
                 {/* Plugin routes - if any were found */}
                 {processedPluginRoutes.map((routeExt) => (

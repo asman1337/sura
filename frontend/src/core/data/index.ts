@@ -1,13 +1,24 @@
-// Export core data services
-export * from './api-client';
-export * from './auth-service';
-export * from './storage-client';
-export * from './cache-manager';
-export * from './sync-manager';
-export * from './base-repository';
-export * from './repository-hooks';
-export * from './data-context';
+// Export service classes
+export { AuthService } from './auth-service';
+export { ApiClient } from './api-client';
+export { StorageClient } from './storage-client';
+export { CacheManager } from './cache-manager';
+export { SyncManager } from './sync-manager';
 
-// Export specific types that aren't exported by the above
-export type { TokenProvider, TokenRefresher, LogoutHandler } from './api-client';
-export type { DataContextConfig, DataContextValue } from './data-context'; 
+// Export data context types and components
+export { DataProvider, useData } from './data-context';
+export type { DataContextConfig, DataContextValue } from './data-context';
+
+// Export base repository
+export { BaseRepository } from './base-repository';
+export type { Repository, RepositoryOptions } from './base-repository';
+
+// Export repository hooks
+export { createRepositoryHook, createCustomRepositoryHook } from './repository-hooks';
+export type { UseRepositoryOptions } from './repository-hooks';
+
+// Export interfaces
+export * from './interfaces';
+
+// Export repositories
+export * from './repositories'; 

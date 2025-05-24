@@ -35,7 +35,8 @@ import {
   Inventory as InventoryIcon,
   EventNoteRounded,
   WorkHistoryRounded,
-  AccountBalanceRounded
+  AccountBalanceRounded,
+  GroupOutlined
 } from '@mui/icons-material';
 
 // Sidebar width
@@ -127,19 +128,19 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       group: 'Core'
     },
     { 
+      title: 'Officers', 
+      path: '/officers', 
+      icon: <GroupOutlined />, 
+      requiresAuth: true,
+      group: 'Core'
+    },
+    { 
       title: 'Profile', 
       path: '/profile', 
       icon: <PersonIcon />, 
       requiresAuth: true,
       group: 'Core'
     },
-    { 
-      title: 'Settings', 
-      path: '/settings', 
-      icon: <SettingsIcon />, 
-      requiresAuth: true,
-      group: 'Core'
-    }
   ];
   
   // Public navigation items
