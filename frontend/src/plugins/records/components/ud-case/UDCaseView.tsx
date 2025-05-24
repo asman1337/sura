@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -21,38 +21,114 @@ import {
   LocationOn as LocationIcon,
   Assignment as AssignmentIcon,
   LocalHospital as HospitalIcon,
-  Photo as PhotoIcon
+  Photo as PhotoIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { useRecords } from '../../hooks/useRecords';
 import { UDCaseRecord } from '../../types';
 import { PageContainer } from '../common';
 import { formatDate } from '../../utils/formatters';
+import { useData } from '../../../../core/data';
 
 const UDCaseView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getRecord, loading, error, deleteRecord } = useRecords();
+  const { api } = useData(); // Access the API directly as a fallback
+  const { getRecord, loading: apiLoading, error: apiError, deleteRecord } = useRecords(
+    undefined, 
+    { skipInitialFetch: true, skipStatsFetch: true }
+  );
   const [udCase, setUdCase] = useState<UDCaseRecord | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [manualRetryEnabled, setManualRetryEnabled] = useState(false);
 
-  useEffect(() => {
-    const loadUDCase = async () => {
-      if (!id) return;
-      
-      try {
-        const record = await getRecord(id, 'ud_case') as UDCaseRecord;
-        setUdCase(record);
-      } catch (err) {
-        console.error('Error loading UD case:', err);
-      }
-    };
+  // Memoize the loadUDCase function to prevent infinite renders
+  const loadUDCase = useCallback(async () => {
+    if (!id) {
+      setError('No case ID provided');
+      return;
+    }
     
+    try {
+      setLoading(true);
+      setError(null);
+      // First, try with getRecord from useRecords
+      let record;
+      try {
+        record = await getRecord(id, 'ud_case');
+      } catch (recordError) {
+        console.error('Error getting record via useRecords:', recordError);
+        record = null;
+      }
+      
+      // If the record is undefined or null, try direct API access as a fallback
+      if (!record && api) {
+        try {
+          const response = await api.get(`/ud-cases/${id}`) as { data?: UDCaseRecord } | UDCaseRecord;
+          
+          // Check if response or response.data contains the record
+          if (response && 'id' in response) {
+            record = response as UDCaseRecord;
+          } else if (response && 'data' in response && response.data && 'id' in response.data) {
+            record = response.data;
+          }
+        } catch (directApiError) {
+          console.error('Direct API access also failed:', directApiError);
+        }
+      }
+      
+      if (record && record.id) {
+        setUdCase(record as UDCaseRecord);
+        setRetryCount(0); // Reset retry count on success
+        setManualRetryEnabled(false);
+      } else {
+        console.error('Received empty or invalid record:', record);
+        
+        // Auto-retry logic - retry up to 3 times with exponential backoff
+        if (retryCount < 3) {
+          const nextRetry = retryCount + 1;
+          const delay = Math.pow(2, nextRetry) * 1000; // 2s, 4s, 8s
+          
+          console.log(`Auto-retrying in ${delay/1000} seconds (attempt ${nextRetry})`);
+          setRetryCount(nextRetry);
+          
+          setTimeout(() => {
+            console.log(`Executing retry attempt ${nextRetry}`);
+            loadUDCase();
+          }, delay);
+        } else {
+          setError('Failed to load case after multiple attempts. You can try manually refreshing.');
+          setManualRetryEnabled(true);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading UD case:', err);
+      setError('Failed to load case details. Please try again.');
+      setManualRetryEnabled(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, getRecord, api, retryCount]);
+
+  // Run the effect only once when loadUDCase changes
+  useEffect(() => {
     loadUDCase();
-  }, [id, getRecord]);
+  }, [loadUDCase]);
+
+  const handleRetry = () => {
+    setRetryCount(0); // Reset retry count
+    loadUDCase();
+  };
 
   const handleDelete = async () => {
-    if (!id) return;
+    if (!id) {
+      setDeleteError('No case ID provided');
+      return;
+    }
     
     if (window.confirm('Are you sure you want to delete this UD case? This action cannot be undone.')) {
       setIsDeleting(true);
@@ -70,7 +146,7 @@ const UDCaseView: React.FC = () => {
     }
   };
 
-  if (loading || !udCase) {
+  if (loading || apiLoading) {
     return (
       <PageContainer>
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -80,15 +156,54 @@ const UDCaseView: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error || apiError) {
     return (
       <PageContainer>
         <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
+          {error || apiError}
         </Alert>
+        
+        {manualRetryEnabled && (
+          <Button
+            onClick={handleRetry}
+            startIcon={<RefreshIcon />}
+            variant="contained"
+            sx={{ mb: 2 }}
+          >
+            Retry Loading
+          </Button>
+        )}
+        
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/records')}
+          onClick={() => navigate('/records/type/ud_case')}
+          variant="outlined"
+        >
+          Back to Records
+        </Button>
+      </PageContainer>
+    );
+  }
+
+  if (!udCase) {
+    return (
+      <PageContainer>
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Case not found or data could not be loaded.
+        </Alert>
+        
+        <Button
+          onClick={handleRetry}
+          startIcon={<RefreshIcon />}
+          variant="contained"
+          sx={{ mb: 2, mr: 1 }}
+        >
+          Retry Loading
+        </Button>
+        
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate('/records/type/ud_case')}
           variant="outlined"
         >
           Back to Records
@@ -133,6 +248,14 @@ const UDCaseView: React.FC = () => {
         </Box>
         <Box>
           <Button
+            startIcon={<RefreshIcon />}
+            onClick={handleRetry}
+            variant="outlined"
+            sx={{ mr: 1 }}
+          >
+            Refresh
+          </Button>
+          <Button
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/records/type/ud_case')}
             variant="outlined"
@@ -142,7 +265,7 @@ const UDCaseView: React.FC = () => {
           </Button>
           <Button
             startIcon={<EditIcon />}
-            onClick={() => navigate(`/records/edit/${udCase.id}`)}
+            onClick={() => navigate(`/records/edit/ud-case/${udCase.id}`)}
             variant="outlined"
             sx={{ mr: 1 }}
           >
@@ -203,7 +326,9 @@ const UDCaseView: React.FC = () => {
               <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle2" color="text.secondary">Assigned Officer</Typography>
                 <Typography variant="body1" gutterBottom>
-                  {udCase.assignedOfficer?.name || udCase.assignedOfficerId}
+                  {udCase.assignedOfficer ? 
+                    `${udCase.assignedOfficer.firstName} ${udCase.assignedOfficer.lastName}` : 
+                    udCase.assignedOfficerId}
                 </Typography>
               </Grid>
               
@@ -369,9 +494,19 @@ const UDCaseView: React.FC = () => {
         <Grid size={{ xs: 12 }}>
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              Created: {formatDate(udCase.createdAt)} by {typeof udCase.createdBy === 'string' ? udCase.createdBy : udCase.createdBy.name}
+              Created: {formatDate(udCase.createdAt)} by {
+                udCase.createdBy ? 
+                  (typeof udCase.createdBy === 'string' ? 
+                    udCase.createdBy : 
+                    `${udCase.createdBy.firstName} ${udCase.createdBy.lastName}`) : 
+                  'Unknown'
+              }
               {udCase.lastModifiedBy && 
-                ` • Last Modified: ${formatDate(udCase.updatedAt)} by ${typeof udCase.lastModifiedBy === 'string' ? udCase.lastModifiedBy : udCase.lastModifiedBy.name}`
+                ` • Last Modified: ${formatDate(udCase.updatedAt)} by ${
+                  typeof udCase.lastModifiedBy === 'string' ? 
+                    udCase.lastModifiedBy : 
+                    `${udCase.lastModifiedBy.firstName} ${udCase.lastModifiedBy.lastName}`
+                }`
               }
             </Typography>
           </Paper>

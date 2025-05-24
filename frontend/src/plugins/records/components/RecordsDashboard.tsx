@@ -27,6 +27,7 @@ import {
   Description as FileIcon,
   Assignment as FormIcon,
   ArrowForward as ArrowForwardIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { useRecordsApi } from '../hooks';
 import { useRecords } from '../hooks/useRecords';
@@ -167,6 +168,23 @@ const RecordsDashboard: React.FC = () => {
       {error && (
         <Box sx={{ mb: 3, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
           <Typography color="error.contrastText">{error}</Typography>
+        </Box>
+      )}
+      
+      {/* Empty state message when no records but not an error */}
+      {!error && records.length === 0 && !loading && (
+        <Box sx={{ mb: 3, p: 3, bgcolor: 'info.light', borderRadius: 1, display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ mr: 2 }}>
+            <InfoIcon color="info" />
+          </Box>
+          <Box>
+            <Typography color="info.contrastText" variant="body1" fontWeight="500">
+              Welcome to Records Management
+            </Typography>
+            <Typography color="info.contrastText" variant="body2">
+              No records found in the system. Click 'Add New Record' to create your first record.
+            </Typography>
+          </Box>
         </Box>
       )}
       
@@ -349,9 +367,9 @@ const RecordsDashboard: React.FC = () => {
                                 color="text.primary"
                                 sx={{ display: 'block', fontWeight: 500 }}
                               >
-                                {record.type === 'ud_case' ? 'UD Case' : 
-                                 record.type === 'stolen_property' ? 'Stolen Property' : 
-                                 record.type}
+                                {(record as any).type === 'ud_case' ? 'UD Case' : 
+                                 (record as any).type === 'stolen_property' ? 'Stolen Property' : 
+                                 (record as any).type}
                               </Typography>
                               <Typography
                                 component="span"
@@ -368,12 +386,23 @@ const RecordsDashboard: React.FC = () => {
                     </React.Fragment>
                   ))
                 ) : (
-                  <ListItem>
-                    <ListItemText
-                      primary="No records found"
-                      secondary="Add new records to get started"
-                    />
-                  </ListItem>
+                  <Box sx={{ py: 4, textAlign: 'center' }}>
+                    <Typography variant="body1" color="text.secondary" gutterBottom>
+                      No records found
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Your records will appear here once they are created
+                    </Typography>
+                    <Button 
+                      variant="outlined"
+                      startIcon={<AddIcon />}
+                      component={RouterLink}
+                      to="/records/create"
+                      size="small"
+                    >
+                      Add Your First Record
+                    </Button>
+                  </Box>
                 )}
               </List>
               
@@ -405,7 +434,7 @@ const RecordsDashboard: React.FC = () => {
             <Divider />
             <CardContent>
               <Grid container spacing={2}>
-                {recordTypes.map((recordType, index) => (
+                {recordTypes.map((recordType) => (
                   <Grid size={{ xs: 6, sm: 4 }} key={recordType.id}>
                     <Paper
                       elevation={0}

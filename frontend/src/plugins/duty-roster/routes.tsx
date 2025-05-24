@@ -85,8 +85,6 @@ const initialize = (plugin: Plugin) => {
   
   // Check if routes are already registered to avoid duplicates
   const existingRoutes = plugin.getExtensionPoints<RouteExtensionData>('routes');
-  console.log(`Found ${existingRoutes.length} existing routes before registration`);
-  
   // Get all existing paths to avoid duplicates
   const existingPaths = new Set(
     existingRoutes
@@ -105,17 +103,11 @@ const initialize = (plugin: Plugin) => {
     }
     
     if (!existingPaths.has(route.path)) {
-      console.log(`Registering Duty Roster route: ${route.path}`);
-      
-      const extensionId = plugin.registerExtensionPoint<RouteExtensionData>('routes', {
+      plugin.registerExtensionPoint<RouteExtensionData>('routes', {
         path: route.path,
         element: route.element
       });
-      
-      console.log(`Route registered with ID: ${extensionId}`);
       registeredCount++;
-    } else {
-      console.log(`Skipping duplicate route registration: ${route.path}`);
     }
   });
   

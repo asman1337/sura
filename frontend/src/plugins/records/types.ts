@@ -21,8 +21,35 @@ export interface BaseRecord {
 // Officer interface (simplified)
 export interface Officer {
   id: string;
-  name: string;
-  rank?: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  badgeNumber: string;
+  gender?: string;
+  userType?: string;
+  profilePhotoUrl?: string;
+  rank?: {
+    id: string;
+    name: string;
+    abbreviation: string;
+    level: number;
+  };
+  organization?: {
+    id: string;
+    name: string;
+    code: string;
+    type: string;
+  };
+  primaryUnit?: {
+    id: string;
+    name: string;
+    code: string;
+    type: string;
+  };
+  department?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 // Unit interface (simplified)

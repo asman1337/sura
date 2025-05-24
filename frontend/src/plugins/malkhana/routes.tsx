@@ -1,6 +1,6 @@
 import React from 'react';
 import { RouteObject } from 'react-router-dom';
-import { Plugin, ExtensionPoint } from '../../core/plugins';
+import { Plugin } from '../../core/plugins';
 
 import MalkhanaDashboard from './components/MalkhanaDashboard';
 import BlackInkRegistry from './components/BlackInkRegistry';
@@ -73,15 +73,12 @@ const initialize = (plugin: Plugin) => {
   
   // Check if routes are already registered to avoid duplicates
   const existingRoutes = plugin.getExtensionPoints<RouteExtensionData>('routes');
-  console.log(`Found ${existingRoutes.length} existing routes before registration`);
-  
   // Get all existing paths to avoid duplicates
   const existingPaths = new Set(
     existingRoutes
       .map(route => route.data?.path)
       .filter((path): path is string => path !== undefined)
   );
-  console.log('Existing paths:', Array.from(existingPaths));
   
   // Register each route as an extension point if not already registered
   let registeredCount = 0;
@@ -94,31 +91,19 @@ const initialize = (plugin: Plugin) => {
     }
     
     if (!existingPaths.has(route.path)) {
-      console.log(`Registering Malkhana route: ${route.path}`);
-      
       // IMPORTANT: Use 'routes' as the extension point type to match what Routes.tsx expects
-      const extensionId = plugin.registerExtensionPoint<RouteExtensionData>('routes', {
+      plugin.registerExtensionPoint<RouteExtensionData>('routes', {
         path: route.path,
         element: route.element
       });
-      
-      console.log(`Route registered with ID: ${extensionId}`);
       registeredCount++;
-    } else {
-      console.log(`Skipping duplicate route registration: ${route.path}`);
     }
   });
   
   // Log registered routes for debugging
   const registeredRoutes = plugin.getExtensionPoints<RouteExtensionData>('routes');
-  console.log(`Total registered Malkhana routes: ${registeredCount}, Total routes: ${registeredRoutes.length}`);
-  
   // Verify routes are registered correctly
-  if (registeredRoutes.length > 0) {
-    registeredRoutes.forEach((route: ExtensionPoint<RouteExtensionData>) => {
-      console.log(`Verified route: ${route.data.path} (ID: ${route.id})`);
-    });
-  } else {
+  if (registeredRoutes.length === 0) {
     console.warn('No routes were registered! Check extension point registration.');
   }
   

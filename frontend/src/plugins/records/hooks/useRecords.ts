@@ -1,21 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRecordsApi } from './index';
 import { RecordData, RecordsStats, RecordType, CreateRecord } from '../types';
+
+interface UseRecordsOptions {
+  skipInitialFetch?: boolean; // Skip fetching records on initialization
+  skipStatsFetch?: boolean;   // Skip fetching stats on initialization
+}
 
 /**
  * Hook for working with records data
  */
-export const useRecords = (recordType?: RecordType) => {
+export const useRecords = (recordType?: RecordType, options: UseRecordsOptions = {}) => {
   const recordsApi = useRecordsApi();
   const [records, setRecords] = useState<RecordData[]>([]);
   const [stats, setStats] = useState<RecordsStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { skipInitialFetch = false, skipStatsFetch = false } = options;
+
   // Load records on component mount
   useEffect(() => {
     const loadRecords = async () => {
-      if (!recordsApi.isReady) return;
+      if (!recordsApi.isReady || skipInitialFetch) return;
       
       try {
         setLoading(true);
@@ -27,6 +34,7 @@ export const useRecords = (recordType?: RecordType) => {
           result = await recordsApi.getAllRecords();
         }
         
+        // An empty array of records is a valid response, not an error
         setRecords(result);
         setError(null);
       } catch (err) {
@@ -38,12 +46,12 @@ export const useRecords = (recordType?: RecordType) => {
     };
     
     loadRecords();
-  }, [recordsApi.isReady, recordType]);
+  }, [recordsApi.isReady, recordType, skipInitialFetch]);
 
   // Load stats on component mount
   useEffect(() => {
     const loadStats = async () => {
-      if (!recordsApi.isReady) return;
+      if (!recordsApi.isReady || skipStatsFetch) return;
       
       try {
         const result = await recordsApi.getStats();
@@ -54,24 +62,33 @@ export const useRecords = (recordType?: RecordType) => {
     };
     
     loadStats();
-  }, [recordsApi.isReady]);
+  }, [recordsApi.isReady, skipStatsFetch]);
 
   // Function to refresh data
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     if (!recordsApi.isReady) return;
     
     try {
       setLoading(true);
       
-      const [recordsResult, statsResult] = await Promise.all([
-        recordType
-          ? recordsApi.getRecordsByType(recordType)
-          : recordsApi.getAllRecords(),
-        recordsApi.getStats()
-      ]);
+      let recordsResult;
+      if (recordType) {
+        console.log(`Refreshing ${recordType} records...`);
+        recordsResult = await recordsApi.getRecordsByType(recordType);
+      } else {
+        console.log('Refreshing all records...');
+        recordsResult = await recordsApi.getAllRecords();
+      }
       
+      console.log('Records refreshed:', recordsResult);
+      
+      // An empty array of records is a valid response, not an error
       setRecords(recordsResult);
+      
+      // Refresh stats
+      const statsResult = await recordsApi.getStats();
       setStats(statsResult);
+      
       setError(null);
     } catch (err) {
       console.error('Error refreshing records data:', err);
@@ -79,15 +96,17 @@ export const useRecords = (recordType?: RecordType) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [recordsApi, recordType]);
 
-  // Function to get a single record
-  const getRecord = async (id: string, type?: RecordType) => {
+  // Function to get a single record - memoized to prevent unnecessary rerenders
+  const getRecord = useCallback(async (id: string, type?: RecordType) => {
     if (!recordsApi.isReady) throw new Error('API not ready');
     
     try {
       setLoading(true);
+      console.log(`Getting record by ID: ${id}, type: ${type || 'not specified'}`);
       const result = await recordsApi.getRecordById(id, type);
+      console.log('Record fetched successfully:', result);
       return result;
     } catch (err) {
       console.error(`Error getting record ${id}:`, err);
@@ -96,7 +115,7 @@ export const useRecords = (recordType?: RecordType) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [recordsApi]);
 
   // Function to create a new record
   const createRecord = async (record: CreateRecord) => {
@@ -147,11 +166,12 @@ export const useRecords = (recordType?: RecordType) => {
   };
 
   // Function to delete a record
-  const deleteRecord = async (recordId: string, type?: RecordType) => {
+  const deleteRecord = useCallback(async (recordId: string, type?: RecordType) => {
     if (!recordsApi.isReady) throw new Error('API not ready');
     
     try {
       setLoading(true);
+      console.log(`Deleting record ${recordId}${type ? ` of type ${type}` : ''}`);
       await recordsApi.deleteRecord(recordId, type);
       
       // Update local state
@@ -169,7 +189,7 @@ export const useRecords = (recordType?: RecordType) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [recordsApi]);
 
   // Function to mark property as recovered
   const markAsRecovered = async (propertyId: string, recoveryDetails: {

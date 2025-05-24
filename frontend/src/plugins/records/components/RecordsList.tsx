@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
-  Card,
-  Grid,
   Paper,
   Table,
   TableBody,
@@ -18,7 +16,6 @@ import {
   Chip,
   IconButton,
   Alert,
-  Divider,
   TextField,
   InputAdornment
 } from '@mui/material';
@@ -30,8 +27,9 @@ import {
   Search as SearchIcon,
   Refresh as RefreshIcon
 } from '@mui/icons-material';
+import { useRecordsApi } from '../hooks';
 import { useRecords } from '../hooks/useRecords';
-import { RecordType, RecordData, UDCaseRecord, StolenPropertyRecord } from '../types';
+import { RecordType, UDCaseRecord, StolenPropertyRecord } from '../types';
 import { PageContainer } from './common';
 import { formatDate } from '../utils/formatters';
 
@@ -56,6 +54,7 @@ const getRecordTypeName = (type: RecordType): string => {
 const RecordsList: React.FC = () => {
   const { recordType } = useParams<{ recordType: RecordType }>();
   const navigate = useNavigate();
+  const recordsApi = useRecordsApi();
   const { records, loading, error, refreshData, deleteRecord } = useRecords(recordType as RecordType);
   
   const [page, setPage] = useState(0);
@@ -63,6 +62,7 @@ const RecordsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [totalRecords, setTotalRecords] = useState(0);
 
   // Filter records based on search term
   const filteredRecords = records.filter(record => {
@@ -77,13 +77,13 @@ const RecordsList: React.FC = () => {
     
     // Type-specific fields
     if (record.type === 'ud_case') {
-      const udCase = record as any;
+      const udCase = record as UDCaseRecord;
       if (udCase.caseNumber?.toLowerCase().includes(searchLower)) return true;
       if (udCase.deceasedName?.toLowerCase().includes(searchLower)) return true;
       if (udCase.informantName?.toLowerCase().includes(searchLower)) return true;
       if (udCase.location?.toLowerCase().includes(searchLower)) return true;
     } else if (record.type === 'stolen_property') {
-      const property = record as any;
+      const property = record as StolenPropertyRecord;
       if (property.propertyId?.toLowerCase().includes(searchLower)) return true;
       if (property.propertyType?.toLowerCase().includes(searchLower)) return true;
       if (property.description?.toLowerCase().includes(searchLower)) return true;
@@ -93,7 +93,31 @@ const RecordsList: React.FC = () => {
     return false;
   });
 
-  const handleChangePage = (event: unknown, newPage: number) => {
+  // Update total records count
+  useEffect(() => {
+    // Safety check to prevent errors during initialization
+    try {
+      if (recordsApi && recordsApi.lastResponse) {
+        console.log('Setting total records from API response:', recordsApi.lastResponse.total);
+        setTotalRecords(recordsApi.lastResponse.total);
+      } else {
+        console.log('Setting total records from filtered records length:', filteredRecords.length);
+        setTotalRecords(filteredRecords.length);
+      }
+
+      // Debug log the records to see what we're getting
+      console.debug('Records loaded in RecordsList:', 
+        records.length, 
+        'records. First record:', 
+        records.length > 0 ? records[0].id : 'none'
+      );
+    } catch (err) {
+      console.error('Error updating total records:', err);
+      setTotalRecords(filteredRecords.length);
+    }
+  }, [records, filteredRecords.length, recordsApi]);
+
+  const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
 
@@ -170,14 +194,19 @@ const RecordsList: React.FC = () => {
             {getRecordTypeName(recordType as RecordType)} Records
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Showing {filteredRecords.length} records
+            Showing {filteredRecords.length} {searchTerm ? 'filtered' : ''} records 
+            {totalRecords > 0 && filteredRecords.length !== totalRecords && !searchTerm ? 
+              ` of ${totalRecords} total` : ''}
           </Typography>
         </Box>
         <Box>
           <Button
             variant="outlined"
             startIcon={<RefreshIcon />}
-            onClick={refreshData}
+            onClick={() => {
+              console.log('Refreshing records...');
+              refreshData();
+            }}
             disabled={loading}
             sx={{ mr: 2 }}
           >
@@ -356,7 +385,7 @@ const RecordsList: React.FC = () => {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25, 50]}
           component="div"
-          count={filteredRecords.length}
+          count={searchTerm ? filteredRecords.length : totalRecords}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}

@@ -11,6 +11,7 @@ export class RecordsService {
   private api: any;
   private isInitialized: boolean = false;
   private baseUrl = '';  // Removed '/api' prefix
+  public lastResponse: { records: RecordData[]; total: number } | null = null;
 
   constructor(api?: any) {
     this.api = api || globalApiInstance;
@@ -23,21 +24,81 @@ export class RecordsService {
 
   // Initialize with API instance if not already initialized
   initialize(api: any): void {
-    if (!this.isInitialized) {
+    if (!this.isInitialized && api) {
+      console.log('Initializing RecordsService with API');
       this.api = api;
       this.isInitialized = true;
+    } else if (!api) {
+      console.warn('Attempted to initialize RecordsService with null/undefined API');
+    }
+  }
+
+  // Ensure API is ready and handle errors consistently
+  private ensureReady(): void {
+    if (!this.isReady) {
+      console.error('API not initialized in RecordsService');
+      throw new Error('API not initialized');
+    }
+    
+    if (!this.api) {
+      console.error('API instance is null/undefined in RecordsService');
+      throw new Error('API instance is null');
     }
   }
 
   // Fetch all records
   async getAllRecords(): Promise<RecordData[]> {
-    if (!this.isReady) {
-      throw new Error('API not initialized');
-    }
+    this.ensureReady();
 
     try {
+      console.log('Fetching all records');
       const response = await this.api.get(`${this.baseUrl}/records`);
-      return response.data.records || [];
+      console.log('All records response:', response);
+      
+      // Safely handle different response formats
+      if (!response) {
+        console.warn('API returned empty response');
+        return [];
+      }
+      
+      // Store response metadata for pagination
+      if (response.records && response.total !== undefined) {
+        this.lastResponse = {
+          records: response.records,
+          total: response.total
+        };
+      } else if (response.data && response.data.records && response.data.total !== undefined) {
+        this.lastResponse = {
+          records: response.data.records,
+          total: response.data.total
+        };
+      } else {
+        this.lastResponse = null;
+      }
+      
+      // Handle case where records is a property of response
+      if (response.records && Array.isArray(response.records)) {
+        return response.records;
+      }
+      
+      // Handle case where records is a property of response.data
+      if (response.data && response.data.records && Array.isArray(response.data.records)) {
+        return response.data.records;
+      }
+      
+      // Handle case where response.data is an array directly
+      if (response.data && Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      // Handle case where response is an array directly
+      if (Array.isArray(response)) {
+        return response;
+      }
+      
+      // If we got here but don't recognize the format, log a warning and return empty array
+      console.warn('Unrecognized API response format:', response);
+      return [];
     } catch (error) {
       console.error('Error fetching records:', error);
       throw error;
@@ -46,9 +107,7 @@ export class RecordsService {
 
   // Fetch records by type
   async getRecordsByType(type: RecordType): Promise<RecordData[]> {
-    if (!this.isReady) {
-      throw new Error('API not initialized');
-    }
+    this.ensureReady();
 
     try {
       let endpoint = '';
@@ -64,8 +123,57 @@ export class RecordsService {
           endpoint = `${this.baseUrl}/records?type=${type}`;
       }
       
+      console.log(`Fetching ${type} records from ${endpoint}`);
       const response = await this.api.get(endpoint);
-      return response.data.records || [];
+      console.log(`API response for ${type}:`, response);
+      
+      // Safely handle different response formats
+      if (!response) {
+        console.warn(`API returned empty response for ${type}`);
+        return [];
+      }
+      
+      // Store response metadata for pagination
+      if (response.records && response.total !== undefined) {
+        console.log(`Using response.records and total: ${response.total}`);
+        this.lastResponse = {
+          records: response.records,
+          total: response.total
+        };
+      } else if (response.data && response.data.records && response.data.total !== undefined) {
+        console.log(`Using response.data.records and total: ${response.data.total}`);
+        this.lastResponse = {
+          records: response.data.records,
+          total: response.data.total
+        };
+      } else {
+        console.log(`No pagination metadata found in response`);
+        this.lastResponse = null;
+      }
+      
+      // Handle case where records is a property of response
+      if (response.records && Array.isArray(response.records)) {
+        return response.records;
+      }
+      
+      // Handle case where records is a property of response.data
+      if (response.data && response.data.records && Array.isArray(response.data.records)) {
+        return response.data.records;
+      }
+      
+      // Handle case where response.data is an array directly
+      if (response.data && Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      // Handle case where response is an array directly
+      if (Array.isArray(response)) {
+        return response;
+      }
+      
+      // If we got here but don't recognize the format, log a warning and return empty array
+      console.warn(`Unrecognized API response format for ${type}:`, response);
+      return [];
     } catch (error) {
       console.error(`Error fetching ${type} records:`, error);
       throw error;
@@ -80,10 +188,28 @@ export class RecordsService {
 
     try {
       const response = await this.api.get(`${this.baseUrl}/records/stats`);
+      
+      if (!response || !response.data) {
+        console.warn('API returned empty stats response');
+        // Return default stats object if response is empty
+        return {
+          totalRecords: 0,
+          recordsByType: {},
+          recentlyAdded: 0,
+          archivedRecords: 0
+        };
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Error fetching records stats:', error);
-      throw error;
+      // Return default stats object on error
+      return {
+        totalRecords: 0,
+        recordsByType: {},
+        recentlyAdded: 0,
+        archivedRecords: 0
+      };
     }
   }
 

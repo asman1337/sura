@@ -50,11 +50,7 @@ const Routes: React.FC = () => {
     console.log(`Found ${routes.length} routes from all plugins`);
     setPluginRoutes(routes as PluginRoute[]);
     
-    if (routes.length > 0) {
-      routes.forEach(route => {
-        console.log(`Found route: ${route.data.path} from plugin ${route.pluginId} (ID: ${route.id})`);
-      });
-    } else {
+    if (routes.length === 0) {
       console.warn("No plugin routes found. Check plugin initialization.");
     }
   }, [getExtensionPoints, enabledPlugins.length]);

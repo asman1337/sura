@@ -78,15 +78,12 @@ const initialize = (plugin: Plugin) => {
   
   // Check if routes are already registered to avoid duplicates
   const existingRoutes = plugin.getExtensionPoints<RouteExtensionData>('routes');
-  console.log(`Found ${existingRoutes.length} existing routes before registration`);
-  
   // Get all existing paths to avoid duplicates
   const existingPaths = new Set(
     existingRoutes
       .map(route => route.data?.path)
       .filter((path): path is string => path !== undefined)
   );
-  console.log('Existing paths:', Array.from(existingPaths));
   
   // Register each route as an extension point if not already registered
   let registeredCount = 0;
@@ -99,18 +96,12 @@ const initialize = (plugin: Plugin) => {
     }
     
     if (!existingPaths.has(route.path)) {
-      console.log(`Registering Records route: ${route.path}`);
-      
       // IMPORTANT: Use 'routes' as the extension point type to match what Routes.tsx expects
-      const extensionId = plugin.registerExtensionPoint<RouteExtensionData>('routes', {
+      plugin.registerExtensionPoint<RouteExtensionData>('routes', {
         path: route.path,
         element: route.element
       });
-      
-      console.log(`Route registered with ID: ${extensionId}`);
       registeredCount++;
-    } else {
-      console.log(`Skipping duplicate route registration: ${route.path}`);
     }
   });
   
