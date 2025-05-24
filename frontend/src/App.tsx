@@ -12,6 +12,7 @@ import './App.css'
 import MalkhanaPlugin from './plugins/malkhana'
 import DutyRosterPlugin from './plugins/duty-roster'
 import RecordsPlugin from './plugins/records'
+import CashRegistryPlugin from './plugins/cash-registry';
 
 // Create the store
 const store = createAppStore()
@@ -41,6 +42,7 @@ function AppShell() {
     MalkhanaPlugin,
     DutyRosterPlugin,
     RecordsPlugin,
+    CashRegistryPlugin,
     // Add more plugins here
   ], []); // Empty dependency array ensures this is only computed once
 
