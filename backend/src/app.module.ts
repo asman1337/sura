@@ -14,6 +14,7 @@ import { OfficerRanksModule } from './modules/officer-ranks/officer-ranks.module
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { DutyRosterModule } from './modules/duty-roster/duty-roster.module';
 import { RecordsModule } from './modules/records/records.module';
+import { CashRegistryModule } from './modules/cash-registry/cash-registry.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { RecordsModule } from './modules/records/records.module';
     MalkhanaModule,
     DutyRosterModule,
     RecordsModule,
+    CashRegistryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
