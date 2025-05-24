@@ -122,8 +122,13 @@ export class RecordsService {
       .groupBy('record.type')
       .getRawMany();
     
+    // Fix: Properly extract the record type from the query results
     const recordsByType = typeCounts.reduce((acc, curr) => {
-      acc[curr.record_type] = parseInt(curr.count);
+      // The column name might be 'record_type' due to SQL naming conventions
+      const type = curr.record_type || curr.type;
+      if (type && type !== 'undefined') {
+        acc[type] = parseInt(curr.count);
+      }
       return acc;
     }, {});
     

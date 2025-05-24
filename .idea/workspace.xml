@@ -4,11 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="42773e7e-4172-4a66-928e-b5864662cec5" name="Changes" comment="Add print functionality for Stolen Property records&#10;&#10;Implemented a print feature with detailed structured templates for Stolen Property records, accessible via a new &quot;Print&quot; button in the UI. The functionality includes printable styles and dynamic content, allowing users to generate formatted reports for the selected property.">
-      <change afterPath="$PROJECT_DIR$/frontend/src/plugins/records/components/create/SelectRecordType.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/plugins/records/components/RecordsDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/plugins/records/components/RecordsDashboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/plugins/records/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/plugins/records/types.ts" afterDir="false" />
-    </list>
+    <list default="true" id="42773e7e-4172-4a66-928e-b5864662cec5" name="Changes" comment="Add print functionality for Stolen Property records&#10;&#10;Implemented a print feature with detailed structured templates for Stolen Property records, accessible via a new &quot;Print&quot; button in the UI. The functionality includes printable styles and dynamic content, allowing users to generate formatted reports for the selected property." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -56,8 +52,11 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
     "settings.editor.selected.configurable": "preferences.pluginManager",
-    "ts.external.directory.path": "C:\\Users\\Asman Mirza\\ExperimentalProjects\\sura\\backend\\node_modules\\typescript\\lib",
+    "ts.external.directory.path": "C:\\Users\\Asman Mirza\\AppData\\Local\\Programs\\IntelliJ IDEA Ultimate\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -76,7 +75,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1748096718113</updated>
-      <workItem from="1748096719524" duration="822000" />
+      <workItem from="1748096719524" duration="1531000" />
     </task>
     <task id="LOCAL-00001" summary="Add print functionality for Stolen Property records&#10;&#10;Implemented a print feature with detailed structured templates for Stolen Property records, accessible via a new &quot;Print&quot; button in the UI. The functionality includes printable styles and dynamic content, allowing users to generate formatted reports for the selected property.">
       <option name="closed" value="true" />
