@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppService } from './app.service';
@@ -13,22 +13,27 @@ import { DepartmentsModule } from './modules/departments/departments.module';
 import { OfficerRanksModule } from './modules/officer-ranks/officer-ranks.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { DutyRosterModule } from './modules/duty-roster/duty-roster.module';
+import { RecordsModule } from './modules/records/records.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DATABASE_HOST || 'localhost',
-      port: process.env.DATABASE_PORT ? parseInt(process.env.DATABASE_PORT, 10) : 5432,
-      username: process.env.DATABASE_USER || 'postgres',
-      password: process.env.DATABASE_PASSWORD || 'postgres',
-      database: process.env.DATABASE_NAME || 'sura',
-      synchronize: process.env.NODE_ENV !== 'production',
-      entities: [__dirname + '/**/*.entity.{js,ts}'],
-      logging: process.env.NODE_ENV !== 'production'
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get('DATABASE_HOST', 'localhost'),
+        port: +configService.get('DATABASE_PORT', 5432),
+        username: configService.get('DATABASE_USER', 'postgres'),
+        password: configService.get('DATABASE_PASSWORD', 'postgres'),
+        database: configService.get('DATABASE_NAME', 'sura'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        synchronize: configService.get('NODE_ENV', 'development') !== 'production',
+        logging: configService.get('DATABASE_LOGGING', 'false') === 'true',
+      }),
     }),
     OfficersModule, 
     OfficerRanksModule,
@@ -39,6 +44,7 @@ import { DutyRosterModule } from './modules/duty-roster/duty-roster.module';
     SeederModule,
     MalkhanaModule,
     DutyRosterModule,
+    RecordsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,6 +1,6 @@
 import React from 'react';
 import { RouteObject } from 'react-router-dom';
-import { Plugin, ExtensionPoint } from '../../core/plugins';
+import { Plugin } from '../../core/plugins';
 
 import RecordsDashboard from './components/RecordsDashboard';
 

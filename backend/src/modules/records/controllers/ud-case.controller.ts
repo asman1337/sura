@@ -1,0 +1,87 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseGuards,
+  ParseUUIDPipe,
+  ValidationPipe
+} from '@nestjs/common';
+import { UDCaseService } from '../services/ud-case.service';
+import { CreateUDCaseDto } from '../dto/create-ud-case.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+
+@Controller('records/ud-cases')
+@UseGuards(JwtAuthGuard)
+export class UDCaseController {
+  constructor(private readonly udCaseService: UDCaseService) {}
+
+  /**
+   * Create a new UD case record
+   */
+  @Post()
+  async create(@Body(new ValidationPipe({ whitelist: true })) createUDCaseDto: CreateUDCaseDto) {
+    return this.udCaseService.create(createUDCaseDto);
+  }
+
+  /**
+   * Get all UD case records with optional filtering
+   */
+  @Get()
+  async findAll(
+    @Query('unitId') unitId?: string,
+    @Query('status') status?: string,
+    @Query('investigationStatus') investigationStatus?: string,
+    @Query('identificationStatus') identificationStatus?: string,
+    @Query('skip') skip?: number,
+    @Query('take') take?: number,
+  ) {
+    return this.udCaseService.findAll({
+      unitId,
+      status,
+      investigationStatus,
+      identificationStatus,
+      skip,
+      take,
+    });
+  }
+
+  /**
+   * Get a specific UD case record by ID
+   */
+  @Get(':id')
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.udCaseService.findOne(id);
+  }
+
+  /**
+   * Get a UD case record by case number
+   */
+  @Get('by-case-number/:caseNumber')
+  async findByCaseNumber(@Param('caseNumber') caseNumber: string) {
+    return this.udCaseService.findByCaseNumber(caseNumber);
+  }
+
+  /**
+   * Update a UD case record
+   */
+  @Patch(':id')
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ValidationPipe({ whitelist: true })) updateUDCaseDto: Partial<CreateUDCaseDto>
+  ) {
+    return this.udCaseService.update(id, updateUDCaseDto);
+  }
+
+  /**
+   * Delete a UD case record (soft delete)
+   */
+  @Delete(':id')
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.udCaseService.remove(id);
+  }
+} 

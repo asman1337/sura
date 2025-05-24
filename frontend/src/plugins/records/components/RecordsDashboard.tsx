@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -24,7 +24,6 @@ import {
   Search as SearchIcon,
   Refresh as RefreshIcon,
   Article as ArticleIcon,
-  ViewList as ViewListIcon,
   Description as FileIcon,
   Assignment as FormIcon,
   ArrowForward as ArrowForwardIcon,
@@ -33,7 +32,7 @@ import { useRecordsApi } from '../hooks';
 import { useRecords } from '../hooks/useRecords';
 import { useData } from '../../../core/data';
 import { setGlobalApiInstance } from '../services';
-import { Record, RecordFormConfig, RecordType } from '../types';
+import { RecordFormConfig } from '../types';
 import { PageContainer } from './common';
 
 // Available record types with their configurations
