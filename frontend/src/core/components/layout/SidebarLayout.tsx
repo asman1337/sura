@@ -34,8 +34,8 @@ import {
   Login as LoginIcon,
   Inventory as InventoryIcon,
   EventNoteRounded,
-  DescriptionRounded,
-  WorkHistoryRounded
+  WorkHistoryRounded,
+  AccountBalanceRounded
 } from '@mui/icons-material';
 
 // Sidebar width
@@ -210,6 +210,8 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
           return <EventNoteRounded />;
         case 'Records':
           return <WorkHistoryRounded />;
+        case 'CashRegistry':
+          return <AccountBalanceRounded />;
         default:
           return <DashboardIcon />; // Default icon
       }

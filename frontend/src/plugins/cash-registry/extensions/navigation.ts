@@ -32,7 +32,7 @@ const navigationExtension = {
         title: 'Cash Registry',
         group: 'finance',
         // We'll use the icon name and let the SidebarLayout handle rendering
-        icon: 'AccountBalanceWallet',
+        icon: 'CashRegistry',
         badgeCount: 0
       },
       { priority: 30 }
