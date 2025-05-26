@@ -39,9 +39,9 @@ function AppShell() {
   
   // Memoize plugins to prevent re-registration on re-renders
   const pluginsToLoad = useMemo(() => [
+    RecordsPlugin,
     MalkhanaPlugin,
     DutyRosterPlugin,
-    RecordsPlugin,
     CashRegistryPlugin,
     // Add more plugins here
   ], []); // Empty dependency array ensures this is only computed once
