@@ -159,13 +159,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 4),
         
         // Badge number
-        if (user.badgeNumber != null)
-          Text(
-            'Badge #${user.badgeNumber}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
-                ),
-          ),
+        Text(
+          'Badge #${user.badgeNumber}',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+              ),
+        ),
         const SizedBox(height: 8),
         
         // User type
@@ -396,7 +395,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         trailing: trailing ??
             Icon(
               Icons.chevron_right,
-              color: Theme.of(context).colorScheme.onBackground.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
         onTap: onTap,
       ),

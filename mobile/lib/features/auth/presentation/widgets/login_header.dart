@@ -41,7 +41,7 @@ class LoginHeader extends StatelessWidget {
         Text(
           'Evidence Management System',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
           textAlign: TextAlign.center,
         ),

@@ -43,7 +43,7 @@ class CustomTextField extends StatelessWidget {
           label,
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w500,
-            color: theme.colorScheme.onBackground,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -59,12 +59,12 @@ class CustomTextField extends StatelessWidget {
           readOnly: readOnly,
           onTap: onTap,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onBackground,
+            color: theme.colorScheme.onSurface,
           ),
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onBackground.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
             prefixIcon: prefixIcon != null
                 ? Icon(
