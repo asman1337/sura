@@ -26,6 +26,7 @@ export interface DataContextValue {
   cache: CacheManager;
   sync: SyncManager;
   isInitialized: boolean;
+  isAuthenticated: boolean;
 }
 
 // Create context with a null default value
@@ -62,6 +63,9 @@ export const DataProvider: React.FC<{
   
   // Create the auth service with storage
   const auth = useMemo(() => new AuthService(storage, config.apiBaseUrl), [storage, config.apiBaseUrl]);
+  
+  // Track authentication state changes
+  const isAuthenticated = useAuthState(auth);
   
   // Create the API client with auth service callbacks
   const api = useMemo(() => new ApiClient(
@@ -163,8 +167,9 @@ export const DataProvider: React.FC<{
     storage,
     cache,
     sync,
-    isInitialized
-  }), [api, auth, storage, cache, sync, isInitialized]);
+    isInitialized,
+    isAuthenticated
+  }), [api, auth, storage, cache, sync, isInitialized, isAuthenticated]);
   
   return (
     <DataContext.Provider value={contextValue}>
@@ -182,4 +187,26 @@ export const useData = (): DataContextValue => {
     throw new Error('useData must be used within a DataProvider');
   }
   return context;
-}; 
+};
+
+/**
+ * Custom hook to track authentication state changes
+ */
+export function useAuthState(auth: AuthService): boolean {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!auth.getToken());
+  
+  useEffect(() => {
+    // Set initial state
+    setIsAuthenticated(!!auth.getToken());
+    
+    // Listen for auth state changes
+    const unsubscribe = auth.addAuthStateListener(() => {
+      setIsAuthenticated(!!auth.getToken());
+    });
+    
+    // Cleanup listener on unmount
+    return unsubscribe;
+  }, [auth]);
+  
+  return isAuthenticated;
+}

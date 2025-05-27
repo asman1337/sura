@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useData } from '../../data';
 
@@ -14,24 +14,11 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   children, 
   loginPath = '/login'
 }) => {
-  const { auth, isInitialized } = useData();
+  const { isInitialized, isAuthenticated } = useData();
   const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  
-  // Check authentication status
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (!isInitialized) return;
-      
-      const token = auth.getToken();
-      setIsAuthenticated(!!token);
-    };
-    
-    checkAuth();
-  }, [auth, isInitialized]);
   
   // Show nothing while checking
-  if (!isInitialized || isAuthenticated === null) {
+  if (!isInitialized) {
     return <div>Loading...</div>;
   }
   

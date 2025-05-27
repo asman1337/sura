@@ -1,23 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
   Button,
   Typography,
-  CircularProgress,
   Chip,
-  IconButton,
   Alert,
   TextField,
-  InputAdornment
+  InputAdornment,
+  useTheme,
+  alpha
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -27,6 +20,7 @@ import {
   Search as SearchIcon,
   Refresh as RefreshIcon
 } from '@mui/icons-material';
+import { DataGrid, GridColDef, GridActionsCellItem, GridRowParams } from '@mui/x-data-grid';
 import { useRecordsApi } from '../hooks';
 import { useRecords } from '../hooks/useRecords';
 import { RecordType, UDCaseRecord, StolenPropertyRecord } from '../types';
@@ -54,44 +48,195 @@ const getRecordTypeName = (type: RecordType): string => {
 const RecordsList: React.FC = () => {
   const { recordType } = useParams<{ recordType: RecordType }>();
   const navigate = useNavigate();
+  const theme = useTheme();
   const recordsApi = useRecordsApi();
   const { records, loading, error, refreshData, deleteRecord } = useRecords(recordType as RecordType);
   
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 10,
+  });
 
   // Filter records based on search term
-  const filteredRecords = records.filter(record => {
-    if (!searchTerm) return true;
+  const filteredRecords = useMemo(() => {
+    if (!searchTerm) return records;
     
     const searchLower = searchTerm.toLowerCase();
     
-    // Generic fields to search
-    if (record.id.toLowerCase().includes(searchLower)) return true;
-    if (record.status.toLowerCase().includes(searchLower)) return true;
-    if (record.remarks?.toLowerCase().includes(searchLower)) return true;
-    
-    // Type-specific fields
-    if (record.type === 'ud_case') {
-      const udCase = record as UDCaseRecord;
-      if (udCase.caseNumber?.toLowerCase().includes(searchLower)) return true;
-      if (udCase.deceasedName?.toLowerCase().includes(searchLower)) return true;
-      if (udCase.informantName?.toLowerCase().includes(searchLower)) return true;
-      if (udCase.location?.toLowerCase().includes(searchLower)) return true;
-    } else if (record.type === 'stolen_property') {
-      const property = record as StolenPropertyRecord;
-      if (property.propertyId?.toLowerCase().includes(searchLower)) return true;
-      if (property.propertyType?.toLowerCase().includes(searchLower)) return true;
-      if (property.description?.toLowerCase().includes(searchLower)) return true;
-      if (property.ownerName?.toLowerCase().includes(searchLower)) return true;
+    return records.filter(record => {
+      // Generic fields to search
+      if (record.status.toLowerCase().includes(searchLower)) return true;
+      if (record.remarks?.toLowerCase().includes(searchLower)) return true;
+      
+      // Type-specific fields
+      if (record.type === 'ud_case') {
+        const udCase = record as UDCaseRecord;
+        if (udCase.caseNumber?.toLowerCase().includes(searchLower)) return true;
+        if (udCase.deceasedName?.toLowerCase().includes(searchLower)) return true;
+        if (udCase.informantName?.toLowerCase().includes(searchLower)) return true;
+        if (udCase.location?.toLowerCase().includes(searchLower)) return true;
+      } else if (record.type === 'stolen_property') {
+        const property = record as StolenPropertyRecord;
+        if (property.propertyId?.toLowerCase().includes(searchLower)) return true;
+        if (property.propertyType?.toLowerCase().includes(searchLower)) return true;
+        if (property.description?.toLowerCase().includes(searchLower)) return true;
+        if (property.ownerName?.toLowerCase().includes(searchLower)) return true;
+      }
+      
+      return false;
+    });
+  }, [records, searchTerm]);
+
+  // Define columns for DataGrid
+  const getColumns = (): GridColDef[] => {
+    const baseColumns: GridColDef[] = [];
+
+    // Type-specific columns (no ID column)
+    if (recordType === 'ud_case') {
+      baseColumns.push(
+        {
+          field: 'caseNumber',
+          headerName: 'Case Number',
+          width: 150,
+          renderCell: (params) => params.row.caseNumber || 'N/A'
+        },
+        {
+          field: 'deceasedName',
+          headerName: 'Deceased Name',
+          width: 180,
+          renderCell: (params) => params.row.deceasedName || 'Unidentified'
+        },
+        {
+          field: 'dateOfOccurrence',
+          headerName: 'Date of Occurrence',
+          width: 160,
+          renderCell: (params) => formatDate(params.row.dateOfOccurrence)
+        },
+        {
+          field: 'investigationStatus',
+          headerName: 'Investigation Status',
+          width: 160,
+          renderCell: (params) => (
+            <Chip
+              label={params.row.investigationStatus || 'pending'}
+              color={
+                params.row.investigationStatus === 'pending' ? 'warning' :
+                params.row.investigationStatus === 'investigation' ? 'info' :
+                'success'
+              }
+              size="small"
+              sx={{ 
+                fontSize: '0.75rem',
+                fontWeight: 'medium'
+              }}
+            />
+          )
+        }
+      );
+    } else if (recordType === 'stolen_property') {
+      baseColumns.push(
+        {
+          field: 'propertyId',
+          headerName: 'Property ID',
+          width: 150,
+          renderCell: (params) => params.row.propertyId || 'N/A'
+        },
+        {
+          field: 'propertyType',
+          headerName: 'Property Type',
+          width: 150,
+          renderCell: (params) => params.row.propertyType || 'N/A'
+        },
+        {
+          field: 'estimatedValue',
+          headerName: 'Value',
+          width: 120,
+          renderCell: (params) => `₹${params.row.estimatedValue?.toLocaleString() || '0'}`
+        },
+        {
+          field: 'recoveryStatus',
+          headerName: 'Recovery Status',
+          width: 160,
+          renderCell: (params) => (
+            <Chip
+              label={params.row.recoveryStatus || 'reported'}
+              color={
+                params.row.recoveryStatus === 'reported' ? 'error' :
+                params.row.recoveryStatus === 'investigation' ? 'warning' :
+                params.row.recoveryStatus === 'recovered' ? 'success' :
+                'default'
+              }
+              size="small"
+              sx={{ 
+                fontSize: '0.75rem',
+                fontWeight: 'medium'
+              }}
+            />
+          )
+        }
+      );
     }
-    
-    return false;
-  });
+
+    // Common columns
+    baseColumns.push(
+      {
+        field: 'status',
+        headerName: 'Status',
+        width: 120,
+        renderCell: (params) => (
+          <Chip
+            label={params.row.status}
+            color={
+              params.row.status === 'active' ? 'success' :
+              params.row.status === 'archived' ? 'warning' :
+              'error'
+            }
+            size="small"
+            sx={{ 
+              fontSize: '0.75rem',
+              fontWeight: 'medium'
+            }}
+          />
+        )
+      },
+      {
+        field: 'createdAt',
+        headerName: 'Created At',
+        width: 150,
+        renderCell: (params) => formatDate(params.row.createdAt)
+      },
+      {
+        field: 'actions',
+        type: 'actions',
+        headerName: 'Actions',
+        width: 150,
+        getActions: (params: GridRowParams) => [
+          <GridActionsCellItem
+            icon={<ViewIcon />}
+            label="View"
+            onClick={() => handleViewRecord(params.row)}
+          />,
+          <GridActionsCellItem
+            icon={<EditIcon />}
+            label="Edit"
+            onClick={() => handleEditRecord(params.row)}
+          />,
+          <GridActionsCellItem
+            icon={<DeleteIcon />}
+            label="Delete"
+            onClick={() => handleDelete(params.row.id)}
+            disabled={isDeleting}
+          />
+        ]
+      }
+    );
+
+    return baseColumns;
+  };
 
   // Update total records count
   useEffect(() => {
@@ -116,15 +261,6 @@ const RecordsList: React.FC = () => {
       setTotalRecords(filteredRecords.length);
     }
   }, [records, filteredRecords.length, recordsApi]);
-
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this record? This action cannot be undone.')) {
@@ -251,145 +387,64 @@ const RecordsList: React.FC = () => {
         </Alert>
       )}
 
-      {/* Records table */}
-      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-        <TableContainer sx={{ maxHeight: 'calc(100vh - 300px)' }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                {recordType === 'ud_case' && (
-                  <>
-                    <TableCell>Case Number</TableCell>
-                    <TableCell>Deceased Name</TableCell>
-                    <TableCell>Date of Occurrence</TableCell>
-                    <TableCell>Investigation Status</TableCell>
-                  </>
-                )}
-                {recordType === 'stolen_property' && (
-                  <>
-                    <TableCell>Property ID</TableCell>
-                    <TableCell>Property Type</TableCell>
-                    <TableCell>Value</TableCell>
-                    <TableCell>Recovery Status</TableCell>
-                  </>
-                )}
-                <TableCell>Status</TableCell>
-                <TableCell>Created At</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={recordType === 'ud_case' ? 7 : recordType === 'stolen_property' ? 7 : 4} align="center">
-                    <CircularProgress size={24} sx={{ my: 2 }} />
-                  </TableCell>
-                </TableRow>
-              ) : filteredRecords.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={recordType === 'ud_case' ? 7 : recordType === 'stolen_property' ? 7 : 4} align="center">
-                    <Typography variant="body1" sx={{ my: 2 }}>
-                      No records found
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredRecords
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((record) => (
-                    <TableRow key={record.id} hover>
-                      <TableCell>{record.id.slice(0, 8)}...</TableCell>
-                      
-                      {recordType === 'ud_case' && record.type === 'ud_case' && (
-                        <>
-                          <TableCell>{record.caseNumber}</TableCell>
-                          <TableCell>{record.deceasedName || 'Unidentified'}</TableCell>
-                          <TableCell>{formatDate(record.dateOfOccurrence)}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={record.investigationStatus || 'pending'}
-                              color={
-                                record.investigationStatus === 'pending' ? 'warning' :
-                                record.investigationStatus === 'investigation' ? 'info' :
-                                'success'
-                              }
-                              size="small"
-                            />
-                          </TableCell>
-                        </>
-                      )}
-                      
-                      {recordType === 'stolen_property' && record.type === 'stolen_property' && (
-                        <>
-                          <TableCell>{record.propertyId}</TableCell>
-                          <TableCell>{record.propertyType}</TableCell>
-                          <TableCell>₹{record.estimatedValue.toLocaleString()}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={record.recoveryStatus || 'reported'}
-                              color={
-                                record.recoveryStatus === 'reported' ? 'error' :
-                                record.recoveryStatus === 'investigation' ? 'warning' :
-                                record.recoveryStatus === 'recovered' ? 'success' :
-                                'default'
-                              }
-                              size="small"
-                            />
-                          </TableCell>
-                        </>
-                      )}
-                      
-                      <TableCell>
-                        <Chip
-                          label={record.status}
-                          color={
-                            record.status === 'active' ? 'success' :
-                            record.status === 'archived' ? 'warning' :
-                            'error'
-                          }
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>{formatDate(record.createdAt)}</TableCell>
-                      <TableCell>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleViewRecord(record)}
-                          title="View"
-                        >
-                          <ViewIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleEditRecord(record)}
-                          title="Edit"
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDelete(record.id)}
-                          title="Delete"
-                          disabled={isDeleting}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          component="div"
-          count={searchTerm ? filteredRecords.length : totalRecords}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
+      {/* Records DataGrid */}
+      <Paper 
+        sx={{ 
+          width: '100%', 
+          height: 'calc(100vh - 300px)',
+          '& .MuiDataGrid-root': {
+            border: 'none',
+          },
+          '& .MuiDataGrid-cell': {
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          },
+          '& .MuiDataGrid-columnHeaders': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.05),
+            borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+            fontWeight: 600,
+          },
+          '& .MuiDataGrid-row:hover': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.04),
+          },
+        }}
+      >
+        <DataGrid
+          rows={filteredRecords}
+          columns={getColumns()}
+          loading={loading}
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          pageSizeOptions={[5, 10, 25, 50]}
+          disableRowSelectionOnClick
+          sx={{
+            '& .MuiDataGrid-cell:focus': {
+              outline: 'none',
+            },
+            '& .MuiDataGrid-row': {
+              cursor: 'pointer',
+            },
+          }}
+          slots={{
+            noRowsOverlay: () => (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  gap: 2,
+                }}
+              >
+                <Typography variant="h6" color="text.secondary">
+                  No records found
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {searchTerm ? 'Try adjusting your search terms' : 'Start by adding a new record'}
+                </Typography>
+              </Box>
+            ),
+          }}
         />
       </Paper>
     </PageContainer>

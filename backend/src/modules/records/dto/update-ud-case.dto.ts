@@ -1,6 +1,6 @@
-import { IsString, IsUUID, MaxLength, IsISO8601, IsOptional, IsEnum, ValidateNested, IsObject, IsArray, IsNumber, IsBoolean } from 'class-validator';
+import { IsString, IsUUID, MaxLength, IsISO8601, IsOptional, IsEnum, ValidateNested, IsObject, IsArray, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CreateRecordDto, RecordType } from './create-record.dto';
+import { UpdateRecordDto } from './update-record.dto';
 
 enum InvestigationStatus {
   PENDING = 'pending',
@@ -73,13 +73,15 @@ class CoordinatesDto {
   longitude?: number;
 }
 
-export class CreateUDCaseDto extends CreateRecordDto {
+export class UpdateUDCaseDto extends UpdateRecordDto {
   @IsString()
-  @MaxLength(100)
-  caseNumber: string;
+  @MaxLength(20)
+  @IsOptional()
+  caseNumber?: string;
   
   @IsISO8601()
-  dateOfOccurrence: string;
+  @IsOptional()
+  dateOfOccurrence?: string;
   
   @IsString()
   @MaxLength(150)
@@ -97,11 +99,13 @@ export class CreateUDCaseDto extends CreateRecordDto {
   
   @IsString()
   @MaxLength(150)
-  informantName: string;
+  @IsOptional()
+  informantName?: string;
   
   @IsString()
   @MaxLength(500)
-  informantAddress: string;
+  @IsOptional()
+  informantAddress?: string;
   
   @IsString()
   @MaxLength(15)
@@ -115,11 +119,13 @@ export class CreateUDCaseDto extends CreateRecordDto {
   
   @IsString()
   @MaxLength(500)
-  apparentCauseOfDeath: string;
+  @IsOptional()
+  apparentCauseOfDeath?: string;
   
   @IsString()
   @MaxLength(255)
-  location: string;
+  @IsOptional()
+  location?: string;
   
   // Assigned Officer Information (simple fields)
   @IsString()
@@ -220,9 +226,9 @@ export class CreateUDCaseDto extends CreateRecordDto {
   @IsOptional()
   finalFormApprovedBy?: string;
 
-  @IsString()
+  @IsNumber()
   @IsOptional()
-  deceasedAge?: string;
+  deceasedAge?: number;
 
   @IsEnum(DeceasedGender)
   @IsOptional()
@@ -252,9 +258,4 @@ export class CreateUDCaseDto extends CreateRecordDto {
   @Type(() => CoordinatesDto)
   @IsOptional()
   coordinates?: CoordinatesDto;
-  
-  constructor() {
-    super();
-    this.type = RecordType.UD_CASE;
-  }
 }

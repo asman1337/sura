@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { UDCaseService } from '../services/ud-case.service';
 import { CreateUDCaseDto } from '../dto/create-ud-case.dto';
+import { UpdateUDCaseDto } from '../dto/update-ud-case.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { UnitId, UserId } from '../../../common/decorators';
 
@@ -92,7 +93,7 @@ export class UDCaseController {
   @Patch(':id')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body(new ValidationPipe({ whitelist: true })) updateUDCaseDto: Partial<CreateUDCaseDto>,
+    @Body(new ValidationPipe({ whitelist: true })) updateUDCaseDto: UpdateUDCaseDto,
     @UserId() userId: string
   ) {
     // Add last modified by information

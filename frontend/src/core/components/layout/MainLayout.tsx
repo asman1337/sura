@@ -32,11 +32,11 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { auth } = useData();
+  const { auth, isAuthenticated } = useData();
   const navigate = useNavigate();
   
   const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const isLoggedIn = !!auth.getToken();
+  const isLoggedIn = isAuthenticated;
   
   const handleLogout = async () => {
     await auth.logout();

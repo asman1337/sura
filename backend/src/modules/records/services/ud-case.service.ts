@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UDCaseRecord } from '../entities/ud-case.entity';
 import { CreateUDCaseDto } from '../dto/create-ud-case.dto';
+import { UpdateUDCaseDto } from '../dto/update-ud-case.dto';
 import { RecordsService } from './records.service';
 
 @Injectable()
@@ -58,7 +59,6 @@ export class UDCaseService {
     
     const queryBuilder = this.udCaseRepository
       .createQueryBuilder('udCase')
-      .leftJoinAndSelect('udCase.assignedOfficer', 'officer')
       .leftJoinAndSelect('udCase.unit', 'unit')
       .where('udCase.isActive = :isActive', { isActive: true });
       
@@ -98,7 +98,7 @@ export class UDCaseService {
   async findOne(id: string): Promise<UDCaseRecord> {
     const record = await this.udCaseRepository.findOne({
       where: { id },
-      relations: ['assignedOfficer', 'createdBy', 'lastModifiedBy', 'unit'],
+      relations: ['createdBy', 'lastModifiedBy', 'unit'],
     });
     
     if (!record) {
@@ -114,7 +114,7 @@ export class UDCaseService {
   async findByCaseNumber(caseNumber: string): Promise<UDCaseRecord> {
     const record = await this.udCaseRepository.findOne({
       where: { caseNumber },
-      relations: ['assignedOfficer', 'createdBy', 'lastModifiedBy', 'unit'],
+      relations: ['createdBy', 'lastModifiedBy', 'unit'],
     });
     
     if (!record) {
@@ -127,7 +127,7 @@ export class UDCaseService {
   /**
    * Update a UD case record
    */
-  async update(id: string, updateUDCaseDto: any): Promise<UDCaseRecord> {
+  async update(id: string, updateUDCaseDto: UpdateUDCaseDto): Promise<UDCaseRecord> {
     // Use base service to update common fields
     await this.recordsService.update(id, updateUDCaseDto);
     
@@ -182,8 +182,25 @@ export class UDCaseService {
       udCase.location = updateUDCaseDto.location;
     }
     
-    if (updateUDCaseDto.assignedOfficerId) {
-      udCase.assignedOfficerId = updateUDCaseDto.assignedOfficerId;
+    // Update assigned officer information (simple fields)
+    if (updateUDCaseDto.assignedOfficerName !== undefined) {
+      udCase.assignedOfficerName = updateUDCaseDto.assignedOfficerName;
+    }
+    
+    if (updateUDCaseDto.assignedOfficerBadgeNumber !== undefined) {
+      udCase.assignedOfficerBadgeNumber = updateUDCaseDto.assignedOfficerBadgeNumber;
+    }
+    
+    if (updateUDCaseDto.assignedOfficerContact !== undefined) {
+      udCase.assignedOfficerContact = updateUDCaseDto.assignedOfficerContact;
+    }
+    
+    if (updateUDCaseDto.assignedOfficerRank !== undefined) {
+      udCase.assignedOfficerRank = updateUDCaseDto.assignedOfficerRank;
+    }
+    
+    if (updateUDCaseDto.assignedOfficerDepartment !== undefined) {
+      udCase.assignedOfficerDepartment = updateUDCaseDto.assignedOfficerDepartment;
     }
     
     // Update post mortem info

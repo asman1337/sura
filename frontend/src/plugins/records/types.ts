@@ -73,6 +73,7 @@ export interface RecordsStats {
 // UD Case Record
 export interface UDCaseRecord extends BaseRecord {
   type: 'ud_case';
+  // Existing fields
   caseNumber: string;
   dateOfOccurrence: string;
   deceasedName?: string;
@@ -84,8 +85,14 @@ export interface UDCaseRecord extends BaseRecord {
   informantRelation?: string;
   apparentCauseOfDeath: string;
   location: string;
-  assignedOfficerId: string;
-  assignedOfficer?: Officer;
+  
+  // Assigned Officer Information (simple fields)
+  assignedOfficerName?: string;
+  assignedOfficerBadgeNumber?: string;
+  assignedOfficerContact?: string;
+  assignedOfficerRank?: string;
+  assignedOfficerDepartment?: string;
+  
   postMortemDate?: string;
   postMortemDoctor?: string;
   postMortemHospital?: string;
@@ -93,6 +100,41 @@ export interface UDCaseRecord extends BaseRecord {
   investigationStatus?: 'pending' | 'investigation' | 'closed';
   description?: string;
   additionalDetails?: { [key: string]: any };
+  
+  // New fields for sample data compatibility
+  serialNumber?: string; // SL NO equivalent
+  policeStationCode?: string; // PS code (e.g., "AUSGRAM PS")
+  policeStationName?: string; // Full PS name
+  
+  // Enhanced autopsy/post-mortem information
+  autopsyResults?: {
+    cause_of_death?: string;
+    manner_of_death?: 'natural' | 'accident' | 'suicide' | 'homicide' | 'undetermined';
+    findings?: string;
+    toxicology_results?: string;
+    time_of_death_estimate?: string;
+    injuries_description?: string;
+  };
+  
+  // Final form status tracking
+  finalFormStatus?: 'draft' | 'submitted' | 'reviewed' | 'approved' | 'closed';
+  finalFormSubmissionDate?: string;
+  finalFormReviewedBy?: string;
+  finalFormApprovedBy?: string;
+  
+  // Additional deceased information
+  deceasedAge?: number;
+  deceasedGender?: 'male' | 'female' | 'other' | 'unknown';
+  deceasedOccupation?: string;
+  deceasedNationality?: string;
+  
+  // Enhanced location details
+  exactLocation?: string; // More specific location within the area
+  nearestLandmark?: string;
+  coordinates?: {
+    latitude?: number;
+    longitude?: number;
+  };
 }
 
 // Stolen Property Record
@@ -177,13 +219,47 @@ export interface CreateUDCase extends CreateRecordBase {
   informantRelation?: string;
   apparentCauseOfDeath: string;
   location: string;
-  assignedOfficerId: string;
+  
+  // Assigned Officer Information (simple fields)
+  assignedOfficerName?: string;
+  assignedOfficerBadgeNumber?: string;
+  assignedOfficerContact?: string;
+  assignedOfficerRank?: string;
+  assignedOfficerDepartment?: string;
+  
   postMortemDate?: string;
   postMortemDoctor?: string;
   postMortemHospital?: string;
   photoUrls?: string[];
   investigationStatus?: 'pending' | 'investigation' | 'closed';
   description?: string;
+  
+  // New fields for sample data compatibility
+  serialNumber?: string;
+  policeStationCode?: string;
+  policeStationName?: string;
+  autopsyResults?: {
+    cause_of_death?: string;
+    manner_of_death?: 'natural' | 'accident' | 'suicide' | 'homicide' | 'undetermined';
+    findings?: string;
+    toxicology_results?: string;
+    time_of_death_estimate?: string;
+    injuries_description?: string;
+  };
+  finalFormStatus?: 'draft' | 'submitted' | 'reviewed' | 'approved' | 'closed';
+  finalFormSubmissionDate?: string;
+  finalFormReviewedBy?: string;
+  finalFormApprovedBy?: string;
+  deceasedAge?: number;
+  deceasedGender?: 'male' | 'female' | 'other' | 'unknown';
+  deceasedOccupation?: string;
+  deceasedNationality?: string;
+  exactLocation?: string;
+  nearestLandmark?: string;
+  coordinates?: {
+    latitude?: number;
+    longitude?: number;
+  };
 }
 
 export interface CreateStolenProperty extends CreateRecordBase {
@@ -212,4 +288,4 @@ export interface CreateStolenProperty extends CreateRecordBase {
 }
 
 // Creation type union
-export type CreateRecord = CreateUDCase | CreateStolenProperty; 
+export type CreateRecord = CreateUDCase | CreateStolenProperty;

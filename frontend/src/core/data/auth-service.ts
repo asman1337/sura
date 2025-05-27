@@ -55,6 +55,7 @@ export class AuthService {
   private tokenInitialized: boolean = false;
   private apiBaseUrl: string;
   private currentUser: OfficerInfo | null = null;
+  private authStateListeners: Set<() => void> = new Set();
   
   constructor(
     private storage: StorageClient,
@@ -132,6 +133,9 @@ export class AuthService {
     // Save to storage for persistence
     await this.storage.setItem('auth_token', authToken);
     await this.storage.setItem('refresh_token', refreshToken);
+    
+    // Notify components that auth state has changed
+    this.notifyAuthStateChange();
   }
   
   /**
@@ -145,6 +149,9 @@ export class AuthService {
     await this.storage.removeItem('auth_token');
     await this.storage.removeItem('refresh_token');
     await this.storage.removeItem('user_profile');
+    
+    // Notify components that auth state has changed
+    this.notifyAuthStateChange();
   }
   
   /**
@@ -333,4 +340,28 @@ export class AuthService {
       return false;
     }
   }
-} 
+
+  /**
+   * Add a listener for auth state changes
+   */
+  addAuthStateListener(listener: () => void): () => void {
+    this.authStateListeners.add(listener);
+    // Return cleanup function
+    return () => {
+      this.authStateListeners.delete(listener);
+    };
+  }
+  
+  /**
+   * Notify all listeners that auth state has changed
+   */
+  private notifyAuthStateChange(): void {
+    this.authStateListeners.forEach(listener => {
+      try {
+        listener();
+      } catch (error) {
+        console.error('Error in auth state listener:', error);
+      }
+    });
+  }
+}
