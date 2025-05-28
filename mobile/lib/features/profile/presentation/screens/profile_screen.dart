@@ -162,7 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Text(
           'Badge #${user.badgeNumber}',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
         ),
         const SizedBox(height: 8),
