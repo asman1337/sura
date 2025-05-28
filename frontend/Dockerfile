@@ -25,10 +25,38 @@ RUN pnpm run build
 # Production stage - using nginx to serve static files
 FROM nginx:alpine AS production
 
+# Copy custom nginx main config (without user directive)
+COPY <<EOF /etc/nginx/nginx.conf
+worker_processes auto;
+error_log /var/log/nginx/error.log notice;
+pid /tmp/nginx.pid;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    
+    log_format main '\$remote_addr - \$remote_user [\$time_local] "\$request" '
+                    '\$status \$body_bytes_sent "\$http_referer" '
+                    '"\$http_user_agent" "\$http_x_forwarded_for"';
+    
+    access_log /var/log/nginx/access.log main;
+    
+    sendfile on;
+    tcp_nopush on;
+    keepalive_timeout 65;
+    
+    include /etc/nginx/conf.d/*.conf;
+}
+EOF
+
 # Copy custom nginx config
 COPY <<EOF /etc/nginx/conf.d/default.conf
 server {
-    listen 80;
+    listen 5567;
     server_name localhost;
     root /usr/share/nginx/html;
     index index.html;
@@ -37,7 +65,7 @@ server {
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
-    gzip_proxied expired no-cache no-store private must-revalidate auth;
+    gzip_proxied any;
     gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
 
     # Handle client-side routing
@@ -70,11 +98,11 @@ RUN chown -R nginx:nginx /usr/share/nginx/html && \
 USER nginx
 
 # Expose port
-EXPOSE 80
+EXPOSE 5567
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5567/ || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
