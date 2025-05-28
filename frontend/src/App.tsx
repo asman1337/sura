@@ -27,7 +27,7 @@ const routerOptions = {
 
 // App configuration
 const dataConfig = {
-  apiBaseUrl: 'http://localhost:3000',
+  apiBaseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3000',
   usePersistentStorage: true,
   useIndexedDb: false,
   syncInterval: 60000 // 1 minute
