@@ -25,6 +25,10 @@ RUN pnpm run build
 # Production stage - using nginx to serve static files
 FROM nginx:alpine AS production
 
+# Create cache directories with proper permissions first
+RUN mkdir -p /tmp/nginx-cache/client_temp /tmp/nginx-cache/proxy_temp /tmp/nginx-cache/fastcgi_temp /tmp/nginx-cache/uwsgi_temp /tmp/nginx-cache/scgi_temp && \
+    chown -R nginx:nginx /tmp/nginx-cache
+
 # Copy custom nginx main config (without user directive)
 COPY <<EOF /etc/nginx/nginx.conf
 worker_processes auto;
@@ -38,6 +42,13 @@ events {
 http {
     include /etc/nginx/mime.types;
     default_type application/octet-stream;
+    
+    # Use writable directories for nginx cache
+    client_body_temp_path /tmp/nginx-cache/client_temp;
+    proxy_temp_path /tmp/nginx-cache/proxy_temp;
+    fastcgi_temp_path /tmp/nginx-cache/fastcgi_temp;
+    uwsgi_temp_path /tmp/nginx-cache/uwsgi_temp;
+    scgi_temp_path /tmp/nginx-cache/scgi_temp;
     
     log_format main '\$remote_addr - \$remote_user [\$time_local] "\$request" '
                     '\$status \$body_bytes_sent "\$http_referer" '
@@ -92,7 +103,8 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 # Set proper permissions for nginx user
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
-    chmod -R 755 /usr/share/nginx/html
+    chmod -R 755 /usr/share/nginx/html && \
+    chown -R nginx:nginx /tmp/nginx-cache
 
 # Switch to nginx user (already exists in nginx:alpine image)
 USER nginx
