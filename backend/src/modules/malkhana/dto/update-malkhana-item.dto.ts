@@ -1,10 +1,18 @@
 import { IsOptional, IsString, IsArray, IsEnum } from 'class-validator';
-import { MalkhanaItemStatus } from '../entities/malkhana-item.entity';
+import { MalkhanaItemStatus, PropertyNature } from '../entities/malkhana-item.entity';
 
 export class UpdateMalkhanaItemDto {
   @IsOptional()
   @IsString()
   caseNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  prNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  gdeNumber?: string;
   
   @IsOptional()
   @IsString()
@@ -13,6 +21,10 @@ export class UpdateMalkhanaItemDto {
   @IsOptional()
   @IsString()
   category?: string;
+
+  @IsOptional()
+  @IsEnum(PropertyNature)
+  propertyNature?: PropertyNature;
   
   @IsOptional()
   dateReceived?: Date;
@@ -20,6 +32,26 @@ export class UpdateMalkhanaItemDto {
   @IsOptional()
   @IsString()
   receivedFrom?: string;
+
+  @IsOptional()
+  @IsString()
+  receivedFromAddress?: string;
+
+  @IsOptional()
+  @IsString()
+  investigatingOfficerName?: string;
+
+  @IsOptional()
+  @IsString()
+  investigatingOfficerRank?: string;
+
+  @IsOptional()
+  @IsString()
+  investigatingOfficerPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  investigatingOfficerUnit?: string;
   
   @IsOptional()
   @IsString()

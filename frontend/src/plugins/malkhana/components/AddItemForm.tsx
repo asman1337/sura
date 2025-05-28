@@ -17,12 +17,12 @@ import {
   CircularProgress,
   Alert
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers';
+import { DateTimePicker } from '@mui/x-date-pickers';
 
 import { useData } from '../../../core/data';
 import { useMalkhanaApi } from '../hooks';
 import { setGlobalApiInstance } from '../services';
-import { ShelfInfo } from '../types';
+import { ShelfInfo, PropertyNature } from '../types';
 
 // Item categories
 const itemCategories = [
@@ -35,6 +35,17 @@ const itemCategories = [
   'Vehicle',
   'Jewelry',
   'Other'
+];
+
+// Property nature options
+const propertyNatureOptions = [
+  { value: 'STOLEN_PROPERTY', label: 'Stolen Property' },
+  { value: 'INTESTATE_PROPERTY', label: 'Intestate Property' },
+  { value: 'UNCLAIMED_PROPERTY', label: 'Unclaimed Property' },
+  { value: 'SUSPICIOUS_PROPERTY', label: 'Suspicious Property' },
+  { value: 'EXHIBITS_AND_OTHER_PROPERTY', label: 'Exhibits and Other Property' },
+  { value: 'SAFE_CUSTODY_PROPERTY', label: 'Safe Custody Property' },
+  { value: 'OTHERS', label: 'Others' }
 ];
 
 // Item conditions
@@ -56,10 +67,18 @@ const AddItemForm: React.FC = () => {
   // Form state
   const [formData, setFormData] = useState({
     caseNumber: '',
+    prNumber: '',
+    gdeNumber: '',
     description: '',
     category: '',
+    propertyNature: '' as PropertyNature | '',
     receivedFrom: '',
+    receivedFromAddress: '',
     dateReceived: new Date(),
+    investigatingOfficerName: '',
+    investigatingOfficerRank: '',
+    investigatingOfficerPhone: '',
+    investigatingOfficerUnit: '',
     condition: '',
     notes: '',
     shelfId: ''
@@ -187,10 +206,18 @@ const AddItemForm: React.FC = () => {
       // Add item using the real API
       const result = await malkhanaApi.createItem({
         caseNumber: formData.caseNumber,
+        prNumber: formData.prNumber,
+        gdeNumber: formData.gdeNumber,
         description: formData.description,
         category: formData.category,
+        propertyNature: formData.propertyNature || undefined,
         receivedFrom: formData.receivedFrom,
+        receivedFromAddress: formData.receivedFromAddress,
         dateReceived: formData.dateReceived,
+        investigatingOfficerName: formData.investigatingOfficerName,
+        investigatingOfficerRank: formData.investigatingOfficerRank,
+        investigatingOfficerPhone: formData.investigatingOfficerPhone,
+        investigatingOfficerUnit: formData.investigatingOfficerUnit,
         condition: formData.condition,
         notes: formData.notes,
         shelfId: formData.shelfId || undefined
@@ -279,10 +306,32 @@ const AddItemForm: React.FC = () => {
                   required
                 />
               </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="PR Number"
+                  name="prNumber"
+                  value={formData.prNumber}
+                  onChange={handleChange}
+                  helperText="Police Report Number (optional)"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="GDE Number"
+                  name="gdeNumber"
+                  value={formData.gdeNumber}
+                  onChange={handleChange}
+                  helperText="General Diary Entry Number (optional)"
+                />
+              </Grid>
               
               <Grid size={{ xs: 12, md: 6 }}>
-                <DatePicker
-                  label="Date Received"
+                <DateTimePicker
+                  label="Date & Time Received *"
                   value={formData.dateReceived}
                   onChange={handleDateChange}
                   slotProps={{
@@ -329,6 +378,27 @@ const AddItemForm: React.FC = () => {
                   {errors.category && <FormHelperText>{errors.category}</FormHelperText>}
                 </FormControl>
               </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Nature of Property</InputLabel>
+                  <Select
+                    name="propertyNature"
+                    value={formData.propertyNature}
+                    onChange={handleSelectChange}
+                    label="Nature of Property"
+                  >
+                    <MenuItem value="">
+                      <em>Select Property Nature</em>
+                    </MenuItem>
+                    {propertyNatureOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
               
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth error={!!errors.condition} required>
@@ -352,13 +422,76 @@ const AddItemForm: React.FC = () => {
               <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
-                  label="Received From"
+                  label="Received From (Name) *"
                   name="receivedFrom"
                   value={formData.receivedFrom}
                   onChange={handleChange}
                   error={!!errors.receivedFrom}
                   helperText={errors.receivedFrom}
                   required
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Address of Person from whom Seized"
+                  name="receivedFromAddress"
+                  value={formData.receivedFromAddress}
+                  onChange={handleChange}
+                  multiline
+                  rows={2}
+                  helperText="Complete address (optional)"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="h6" sx={{ mt: 2, mb: 2, color: 'primary.main' }}>
+                  Investigating Officer Details
+                </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="IO Name"
+                  name="investigatingOfficerName"
+                  value={formData.investigatingOfficerName}
+                  onChange={handleChange}
+                  helperText="Investigating Officer Name (optional)"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="IO Rank"
+                  name="investigatingOfficerRank"
+                  value={formData.investigatingOfficerRank}
+                  onChange={handleChange}
+                  helperText="Investigating Officer Rank (optional)"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="IO Phone Number"
+                  name="investigatingOfficerPhone"
+                  value={formData.investigatingOfficerPhone}
+                  onChange={handleChange}
+                  helperText="Investigating Officer Phone (optional)"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="IO Unit"
+                  name="investigatingOfficerUnit"
+                  value={formData.investigatingOfficerUnit}
+                  onChange={handleChange}
+                  helperText="Investigating Officer Unit (optional)"
                 />
               </Grid>
               

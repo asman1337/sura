@@ -16,7 +16,7 @@ import {
   useTheme,
   CircularProgress
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers';
+import { DateTimePicker } from '@mui/x-date-pickers';
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from '@mui/icons-material';
 
 import { MalkhanaItem, UpdateMalkhanaItemDto, ShelfInfo } from '../types';
@@ -34,6 +34,17 @@ const ITEM_CATEGORIES = [
   'Electronic',
   'Clothing',
   'Other'
+];
+
+// Property nature options
+const PROPERTY_NATURE_OPTIONS = [
+  { value: 'STOLEN_PROPERTY', label: 'Stolen Property' },
+  { value: 'INTESTATE_PROPERTY', label: 'Intestate Property' },
+  { value: 'UNCLAIMED_PROPERTY', label: 'Unclaimed Property' },
+  { value: 'SUSPICIOUS_PROPERTY', label: 'Suspicious Property' },
+  { value: 'EXHIBITS_AND_OTHER_PROPERTY', label: 'Exhibits and Other Property' },
+  { value: 'SAFE_CUSTODY_PROPERTY', label: 'Safe Custody Property' },
+  { value: 'OTHERS', label: 'Others' }
 ];
 
 // Item conditions
@@ -61,7 +72,15 @@ const EditItemForm: React.FC = () => {
     dateReceived: new Date().toISOString(),
     condition: '',
     notes: '',
-    shelfId: ''
+    shelfId: '',
+    prNumber: '',
+    gdeNumber: '',
+    propertyNature: undefined,
+    receivedFromAddress: '',
+    investigatingOfficerName: '',
+    investigatingOfficerRank: '',
+    investigatingOfficerPhone: '',
+    investigatingOfficerUnit: ''
   });
   
   // Available shelves
@@ -238,7 +257,15 @@ const EditItemForm: React.FC = () => {
         receivedFrom: formData.receivedFrom,
         condition: formData.condition,
         notes: formData.notes,
-        shelfId: formData.shelfId === '' ? undefined : formData.shelfId
+        shelfId: formData.shelfId === '' ? undefined : formData.shelfId,
+        prNumber: formData.prNumber || undefined,
+        gdeNumber: formData.gdeNumber || undefined,
+        propertyNature: formData.propertyNature,
+        receivedFromAddress: formData.receivedFromAddress || undefined,
+        investigatingOfficerName: formData.investigatingOfficerName || undefined,
+        investigatingOfficerRank: formData.investigatingOfficerRank || undefined,
+        investigatingOfficerPhone: formData.investigatingOfficerPhone || undefined,
+        investigatingOfficerUnit: formData.investigatingOfficerUnit || undefined
       };
       
       // Convert string date to Date object if it exists
@@ -339,7 +366,7 @@ const EditItemForm: React.FC = () => {
         >
           <Box sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 3 }}>
-              Item Information
+              Case Information
             </Typography>
             
             <Grid container spacing={3}>
@@ -357,6 +384,47 @@ const EditItemForm: React.FC = () => {
                 />
               </Grid>
               
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="PR Number"
+                  name="prNumber"
+                  value={formData.prNumber || ''}
+                  onChange={handleInputChange}
+                  disabled={submitting}
+                  helperText="Police Report Number"
+                />
+              </Grid>
+              
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="GDE Number"
+                  name="gdeNumber"
+                  value={formData.gdeNumber || ''}
+                  onChange={handleInputChange}
+                  disabled={submitting}
+                  helperText="General Diary Entry Number"
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </Card>
+
+        <Card
+          elevation={0}
+          sx={{ 
+            borderRadius: 2,
+            border: `1px solid ${theme.palette.divider}`,
+            mb: 3
+          }}
+        >
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 3 }}>
+              Item Information
+            </Typography>
+            
+            <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth error={!!validationErrors.category}>
                   <InputLabel id="category-label">Category</InputLabel>
@@ -380,6 +448,30 @@ const EditItemForm: React.FC = () => {
                 </FormControl>
               </Grid>
               
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth>
+                  <InputLabel id="property-nature-label">Property Nature</InputLabel>
+                  <Select
+                    labelId="property-nature-label"
+                    name="propertyNature"
+                    value={formData.propertyNature || ''}
+                    onChange={handleSelectChange}
+                    disabled={submitting}
+                    label="Property Nature"
+                  >
+                    <MenuItem value="">
+                      <em>Select property nature</em>
+                    </MenuItem>
+                    {PROPERTY_NATURE_OPTIONS.map(option => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>Classification of the property being stored</FormHelperText>
+                </FormControl>
+              </Grid>
+              
               <Grid size={{ xs: 12 }}>   
                 <TextField
                   fullWidth
@@ -393,37 +485,6 @@ const EditItemForm: React.FC = () => {
                   rows={3}
                   disabled={submitting}
                   required
-                />
-              </Grid>
-              
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Received From"
-                  name="receivedFrom"
-                  value={formData.receivedFrom || ''}
-                  onChange={handleInputChange}
-                  error={!!validationErrors.receivedFrom}
-                  helperText={validationErrors.receivedFrom}
-                  disabled={submitting}
-                  required
-                />
-              </Grid>
-              
-              <Grid size={{ xs: 12, md: 6 }}>
-                <DatePicker
-                  label="Date Received"
-                  value={formData.dateReceived ? new Date(formData.dateReceived) : null}
-                  onChange={handleDateChange}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      error: !!validationErrors.dateReceived,
-                      helperText: validationErrors.dateReceived,
-                      disabled: submitting,
-                      required: true
-                    }
-                  }}
                 />
               </Grid>
               
@@ -450,6 +511,150 @@ const EditItemForm: React.FC = () => {
                 </FormControl>
               </Grid>
               
+              <Grid size={{ xs: 12, md: 6 }}>
+                <DateTimePicker
+                  label="Date Received"
+                  value={formData.dateReceived ? new Date(formData.dateReceived) : null}
+                  onChange={handleDateChange}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      error: !!validationErrors.dateReceived,
+                      helperText: validationErrors.dateReceived,
+                      disabled: submitting,
+                      required: true
+                    }
+                  }}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </Card>
+
+        <Card
+          elevation={0}
+          sx={{ 
+            borderRadius: 2,
+            border: `1px solid ${theme.palette.divider}`,
+            mb: 3
+          }}
+        >
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 3 }}>
+              Received From Information
+            </Typography>
+            
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Received From"
+                  name="receivedFrom"
+                  value={formData.receivedFrom || ''}
+                  onChange={handleInputChange}
+                  error={!!validationErrors.receivedFrom}
+                  helperText={validationErrors.receivedFrom}
+                  disabled={submitting}
+                  required
+                />
+              </Grid>
+              
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Received From Address"
+                  name="receivedFromAddress"
+                  value={formData.receivedFromAddress || ''}
+                  onChange={handleInputChange}
+                  multiline
+                  rows={2}
+                  disabled={submitting}
+                  helperText="Complete address from where the item was received"
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </Card>
+
+        <Card
+          elevation={0}
+          sx={{ 
+            borderRadius: 2,
+            border: `1px solid ${theme.palette.divider}`,
+            mb: 3
+          }}
+        >
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 3 }}>
+              Investigating Officer Details
+            </Typography>
+            
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Officer Name"
+                  name="investigatingOfficerName"
+                  value={formData.investigatingOfficerName || ''}
+                  onChange={handleInputChange}
+                  disabled={submitting}
+                  helperText="Name of the investigating officer"
+                />
+              </Grid>
+              
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Officer Rank"
+                  name="investigatingOfficerRank"
+                  value={formData.investigatingOfficerRank || ''}
+                  onChange={handleInputChange}
+                  disabled={submitting}
+                  helperText="Rank of the investigating officer"
+                />
+              </Grid>
+              
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Officer Phone"
+                  name="investigatingOfficerPhone"
+                  value={formData.investigatingOfficerPhone || ''}
+                  onChange={handleInputChange}
+                  disabled={submitting}
+                  helperText="Contact number of the investigating officer"
+                />
+              </Grid>
+              
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Officer Unit"
+                  name="investigatingOfficerUnit"
+                  value={formData.investigatingOfficerUnit || ''}
+                  onChange={handleInputChange}
+                  disabled={submitting}
+                  helperText="Unit/department of the investigating officer"
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </Card>
+
+        <Card
+          elevation={0}
+          sx={{ 
+            borderRadius: 2,
+            border: `1px solid ${theme.palette.divider}`,
+            mb: 3
+          }}
+        >
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 3 }}>
+              Storage & Additional Information
+            </Typography>
+            
+            <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth>
                   <InputLabel id="shelf-label">Assign to Shelf</InputLabel>

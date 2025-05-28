@@ -17,6 +17,17 @@ export enum RegistryType {
   RED_INK = 'RED_INK'
 }
 
+// Nature of property enum
+export enum PropertyNature {
+  STOLEN_PROPERTY = 'STOLEN_PROPERTY',
+  INTESTATE_PROPERTY = 'INTESTATE_PROPERTY',
+  UNCLAIMED_PROPERTY = 'UNCLAIMED_PROPERTY',
+  SUSPICIOUS_PROPERTY = 'SUSPICIOUS_PROPERTY',
+  EXHIBITS_AND_OTHER_PROPERTY = 'EXHIBITS_AND_OTHER_PROPERTY',
+  SAFE_CUSTODY_PROPERTY = 'SAFE_CUSTODY_PROPERTY',
+  OTHERS = 'OTHERS'
+}
+
 @Entity('malkhana_items')
 export class MalkhanaItem {
   @PrimaryGeneratedColumn('uuid')
@@ -41,17 +52,49 @@ export class MalkhanaItem {
   @Column({ length: 100, nullable: true })
   caseNumber: string;
 
+  // Additional case-related fields
+  @Column({ length: 50, nullable: true })
+  prNumber: string;
+
+  @Column({ length: 50, nullable: true })
+  gdeNumber: string;
+
   @Column({ length: 500, nullable: true })
   description: string;
 
   @Column({ length: 100 })
   category: string;
 
-  @Column({ type: 'date' })
+  // Nature of property
+  @Column({
+    type: 'enum',
+    enum: PropertyNature,
+    nullable: true
+  })
+  propertyNature: PropertyNature;
+
+  @Column({ type: 'timestamp' })
   dateReceived: Date;
 
   @Column({ length: 200 })
   receivedFrom: string;
+
+  // Address of the person from whom seized
+  @Column({ type: 'text', nullable: true })
+  receivedFromAddress: string;
+
+  // Investigating Officer details
+  @Column({ length: 200, nullable: true })
+  investigatingOfficerName: string;
+
+  @Column({ length: 100, nullable: true })
+  investigatingOfficerRank: string;
+
+  @Column({ length: 15, nullable: true })
+  investigatingOfficerPhone: string;
+
+  @Column({ length: 200, nullable: true })
+  investigatingOfficerUnit: string;
 
   @Column({ length: 200 })
   condition: string;

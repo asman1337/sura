@@ -49,9 +49,45 @@ export const commonItemColumns: GridColDef[] = [
 export const blackInkColumns: GridColDef[] = [
   ...commonItemColumns,
   {
+    field: 'prNumber',
+    headerName: 'PR Number',
+    width: 120,
+    valueFormatter: (value) => value || '-',
+  },
+  {
+    field: 'gdeNumber',
+    headerName: 'GDE Number',
+    width: 120,
+    valueFormatter: (value) => value || '-',
+  },
+  {
+    field: 'propertyNature',
+    headerName: 'Nature',
+    width: 130,
+    valueFormatter: (value) => {
+      if (!value) return '-';
+      const labels: Record<string, string> = {
+        'STOLEN_PROPERTY': 'Stolen',
+        'INTESTATE_PROPERTY': 'Intestate',
+        'UNCLAIMED_PROPERTY': 'Unclaimed',
+        'SUSPICIOUS_PROPERTY': 'Suspicious',
+        'EXHIBITS_AND_OTHER_PROPERTY': 'Exhibits',
+        'SAFE_CUSTODY_PROPERTY': 'Safe Custody',
+        'OTHERS': 'Others'
+      };
+      return labels[value] || value;
+    },
+  },
+  {
     field: 'receivedFrom',
     headerName: 'Received From',
     width: 150,
+  },
+  {
+    field: 'investigatingOfficerName',
+    headerName: 'IO Name',
+    width: 130,
+    valueFormatter: (value) => value || '-',
   },
 ];
 

@@ -7,7 +7,6 @@ import {
   CardContent,
   Chip,
   CircularProgress,
-  Container,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -231,7 +230,7 @@ const ItemDetail: React.FC = () => {
   };
   
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
+    <Box sx={{ p: 3 }}>
       {loading && (
         <Box 
           sx={{ 
@@ -380,6 +379,22 @@ const ItemDetail: React.FC = () => {
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Typography variant="subtitle2" color="text.secondary">
+                PR Number
+              </Typography>
+              <Typography variant="body1">
+                {item.prNumber || 'N/A'}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                GDE Number
+              </Typography>
+              <Typography variant="body1">
+                {item.gdeNumber || 'N/A'}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="subtitle2" color="text.secondary">
                 Category
               </Typography>
               <Typography variant="body1">
@@ -388,10 +403,21 @@ const ItemDetail: React.FC = () => {
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Typography variant="subtitle2" color="text.secondary">
+                Property Nature
+              </Typography>
+              <Typography variant="body1">
+                {item.propertyNature ? 
+                  item.propertyNature.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim().toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) 
+                  : 'N/A'
+                }
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="subtitle2" color="text.secondary">
                 Date Received
               </Typography>
               <Typography variant="body1">
-                {new Date(item.dateReceived).toLocaleDateString()}
+                {new Date(item.dateReceived).toLocaleString()}
               </Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -432,7 +458,69 @@ const ItemDetail: React.FC = () => {
                 {item.description}
               </Typography>
             </Grid>
+            {item.receivedFromAddress && (
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Received From Address
+                </Typography>
+                <Typography variant="body1">
+                  {item.receivedFromAddress}
+                </Typography>
+              </Grid>
+            )}
           </Grid>
+          
+          {(item.investigatingOfficerName || item.investigatingOfficerRank || item.investigatingOfficerPhone || item.investigatingOfficerUnit) && (
+            <>
+              <Typography variant="h6" fontWeight="500" gutterBottom>
+                Investigating Officer Details
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                {item.investigatingOfficerName && (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Officer Name
+                    </Typography>
+                    <Typography variant="body1">
+                      {item.investigatingOfficerName}
+                    </Typography>
+                  </Grid>
+                )}
+                {item.investigatingOfficerRank && (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Rank
+                    </Typography>
+                    <Typography variant="body1">
+                      {item.investigatingOfficerRank}
+                    </Typography>
+                  </Grid>
+                )}
+                {item.investigatingOfficerPhone && (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Phone
+                    </Typography>
+                    <Typography variant="body1">
+                      {item.investigatingOfficerPhone}
+                    </Typography>
+                  </Grid>
+                )}
+                {item.investigatingOfficerUnit && (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Unit
+                    </Typography>
+                    <Typography variant="body1">
+                      {item.investigatingOfficerUnit}
+                    </Typography>
+                  </Grid>
+                )}
+              </Grid>
+            </>
+          )}
           
           {item.shelfId && (
             <>
@@ -442,20 +530,28 @@ const ItemDetail: React.FC = () => {
               <Divider sx={{ mb: 2 }} />
               
               <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Shelf ID
+                    Shelf Name
                   </Typography>
                   <Typography variant="body1">
-                    {item.shelfId}
+                    {item.shelf?.name || 'N/A'}
                   </Typography>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Shelf Location
                   </Typography>
                   <Typography variant="body1">
                     {item.shelf?.location || 'N/A'}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Shelf Category
+                  </Typography>
+                  <Typography variant="body1">
+                    {item.shelf?.category || 'N/A'}
                   </Typography>
                 </Grid>
               </Grid>
@@ -645,7 +741,7 @@ const ItemDetail: React.FC = () => {
           <Button onClick={() => setOpenQrDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 

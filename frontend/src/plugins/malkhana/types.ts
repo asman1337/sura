@@ -8,6 +8,16 @@ export type MalkhanaItemStatus = 'ACTIVE' | 'DISPOSED' | 'TRANSFERRED' | 'RELEAS
 // Type of registry (Black Ink = current year, Red Ink = historical)
 export type RegistryType = 'BLACK_INK' | 'RED_INK';
 
+// Nature of property
+export type PropertyNature = 
+  | 'STOLEN_PROPERTY'
+  | 'INTESTATE_PROPERTY' 
+  | 'UNCLAIMED_PROPERTY'
+  | 'SUSPICIOUS_PROPERTY'
+  | 'EXHIBITS_AND_OTHER_PROPERTY'
+  | 'SAFE_CUSTODY_PROPERTY'
+  | 'OTHERS';
+
 // Historical Red Ink ID record
 export interface RedInkHistoryEntry {
   id: string;
@@ -34,10 +44,22 @@ export interface MalkhanaItem {
   // The permanent mother number that never changes (format: YYYY-NNNNN)
   motherNumber: string;
   caseNumber: string;
+  // Additional case-related fields
+  prNumber?: string;
+  gdeNumber?: string;
   description: string;
   category: string;
+  // Nature of property
+  propertyNature?: PropertyNature;
   dateReceived: string;
   receivedFrom: string;
+  // Address of the person from whom seized
+  receivedFromAddress?: string;
+  // Investigating Officer details
+  investigatingOfficerName?: string;
+  investigatingOfficerRank?: string;
+  investigatingOfficerPhone?: string;
+  investigatingOfficerUnit?: string;
   condition: string;
   status: MalkhanaItemStatus;
   disposalDate?: string;
@@ -62,10 +84,18 @@ export interface MalkhanaItem {
 // Create Malkhana Item DTO for API requests
 export interface CreateMalkhanaItemDto {
   caseNumber?: string;
+  prNumber?: string;
+  gdeNumber?: string;
   description?: string;
   category: string;
+  propertyNature?: PropertyNature;
   dateReceived: Date;
   receivedFrom: string;
+  receivedFromAddress?: string;
+  investigatingOfficerName?: string;
+  investigatingOfficerRank?: string;
+  investigatingOfficerPhone?: string;
+  investigatingOfficerUnit?: string;
   condition: string;
   notes?: string;
   photos?: string[];
@@ -75,10 +105,18 @@ export interface CreateMalkhanaItemDto {
 // Update Malkhana Item DTO for API requests
 export interface UpdateMalkhanaItemDto {
   caseNumber?: string;
+  prNumber?: string;
+  gdeNumber?: string;
   description?: string;
   category?: string;
+  propertyNature?: PropertyNature;
   dateReceived?: Date;
   receivedFrom?: string;
+  receivedFromAddress?: string;
+  investigatingOfficerName?: string;
+  investigatingOfficerRank?: string;
+  investigatingOfficerPhone?: string;
+  investigatingOfficerUnit?: string;
   condition?: string;
   status?: MalkhanaItemStatus;
   notes?: string;
