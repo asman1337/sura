@@ -15,7 +15,7 @@ async function bootstrap() {
   const corsOrigin = configService.get('CORS_ORIGIN');
   const corsOrigins = corsOrigin 
     ? corsOrigin.split(',').map(origin => origin.trim())
-    : ['http://localhost:3000', 'http://localhost:5173', 'https://sura.otmalse.in'];
+    : ['http://localhost:3000', 'http://localhost:5567', 'https://sura.otmalse.in'];
   
   app.enableCors({
     origin: corsOrigins,

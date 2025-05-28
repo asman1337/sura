@@ -84,6 +84,13 @@ export class DutyAssignmentRepository extends BaseRepository<DutyAssignment> {
       params: { rosterId, officerId } 
     });
   }
+
+  /**
+   * Get assignments by unit (when no params provided, backend filters by user's unit)
+   */
+  async getByUnit(): Promise<DutyAssignment[]> {
+    return this.api.get<DutyAssignment[]>(this.resourcePath);
+  }
 }
 
 /**

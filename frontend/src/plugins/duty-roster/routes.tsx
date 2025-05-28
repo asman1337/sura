@@ -10,7 +10,7 @@ const RosterForm = React.lazy(() => import('./components/RosterForm'));
 const ShiftManagement = React.lazy(() => import('./components/ShiftManagement'));
 const ShiftForm = React.lazy(() => import('./components/ShiftForm'));
 const AssignmentCalendar = React.lazy(() => import('./components/AssignmentCalendar'));
-const OfficerDutyView = React.lazy(() => import('./components/OfficerDutyView'));
+const OfficerGroupView = React.lazy(() => import('./components/OfficerGroupView'));
 const AssignmentForm = React.lazy(() => import('./components/AssignmentForm'));
 
 /**
@@ -64,8 +64,8 @@ const DutyRosterRoutes: RouteObject[] = [
     element: <AssignmentCalendar />
   },
   {
-    path: '/duty-roster/officer/:id',
-    element: <OfficerDutyView />
+    path: '/duty-roster/officers',
+    element: <OfficerGroupView />
   },
   {
     path: '/duty-roster/assignments/create',

@@ -369,6 +369,8 @@ const DutyRosterDashboard: React.FC = () => {
           
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card 
+            component={RouterLink}
+            to="/duty-roster/officers"
             elevation={0}
             sx={{ 
               height: '100%',
@@ -403,7 +405,7 @@ const DutyRosterDashboard: React.FC = () => {
                     {stats.staffingRate}%
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Staffing Rate
+                    Officer Duties
                   </Typography>
                 </Box>
               </Box>
@@ -704,7 +706,7 @@ const DutyRosterDashboard: React.FC = () => {
                       }
                     }}
                     component={RouterLink}
-                    to="/duty-roster/officer"
+                    to="/duty-roster/officers"
                   >
                     <Box sx={{
                       mb: 1,
