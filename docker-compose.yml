@@ -23,16 +23,16 @@ services:
       - postgres_network
     environment:
       # Environment
-      - NODE_ENV=production
+      - NODE_ENV=development
       - PORT=3000
       # CORS Configuration
       - CORS_ORIGIN=https://sura.otmalse.in,http://localhost:5173,http://localhost:3000
       # Database (matching app.module.ts expectations)
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
-      - DATABASE_USER=medmart_d4rky
-      - DATABASE_PASSWORD=Mr.D4rky007@medmart
-      - DATABASE_NAME=medmart_database
+      - DATABASE_USER=sura_d4rky
+      - DATABASE_PASSWORD=Mr.D4rky007@sura
+      - DATABASE_NAME=sura
       - DATABASE_LOGGING=false
       # Authentication
       - JWT_SECRET=5ygs89sfw9uf9nsf89dsfny7y4er5fg
