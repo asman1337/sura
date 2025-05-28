@@ -1,0 +1,1 @@
+export { printQrCode, printMultipleQrCodes } from './printQrCode'; 

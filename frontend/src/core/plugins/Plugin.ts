@@ -45,15 +45,29 @@ export class PluginImpl implements Plugin {
    */
   async initialize(): Promise<void> {
     try {
+      console.log(`Initializing plugin ${this.id}, loaded modules:`, Object.keys(this.loadedModules));
+      
       // Initialize all modules
       for (const [name, module] of Object.entries(this.loadedModules)) {
-        if (module.initialize) {
-          const cleanup = await module.initialize();
+        console.log(`Initializing module ${name} for plugin ${this.id}`, module);
+        
+        if (module.default && typeof module.default.initialize === 'function') {
+          console.log(`Calling initialize on module ${name}.default`);
+          const cleanup = await module.default.initialize(this);
           if (typeof cleanup === 'function') {
             this.cleanupFunctions.push(cleanup);
           }
+        } else if (module.initialize) {
+          console.log(`Calling initialize on module ${name}`);
+          const cleanup = await module.initialize(this);
+          if (typeof cleanup === 'function') {
+            this.cleanupFunctions.push(cleanup);
+          }
+        } else {
+          console.log(`Module ${name} has no initialize method`);
         }
       }
+      
       this.status = 'initialized';
     } catch (error) {
       this.status = 'error';
@@ -110,6 +124,64 @@ export class PluginImpl implements Plugin {
    */
   registerExtensionPoint<T>(type: string, data: T, options: { priority?: number } = {}): string {
     const id = uuidv4();
+    
+    // Check for existing similar extension points
+    const existingExtensionPoints = this.getExtensionPoints<T>(type);
+    
+    // Helper function for type-safe property access
+    const getProperty = <P extends string>(obj: any, prop: P): any => {
+      return obj && typeof obj === 'object' && prop in obj ? obj[prop] : undefined;
+    };
+    
+    // Check if there's a functionally equivalent extension point already registered
+    const hasDuplicate = existingExtensionPoints.some(ext => {
+      // For routes, check the path
+      if (type === 'routes') {
+        const extPath = getProperty(ext.data, 'path');
+        const dataPath = getProperty(data, 'path');
+        return extPath && dataPath && extPath === dataPath;
+      }
+      // For navigation items, check the ID and path
+      else if (type === 'navigation:main') {
+        const extId = getProperty(ext.data, 'id');
+        const dataId = getProperty(data, 'id');
+        return extId && dataId && extId === dataId;
+      }
+      // For dashboard widgets, check the title
+      else if (type === 'dashboard:widgets') {
+        const extTitle = getProperty(ext.data, 'title');
+        const dataTitle = getProperty(data, 'title');
+        return extTitle && dataTitle && extTitle === dataTitle;
+      }
+      return false;
+    });
+    
+    // If duplicate found, skip registration and return existing ID
+    if (hasDuplicate) {
+      console.log(`Skipping duplicate extension point registration for ${type} in plugin ${this.id}`);
+      const existingExt = existingExtensionPoints.find(ext => {
+        if (type === 'routes') {
+          const extPath = getProperty(ext.data, 'path');
+          const dataPath = getProperty(data, 'path');
+          return extPath && dataPath && extPath === dataPath;
+        }
+        else if (type === 'navigation:main') {
+          const extId = getProperty(ext.data, 'id');
+          const dataId = getProperty(data, 'id');
+          return extId && dataId && extId === dataId;
+        }
+        else if (type === 'dashboard:widgets') {
+          const extTitle = getProperty(ext.data, 'title');
+          const dataTitle = getProperty(data, 'title');
+          return extTitle && dataTitle && extTitle === dataTitle;
+        }
+        return false;
+      });
+      
+      return existingExt?.id || id;
+    }
+    
+    // Create new extension point
     const extensionPoint: ExtensionPoint<T> = {
       id,
       pluginId: this.id,

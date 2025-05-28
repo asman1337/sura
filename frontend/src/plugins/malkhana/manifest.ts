@@ -12,10 +12,10 @@ export const MalkhanaPluginManifest: PluginManifest = {
   
   // Module entry points
   entryPoints: {
-    routes: () => import('./routes'),
+    routes: () => import('./routes.tsx'),
     store: () => import('./store'),
     services: () => import('./services'),
-    navigationItems: () => import('./extensions/navigation'),
+    navigation: () => import('./extensions/navigation'),
     dashboardWidgets: () => import('./extensions/widgets.tsx'),
     permissions: () => import('./extensions/permissions'),
   },

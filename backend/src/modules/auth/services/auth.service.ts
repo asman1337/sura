@@ -18,7 +18,9 @@ export class AuthService {
       return null;
     }
 
+    // Verify password - argon2.verify automatically uses the parameters encoded in the hash
     const isPasswordValid = await argon2.verify(officer.passwordHash, pass);
+    
     if (!isPasswordValid) {
       return null;
     }
@@ -29,51 +31,77 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    const officer = await this.officersService.findByEmailWithRelations(loginDto.email, loginDto.password);
+    // Use either email or username
+    const userIdentifier = loginDto.email || loginDto.username;
+    
+    if (!userIdentifier) {
+      throw new UnauthorizedException('Email or username is required');
+    }
+    
+    // Find officer by email
+    const officer = await this.officersService.findByEmail(userIdentifier, true);
     
     if (!officer) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    
+    // Verify password
+    const isPasswordValid = await argon2.verify(officer.passwordHash, loginDto.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    
+    // Fetch officer with relations
+    const officerWithRelations = await this.officersService.findByIdWithRelations(officer.id);
+    
+    if (!officerWithRelations) {
+      throw new UnauthorizedException('Officer not found');
+    }
 
-    // Generate JWT token
-    const payload = { sub: officer.id, email: officer.email, type: officer.userType };
+    // Generate JWT token with primary unit ID
+    const payload = { 
+      sub: officer.id, 
+      email: officer.email, 
+      type: officer.userType,
+      primaryUnitId: officer.primaryUnitId 
+    };
     
     return {
       accessToken: this.jwtService.sign(payload),
       officer: {
-        id: officer.id,
-        firstName: officer.firstName,
-        lastName: officer.lastName,
-        email: officer.email,
-        badgeNumber: officer.badgeNumber,
-        userType: officer.userType,
-        gender: officer.gender,
-        profilePhotoUrl: officer.profilePhotoUrl,
+        id: officerWithRelations.id,
+        firstName: officerWithRelations.firstName,
+        lastName: officerWithRelations.lastName,
+        email: officerWithRelations.email,
+        badgeNumber: officerWithRelations.badgeNumber,
+        userType: officerWithRelations.userType,
+        gender: officerWithRelations.gender,
+        profilePhotoUrl: officerWithRelations.profilePhotoUrl,
         // Include basic information about rank
-        rank: officer.rank ? {
-          id: officer.rank.id,
-          name: officer.rank.name,
-          abbreviation: officer.rank.abbreviation,
-          level: officer.rank.level
+        rank: officerWithRelations.rank ? {
+          id: officerWithRelations.rank.id,
+          name: officerWithRelations.rank.name,
+          abbreviation: officerWithRelations.rank.abbreviation,
+          level: officerWithRelations.rank.level
         } : null,
         // Include basic information about organization
-        organization: officer.organization ? {
-          id: officer.organization.id,
-          name: officer.organization.name,
-          code: officer.organization.code,
-          type: officer.organization.type
+        organization: officerWithRelations.organization ? {
+          id: officerWithRelations.organization.id,
+          name: officerWithRelations.organization.name,
+          code: officerWithRelations.organization.code,
+          type: officerWithRelations.organization.type
         } : null,
         // Include basic information about primary unit
-        primaryUnit: officer.primaryUnit ? {
-          id: officer.primaryUnit.id,
-          name: officer.primaryUnit.name,
-          code: officer.primaryUnit.code,
-          type: officer.primaryUnit.type
+        primaryUnit: officerWithRelations.primaryUnit ? {
+          id: officerWithRelations.primaryUnit.id,
+          name: officerWithRelations.primaryUnit.name,
+          code: officerWithRelations.primaryUnit.code,
+          type: officerWithRelations.primaryUnit.type
         } : null,
         // Include basic information about department if applicable
-        department: officer.department ? {
-          id: officer.department.id,
-          name: officer.department.name
+        department: officerWithRelations.department ? {
+          id: officerWithRelations.department.id,
+          name: officerWithRelations.department.name
         } : null
       }
     };

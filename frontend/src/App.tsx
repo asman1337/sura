@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Provider as ReduxProvider } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
 import { PluginProvider, PluginLoader } from './core/plugins'
@@ -10,15 +10,20 @@ import './App.css'
 
 // Import plugins - in a real app, these would be loaded dynamically
 import MalkhanaPlugin from './plugins/malkhana'
+import DutyRosterPlugin from './plugins/duty-roster'
+import RecordsPlugin from './plugins/records'
+import CashRegistryPlugin from './plugins/cash-registry';
 
 // Create the store
 const store = createAppStore()
 
-// List of plugins to load
-const pluginsToLoad = [
-  MalkhanaPlugin,
-  // Add more plugins here
-]
+// React Router future flags
+const routerOptions = {
+  future: {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true
+  }
+};
 
 // App configuration
 const dataConfig = {
@@ -26,17 +31,32 @@ const dataConfig = {
   usePersistentStorage: true,
   useIndexedDb: false,
   syncInterval: 60000 // 1 minute
-}
+} 
 
 // App Shell handles app layout after plugins are loaded
 function AppShell() {
   const [pluginsReady, setPluginsReady] = useState(false)
+  
+  // Memoize plugins to prevent re-registration on re-renders
+  const pluginsToLoad = useMemo(() => [
+    RecordsPlugin,
+    MalkhanaPlugin,
+    DutyRosterPlugin,
+    CashRegistryPlugin,
+    // Add more plugins here
+  ], []); // Empty dependency array ensures this is only computed once
+
+  // Handler for when plugins are loaded
+  const handlePluginsLoaded = () => {
+    console.log('All plugins have been loaded and initialized');
+    setPluginsReady(true);
+  };
 
   return (
     <div className="app-shell">
       <PluginLoader 
         plugins={pluginsToLoad} 
-        onLoaded={() => setPluginsReady(true)}
+        onLoaded={handlePluginsLoaded}
         fallback={<div className="loading">Loading SURA plugins...</div>}
       >
         {pluginsReady ? (
@@ -57,7 +77,7 @@ function AppShell() {
 function App() {
   return (
     <ReduxProvider store={store}>
-      <BrowserRouter>
+      <BrowserRouter {...routerOptions}>
         <ThemeProvider>
           <PluginProvider>
             <DataProvider config={dataConfig}>

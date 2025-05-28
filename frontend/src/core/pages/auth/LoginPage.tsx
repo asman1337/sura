@@ -3,15 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { LoginForm } from '../../components/auth';
 import { 
   Box, 
-  Paper, 
-  Typography, 
   Link, 
+  Paper, 
   Container,
-  useTheme
+  Typography, 
 } from '@mui/material';
 
 const LoginPage: React.FC = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   

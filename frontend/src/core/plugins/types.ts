@@ -52,10 +52,20 @@ export interface ExtensionPoint<T = any> {
 
 // Navigation extension point data
 export interface NavigationItem {
+  id: string;
   path: string;
-  label: string;
-  icon: React.ReactNode;
+  title: string;
+  icon?: React.ReactNode;
   badgeCount?: number;
+  children?: NavigationChildItem[];
+  group?: string;
+}
+
+// Child navigation item
+export interface NavigationChildItem {
+  path: string;
+  title: string;
+  icon?: React.ReactNode;
 }
 
 // Dashboard widget extension point data

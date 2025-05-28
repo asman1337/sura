@@ -395,7 +395,7 @@ export abstract class BaseRepository<T extends { id: ID }, ID = string | number>
   /**
    * Create a repository hook for use in components
    */
-  protected createRepositoryHook<T extends { id: ID }, ID = string | number>() {
+  protected createRepositoryHook() {
     // This would be implemented in a derived class
     // to create React hooks for the repository
   }

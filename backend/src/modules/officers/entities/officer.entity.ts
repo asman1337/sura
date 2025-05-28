@@ -19,7 +19,7 @@ export class Officer {
   @Column({ length: 150, unique: true })
   email: string;
 
-  @Column({ length: 64, select: false })
+  @Column({ length: 128, select: false })
   passwordHash: string;
   
   @Column({ length: 64 })

@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { 
   Box, 
-  Typography, 
   IconButton, 
   Alert,
   InputAdornment
 } from '@mui/material';
 import { useData } from '../../data';
-import { TextField, PasswordField, Button } from '../shared';
+import { TextField, Button } from '../shared';
 import { Loader } from '../shared/Loader';
 
 // Simple icon components for the password visibility toggle
