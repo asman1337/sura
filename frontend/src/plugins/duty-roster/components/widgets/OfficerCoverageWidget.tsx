@@ -10,7 +10,6 @@ import {
   CircularProgress
 } from '@mui/material';
 import { useData } from '../../../../core/data/data-context';
-import { DutyAssignmentRepository } from '../../repositories/duty-assignment-repository';
 
 interface CoverageData {
   dayName: string;
@@ -31,7 +30,7 @@ const OfficerCoverageWidget: React.FC = () => {
       try {
         setLoading(true);
         
-        const repository = new DutyAssignmentRepository(api, cache, sync, storage);
+        // const repository = new DutyAssignmentRepository(api, cache, sync, storage);
         
         // In a real implementation, we would calculate coverage
         // For now, just set placeholder data

@@ -1,10 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { RecordsStats, Record, RecordType } from './types';
+import { RecordsStats, RecordData, RecordType } from './types';
 
 interface RecordsState {
-  records: Record[];
+  records: RecordData[];
   stats: RecordsStats | null;
-  selectedRecord: Record | null;
+  selectedRecord: RecordData | null;
   selectedRecordType: RecordType | null;
   loading: boolean;
   error: string | null;
@@ -29,29 +29,29 @@ const recordsSlice = createSlice({
     setError(state, action: PayloadAction<string | null>) {
       state.error = action.payload;
     },
-    setRecords(state, action: PayloadAction<Record[]>) {
+    setRecords(state, action: PayloadAction<RecordData[]>) {
       state.records = action.payload;
     },
     setStats(state, action: PayloadAction<RecordsStats>) {
       state.stats = action.payload;
     },
-    setSelectedRecord(state, action: PayloadAction<Record | null>) {
+    setSelectedRecord(state, action: PayloadAction<RecordData | null>) {
       state.selectedRecord = action.payload;
     },
     setSelectedRecordType(state, action: PayloadAction<RecordType | null>) {
       state.selectedRecordType = action.payload;
     },
-    addRecord(state, action: PayloadAction<Record>) {
+    addRecord(state, action: PayloadAction<RecordData>) {
       state.records.push(action.payload);
     },
-    updateRecord(state, action: PayloadAction<Record>) {
-      const index = state.records.findIndex(record => record.id === action.payload.id);
+    updateRecord(state, action: PayloadAction<RecordData>) {
+      const index = state.records.findIndex((record: RecordData) => record.id === action.payload.id);
       if (index !== -1) {
         state.records[index] = action.payload;
       }
     },
     deleteRecord(state, action: PayloadAction<string>) {
-      state.records = state.records.filter(record => record.id !== action.payload);
+      state.records = state.records.filter((record: RecordData) => record.id !== action.payload);
     }
   }
 });

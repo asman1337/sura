@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useData } from '../../../core/data/data-context';
 import { 
-  DutyRoster, 
   CreateDutyRosterDto, 
   UpdateDutyRosterDto 
 } from '../types';

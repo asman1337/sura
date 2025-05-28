@@ -26,7 +26,7 @@ const UpcomingDutiesWidget: React.FC = () => {
         setLoading(true);
         
         const repository = new DutyAssignmentRepository(api, cache, sync, storage);
-        const today = new Date().toISOString().split('T')[0];
+        // const today = new Date().toISOString().split('T')[0];
         
         // In a real implementation, we would filter by date range
         // For now, just get all assignments
@@ -69,7 +69,7 @@ const UpcomingDutiesWidget: React.FC = () => {
               <ListItem key={assignment.id} divider>
                 <ListItemText
                   primary={`${assignment.date} - ${assignment.shift?.name || 'Unknown Shift'}`}
-                  secondary={`Officer: ${assignment.officer?.name || 'Unknown Officer'}`}
+                  secondary={`Officer: ${assignment.officer?.firstName || 'Unknown Officer'}`}
                 />
               </ListItem>
             ))}

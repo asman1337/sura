@@ -58,8 +58,8 @@ const DashboardPage: React.FC = () => {
     // Simulate fetching user info
     setTimeout(() => {
       setUserInfo({
-        username: 'demo_user',
-        role: 'Officer'
+        username: auth.getCurrentUser()?.firstName || 'Officer',
+        role: auth.getCurrentUser()?.rank?.abbreviation || 'Officer'
       });
     }, 500);
   }, []);

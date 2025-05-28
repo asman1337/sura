@@ -5,7 +5,7 @@ import { BaseRepository } from './base-repository';
 /**
  * Hook state for repository operations
  */
-interface RepositoryState<T, ID> {
+interface RepositoryState<T> {
   items: T[];
   selectedItem: T | null;
   isLoading: boolean;
@@ -41,7 +41,7 @@ export function createRepositoryHook<T extends { id: ID }, ID = string | number>
     const repository = repositoryRef.current;
     
     // State for the repository
-    const [state, setState] = useState<RepositoryState<T, ID>>({
+    const [state, setState] = useState<RepositoryState<T>>({
       items: [],
       selectedItem: null,
       isLoading: false,

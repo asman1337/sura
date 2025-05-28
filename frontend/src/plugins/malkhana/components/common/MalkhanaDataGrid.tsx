@@ -25,7 +25,7 @@ import {
   MoveDown as MoveIcon 
 } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
-import { MalkhanaItem, MalkhanaItemStatus } from '../../types';
+import { MalkhanaItemStatus } from '../../types';
 
 export type MalkhanaDataGridProps = {
   rows: any[];

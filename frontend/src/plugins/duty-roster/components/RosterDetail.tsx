@@ -151,13 +151,7 @@ const RosterDetail: React.FC = () => {
         setAssignments(fetchedAssignments);
         
         // TODO: Replace with actual officer data from user repository
-        setOfficers([
-          { id: '1', name: 'John Smith', rank: 'Sergeant', badgeNumber: '12345' },
-          { id: '2', name: 'Sarah Jones', rank: 'Officer', badgeNumber: '23456' },
-          { id: '3', name: 'Michael Brown', rank: 'Corporal', badgeNumber: '34567' },
-          { id: '4', name: 'Emily Davis', rank: 'Officer', badgeNumber: '45678' },
-          { id: '5', name: 'Robert Wilson', rank: 'Lieutenant', badgeNumber: '56789' }
-        ]);
+        setOfficers([]);
         
         setLoading(false);
       } catch (err) {
@@ -627,7 +621,7 @@ const RosterDetail: React.FC = () => {
                           {assignedOfficer ? (
                             <Chip 
                               icon={<PersonIcon fontSize="small" />}
-                              label={assignedOfficer.name}
+                              label={assignedOfficer.firstName}
                               color="primary"
                               variant="outlined"
                               size="small"
@@ -741,7 +735,7 @@ const RosterDetail: React.FC = () => {
                         <TableCell>
                           <Chip 
                             icon={<PersonIcon fontSize="small" />}
-                            label={officer.name}
+                            label={officer.firstName}
                             color="primary"
                             variant="outlined"
                             size="small"
@@ -815,7 +809,7 @@ const RosterDetail: React.FC = () => {
                   value={officer.id}
                   disabled={selectedShift ? isOfficerAssigned(selectedShift.id, officer.id) : false}
                 >
-                  {officer.name} ({officer.rank}) - {officer.badgeNumber}
+                  {officer.firstName} ({officer.rank?.abbreviation}) - {officer.badgeNumber}
                 </MenuItem>
               ))}
             </Select>

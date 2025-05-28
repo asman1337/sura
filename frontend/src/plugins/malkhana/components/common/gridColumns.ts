@@ -1,6 +1,5 @@
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { dateFormatter, statusCellRenderer } from './MalkhanaDataGrid';
-import { MalkhanaItem } from '../../types';
 
 // Basic columns used in most registry/item tables
 export const commonItemColumns: GridColDef[] = [

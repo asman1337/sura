@@ -1,10 +1,5 @@
 import { StorageClient } from './storage-client';
 
-// Interfaces to match backend DTOs
-interface LoginDto {
-  username: string;
-  password: string;
-}
 
 interface AuthResponseDto {
   accessToken: string;
