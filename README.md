@@ -50,10 +50,11 @@ SURA follows a modular and multi-tenant architecture:
 - **Frontend (Web)**: React with Vite, Tailwind CSS
 - **Frontend (Mobile)**: Flutter (cross-platform for Android and iOS)
 - **Database**: PostgreSQL with TypeORM
-- **Containerization**: Docker
-- **CI/CD**: GitHub Actions
-- **Hosting**: VPS (e.g., AWS EC2, DigitalOcean)
-- **Other**: GPS APIs for vehicle tracking, barcode scanning libraries for Malkhana
+- **Authentication**: JWT-based authentication
+- **Containerization**: Docker and Docker Compose
+- **CI/CD**: GitHub Actions with automated testing and deployment
+- **Package Manager**: pnpm (for Node.js projects)
+- **Runtime**: Node.js 22.x
 
 ## Installation
 Follow these steps to set up SURA locally for development or testing.
@@ -129,6 +130,38 @@ Follow these steps to set up SURA locally for development or testing.
      ```bash
      docker-compose up --build
      ```
+
+## CI/CD Pipeline
+
+SURA uses GitHub Actions for automated testing, building, and deployment. The project has separate CI/CD workflows for backend and frontend applications.
+
+### Workflow Features
+- **Path-based triggers**: Workflows only run when relevant code changes
+- **Multi-platform builds**: Docker images for linux/amd64 and linux/arm64
+- **Automated testing**: Unit tests, e2e tests, and type checking
+- **Environment deployments**: Support for development, staging, and production
+- **Manual deployments**: Workflow dispatch for on-demand deployments
+
+### Backend Workflow (`backend-ci-cd.yml`)
+- **Node.js**: 22.x with pnpm
+- **Testing**: Linting, unit tests, e2e tests, coverage reporting
+- **Building**: Multi-platform Docker image as `sura-backend`
+- **Deployment**: Configurable environment deployment with health checks
+
+### Frontend Workflow (`frontend-ci-cd.yml`)
+- **Node.js**: 22.x with pnpm
+- **Testing**: Linting, type checking, bundle analysis
+- **Building**: Multi-platform Docker image as `sura-frontend`
+- **Deployment**: Configurable environment deployment with performance tests
+
+### Manual Deployment
+1. Go to **Actions** tab in GitHub repository
+2. Select desired workflow (Backend CI/CD or Frontend CI/CD)
+3. Click **Run workflow**
+4. Choose target environment (development/staging/production)
+5. Click **Run workflow**
+
+For detailed CI/CD documentation, see [`.github/workflows/README.md`](.github/workflows/README.md).
 
 ## Configuration
 - **Database**: Configure tenant-specific schemas in PostgreSQL. Update `DATABASE_URL` in the backend `.env` file.
