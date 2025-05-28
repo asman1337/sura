@@ -54,7 +54,9 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
       if (!recordsApi.isReady || skipStatsFetch) return;
       
       try {
+        console.log('useRecords: Loading stats...');
         const result = await recordsApi.getStats();
+        console.log('useRecords: Stats loaded successfully:', result);
         setStats(result);
       } catch (err) {
         console.error('Error loading record stats:', err);

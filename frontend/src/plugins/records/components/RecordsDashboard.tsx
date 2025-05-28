@@ -113,6 +113,17 @@ const RecordsDashboard: React.FC = () => {
   const recordsApi = useRecordsApi();
   const { records, stats, loading, error, refreshData } = useRecords();
 
+  // Debug logging for stats
+  useEffect(() => {
+    console.log('RecordsDashboard: Stats updated:', stats);
+    if (stats) {
+      console.log('RecordsDashboard: Total records:', stats.totalRecords);
+      console.log('RecordsDashboard: Records by type:', stats.recordsByType);
+      console.log('RecordsDashboard: Recently added:', stats.recentlyAdded);
+      console.log('RecordsDashboard: Archived records:', stats.archivedRecords);
+    }
+  }, [stats]);
+
   // Set global API instance on component mount
   useEffect(() => {
     if (api) {

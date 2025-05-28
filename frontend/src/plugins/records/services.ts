@@ -187,11 +187,12 @@ export class RecordsService {
     }
 
     try {
+      console.log('Fetching stats from:', `${this.baseUrl}/records/stats`);
       const response = await this.api.get(`${this.baseUrl}/records/stats`);
+      console.log('Stats API raw response:', response);
       
-      if (!response || !response.data) {
-        console.warn('API returned empty stats response');
-        // Return default stats object if response is empty
+      if (!response) {
+        console.warn('API returned null/undefined stats response');
         return {
           totalRecords: 0,
           recordsByType: {},
@@ -199,8 +200,34 @@ export class RecordsService {
           archivedRecords: 0
         };
       }
+
+      // Handle different response formats
+      let statsData = response;
       
-      return response.data;
+      // If response has a data property, use that
+      if (response.data) {
+        console.log('Using response.data for stats:', response.data);
+        statsData = response.data;
+      }
+      
+      // If the response is wrapped in another layer, unwrap it
+      if (statsData.data && typeof statsData.data === 'object') {
+        console.log('Using nested data property for stats:', statsData.data);
+        statsData = statsData.data;
+      }
+      
+      console.log('Final stats data being returned:', statsData);
+      
+      // Ensure we have all required properties with defaults
+      const result: RecordsStats = {
+        totalRecords: statsData.totalRecords || 0,
+        recordsByType: statsData.recordsByType || {},
+        recentlyAdded: statsData.recentlyAdded || 0,
+        archivedRecords: statsData.archivedRecords || 0
+      };
+      
+      console.log('Processed stats result:', result);
+      return result;
     } catch (error) {
       console.error('Error fetching records stats:', error);
       // Return default stats object on error
