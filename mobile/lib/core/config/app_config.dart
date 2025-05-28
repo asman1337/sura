@@ -7,7 +7,7 @@ class AppConfig {
   static const String appDescription = 'Evidence Management System';
   
   // API configuration
-  static const String apiBaseUrl = kDebugMode ? "http://192.168.31.121:3000" : "https://sura.otmalse.com";
+  static const String apiBaseUrl = kDebugMode ? "http://192.168.31.121:3000" : "https://apisura.otmalse.in";
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
   
