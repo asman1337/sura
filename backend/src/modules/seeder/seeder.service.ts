@@ -136,7 +136,7 @@ export class SeederService implements OnModuleInit {
         jurisdictionArea: 'Purba Bardhaman District',
         address: 'District Police Office, Purba Bardhaman',
         contactPhone: '1234567890',
-        contactEmail: 'sp-pbarddhaman@policewb.gov.in',
+        contactEmail: 'sp-pbarddhaman@wb.gov.in',
         isActive: true
       };
       
@@ -191,7 +191,7 @@ export class SeederService implements OnModuleInit {
         isActive: true,
         contactInformation: {
           phone: '1234567890',
-          email: 'sp-office@pbdp.gov.in'
+          email: 'pbwn-sp@wb.gov.in'
         }
       };
       
@@ -220,7 +220,7 @@ export class SeederService implements OnModuleInit {
         isActive: true,
         contactInformation: {
           phone: '1234567891',
-          email: 'addsp-hq@pbdp.gov.in'
+          email: 'pbwn-addsp@wb.gov.in'
         }
       };
       
@@ -249,7 +249,7 @@ export class SeederService implements OnModuleInit {
         isActive: true,
         contactInformation: {
           phone: '1234567892',
-          email: 'dysp-sadarnorth@pbdp.gov.in'
+          email: 'pbwn-dysp@wb.gov.in'
         }
       };
       
@@ -278,7 +278,7 @@ export class SeederService implements OnModuleInit {
         isActive: true,
         contactInformation: {
           phone: '1234567893',
-          email: 'oc-ausgram@pbdp.gov.in'
+          email: 'ausgramps@wb.gov.in'
         }
       };
       
@@ -395,7 +395,7 @@ export class SeederService implements OnModuleInit {
       firstName: 'Rajesh',
       lastName: 'Sharma',
       email: 'sp@pbdp.gov.in',
-      password: 'password123',
+      password: 'Test@113#',
       badgeNumber: 'SP-001',
       gender: 'MALE',
       userType: 'OFFICER',
@@ -410,7 +410,7 @@ export class SeederService implements OnModuleInit {
       firstName: 'Priya',
       lastName: 'Patel',
       email: 'addlsp@pbdp.gov.in',
-      password: 'password123',
+      password: 'Test@113#',
       badgeNumber: 'ADDL-SP-001',
       gender: 'FEMALE',
       userType: 'OFFICER',
@@ -437,10 +437,10 @@ export class SeederService implements OnModuleInit {
 
     // 4. Create Inspector for Ausgram PS
     await this.createOfficer({
-      firstName: 'Sunil',
-      lastName: 'Gupta',
-      email: 'inspector@pbdp.gov.in',
-      password: 'password123',
+      firstName: 'Santanu',
+      lastName: 'Adhikari',
+      email: 'ausgram.ps@wb.gov.in',
+      password: 'Test@113#',
       badgeNumber: 'INSP-001',
       gender: 'MALE',
       userType: 'OFFICER',
@@ -452,10 +452,10 @@ export class SeederService implements OnModuleInit {
 
     // 5. Create SI for Malkhana Department
     await this.createOfficer({
-      firstName: 'Deepak',
-      lastName: 'Banerjee',
-      email: 'malkhana@pbdp.gov.in',
-      password: 'password123',
+      firstName: 'Subhash',
+      lastName: 'Babu',
+      email: 'ausgram.malkhana@wb.gov.in',
+      password: 'Test@113#',
       badgeNumber: 'SI-001',
       gender: 'MALE',
       userType: 'OFFICER',
@@ -470,7 +470,7 @@ export class SeederService implements OnModuleInit {
       firstName: 'System',
       lastName: 'Administrator',
       email: 'admin@sura.com',
-      password: 'admin123',
+      password: 'd4rky007#',
       badgeNumber: 'ADMIN-001',
       gender: 'OTHER',
       userType: 'ADMIN',
