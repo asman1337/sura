@@ -25,6 +25,8 @@ services:
       # Environment
       - NODE_ENV=production
       - PORT=3000
+      # CORS Configuration
+      - CORS_ORIGIN=https://sura.otmalse.in,http://localhost:5173,http://localhost:3000
       # Database (matching app.module.ts expectations)
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432

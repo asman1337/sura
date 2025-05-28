@@ -1,14 +1,30 @@
 import { AppModule } from './app.module';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
 
+  // Get ConfigService instance
+  const configService = app.get(ConfigService);
+
   // Enable CORS
-  app.enableCors();
+  const corsOrigin = configService.get('CORS_ORIGIN');
+  const corsOrigins = corsOrigin 
+    ? corsOrigin.split(',').map(origin => origin.trim())
+    : ['http://localhost:3000', 'http://localhost:5173', 'https://sura.otmalse.in'];
+  
+  app.enableCors({
+    origin: corsOrigins,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true, // Allow cookies to be sent with requests
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  });
 
   // Enable validation
   app.useGlobalPipes(
@@ -19,6 +35,8 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = configService.get('PORT', 3000);
+  await app.listen(port);
 }
+
 bootstrap();
