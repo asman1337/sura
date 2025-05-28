@@ -62,14 +62,11 @@ EOF
 # Copy built application from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Create non-root user
-RUN addgroup -g 1001 -S nginx && \
-    adduser -S nginx -u 1001 -G nginx
+# Set proper permissions for nginx user
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html
 
-# Change ownership of nginx directories
-RUN chown -R nginx:nginx /var/cache/nginx /var/run /var/log/nginx /usr/share/nginx/html
-
-# Switch to non-root user
+# Switch to nginx user (already exists in nginx:alpine image)
 USER nginx
 
 # Expose port
