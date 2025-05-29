@@ -34,7 +34,7 @@ import { printQrCode } from '../utils';
 const ShelfManagement: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { api } = useData();
+  const { api, auth } = useData();
   const malkhanaApi = useMalkhanaApi();
   const [shelves, setShelves] = useState<ShelfInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,14 +149,14 @@ const ShelfManagement: React.FC = () => {
   // Handle printing QR code
   const handlePrintQrCode = () => {
     if (!selectedShelf) return;
-    
     try {
-      // Generate a clean QR code data string
-      const title = `Shelf: ${selectedShelf.name}`;
-      const subtitle = `Location: ${selectedShelf.location}${selectedShelf.category ? ` • Category: ${selectedShelf.category}` : ''}`;
-      
-      // Call the print function with the compact data
-      printQrCode(title, subtitle, getCompactShelfQrCodeData(selectedShelf));
+      const title = selectedShelf.name;
+      const value = getCompactShelfQrCodeData(selectedShelf);
+      const logoUrl = '/images/logo/wbp_logo.svg';
+      const currentUser = auth.getCurrentUser();
+      const unitName = currentUser?.primaryUnit?.name || '';
+      const orgName = currentUser?.organization?.name || '';
+      printQrCode(title, value, logoUrl, unitName, orgName);
     } catch (error) {
       console.error('Error preparing QR code data for printing:', error);
       alert('Failed to print QR code. Please try again.');

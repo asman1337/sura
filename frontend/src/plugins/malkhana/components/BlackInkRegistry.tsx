@@ -27,7 +27,7 @@ import { setGlobalApiInstance } from '../services';
 import { printMultipleQrCodes } from '../utils';
 
 const BlackInkRegistry: React.FC = () => {
-  const { api } = useData();
+  const { api, auth } = useData();
   const malkhanaApi = useMalkhanaApi();
   const [items, setItems] = useState<MalkhanaItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,21 +80,20 @@ const BlackInkRegistry: React.FC = () => {
     try {
       // Prepare items for grid printing
       const qrItems = selectedItems.map(item => {
-        // Generate a simplified QR code data with only essential information
         const qrData = {
           type: 'item',
           id: item.id,
           timestamp: new Date().toISOString()
         };
+        const title = `PR NO - ${item.prNumber}` || `Mother NO - ${item.motherNumber}`;
+        const value = btoa(unescape(encodeURIComponent(JSON.stringify(qrData))));
+        const logoUrl = '/images/logo/wbp_logo.svg';
+        const currentUser = auth.getCurrentUser();
+        const unitName = currentUser?.primaryUnit?.name || '';
+        const orgName = currentUser?.organization?.name || '';
         
-        return {
-          title: `Item: ${item.motherNumber}`,
-          subtitle: item.description || `Registry #${item.registryNumber}`,
-          value: JSON.stringify(qrData)
-        };
+        return { title, value, logoUrl, unitName, orgName };
       });
-      
-      // Print all QR codes in a grid layout
       printMultipleQrCodes(qrItems);
     } catch (error) {
       console.error('Error preparing QR codes for multi-print:', error);
@@ -230,4 +229,4 @@ const BlackInkRegistry: React.FC = () => {
   );
 };
 
-export default BlackInkRegistry; 
+export default BlackInkRegistry;

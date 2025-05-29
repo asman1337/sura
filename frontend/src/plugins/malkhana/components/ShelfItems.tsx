@@ -41,7 +41,7 @@ import { printQrCode } from '../utils';
 const ShelfItems: React.FC = () => {
   const { shelfId } = useParams<{ shelfId: string }>();
   const theme = useTheme();
-  const { api } = useData();
+  const { api, auth } = useData();
   const malkhanaApi = useMalkhanaApi();
   
   const [shelf, setShelf] = useState<ShelfInfo | null>(null);
@@ -169,23 +169,14 @@ const ShelfItems: React.FC = () => {
   // Handle printing QR code
   const handlePrintQrCode = () => {
     if (!selectedItem) return;
-    
     try {
-      // Generate a simplified QR code data with only essential information
-      const qrData = {
-        type: 'item',
-        id: selectedItem.id,
-        timestamp: new Date().toISOString()
-      };
-      
-      const title = `Evidence Item: ${selectedItem.motherNumber}`;
-      const subtitle = selectedItem.description || `Registry #${selectedItem.registryNumber}`;
-      
-      // Convert to compact JSON string with minimal whitespace
-      const qrValue = JSON.stringify(qrData);
-      
-      // Call the print function with the prepared data
-      printQrCode(title, subtitle, qrValue);
+      const title = `PR NO - ${selectedItem.prNumber}` || `Mother NO - ${selectedItem.motherNumber}`;
+      const value = getCompactQrCodeData(selectedItem);
+      const logoUrl = '/images/logo/wbp_logo.svg';
+      const currentUser = auth.getCurrentUser();
+      const unitName = currentUser?.primaryUnit?.name || '';
+      const orgName = currentUser?.organization?.name || '';
+      printQrCode(title, value, logoUrl, unitName, orgName);
     } catch (error) {
       console.error('Error preparing QR code data for printing:', error);
       alert('Failed to print QR code. Please try again.');

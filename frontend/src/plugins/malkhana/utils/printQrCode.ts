@@ -4,28 +4,29 @@
 
 
 /**
- * Prints a QR code with a title and subtitle in a new window
- * @param title The title to display above the QR code
- * @param subtitle The subtitle to display below the QR code
+ * Prints a QR code with a title (PR NO), QR, logo, unit and org name
+ * @param title The title to display at the top
  * @param value The value to encode in the QR code
+ * @param logoUrl The URL of the department logo (relative to public/)
+ * @param unitName The name of the unit (e.g., police station)
+ * @param orgName The name of the organization (e.g., district police)
  */
-export const printQrCode = (title: string, subtitle: string, value: string) => {
+export const printQrCode = (
+  title: string,
+  value: string,
+  logoUrl: string,
+  unitName: string,
+  orgName: string
+) => {
   try {
-    // Convert to Base64 to avoid JSON parsing issues when printing
     const base64Value = btoa(unescape(encodeURIComponent(value)));
-    
-    // Create a new window for printing
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       console.error('Failed to open print window');
       alert('Please allow pop-ups to print QR codes');
       return;
     }
-    
-    // QR Code dimension
     const qrSize = 280;
-    
-    // Write the HTML content to the new window
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -46,16 +47,14 @@ export const printQrCode = (title: string, subtitle: string, value: string) => {
               align-items: center;
               justify-content: center;
             }
-            .title {
-              font-size: 20px;
+            .prno {
+              font-size: 22px;
               font-weight: bold;
-              margin-bottom: 10px;
+              margin-bottom: 18px;
               text-align: center;
-            }
-            .subtitle {
-              font-size: 16px;
-              margin-bottom: 20px;
-              text-align: center;
+              letter-spacing: 2px;
+              color: #1a237e; /* Deep blue (WBP) */
+              text-shadow: 0 1px 0 #fff, 0 2px 4px #b71c1c33;
             }
             .qr-container {
               background-color: white;
@@ -65,7 +64,42 @@ export const printQrCode = (title: string, subtitle: string, value: string) => {
               display: flex;
               justify-content: center;
               align-items: center;
-              margin-bottom: 20px;
+              margin-bottom: 18px;
+            }
+            .logo-unit-row {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 18px;
+              margin-bottom: 8px;
+            }
+            .logo {
+              width: 60px;
+              height: 60px;
+              object-fit: contain;
+              display: block;
+            }
+            .unit-org-col {
+              display: flex;
+              flex-direction: column;
+              align-items: flex-start;
+              justify-content: center;
+            }
+            .unit-name {
+              font-size: 16px;
+              font-weight: 600;
+              margin-bottom: 2px;
+              text-align: left;
+              width: 100%;
+              color: #b71c1c; /* WBP red */
+              letter-spacing: 1px;
+            }
+            .org-name {
+              font-size: 14px;
+              color: #1a237e; /* WBP blue */
+              text-align: left;
+              width: 100%;
+              font-weight: 500;
             }
             .button-container {
               display: flex;
@@ -103,24 +137,26 @@ export const printQrCode = (title: string, subtitle: string, value: string) => {
         </head>
         <body>
           <div class="print-container">
-            <div class="title">${title}</div>
-            <div class="subtitle">${subtitle}</div>
+            <div class="prno">${title}</div>
             <div class="qr-container">
               <div id="qrcode" class="qr-code"></div>
+            </div>
+            <div class="logo-unit-row">
+              <img src="${logoUrl}" class="logo" alt="Department Logo" />
+              <div class="unit-org-col">
+                <div class="unit-name">${unitName}</div>
+                <div class="org-name">${orgName}</div>
+              </div>
             </div>
             <div class="button-container">
               <button onclick="window.print()">Print QR Code</button>
               <button class="secondary" onclick="window.close()">Close</button>
             </div>
           </div>
-          
           <script>
-            // Function to generate QR code with direct approach
             function generateQRCode() {
               const container = document.getElementById('qrcode');
               if (!container) return;
-              
-              // Decode the Base64 data
               let qrData;
               try {
                 qrData = decodeURIComponent(escape(window.atob('${base64Value}')));
@@ -129,41 +165,29 @@ export const printQrCode = (title: string, subtitle: string, value: string) => {
                 container.innerHTML = '<div style="color: red; text-align: center;">Error: Failed to decode QR data</div>';
                 return;
               }
-              
-              // Dynamically load QR code library
               const script = document.createElement('script');
               script.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js';
               script.onload = function() {
                 try {
-                  // Try various error correction levels from lowest to highest
                   const errorCorrectionLevels = ['L', 'M', 'Q', 'H'];
                   let success = false;
-                  
                   for (const level of errorCorrectionLevels) {
                     try {
-                      // typeNumber 0 means auto-detect the best type
                       const qr = window.qrcode(0, level);
                       qr.addData(qrData);
                       qr.make();
-                      
-                      // If we reach here, the QR code was successfully created
                       const imgTag = document.createElement('img');
-                      imgTag.src = qr.createDataURL(10, 0); // 10px per module, 0px margin
+                      imgTag.src = qr.createDataURL(10, 0);
                       imgTag.style.width = '100%';
                       imgTag.style.height = '100%';
-                      
                       container.innerHTML = '';
                       container.appendChild(imgTag);
-                      
                       success = true;
                       break;
                     } catch (e) {
                       console.warn('Failed with error correction level ' + level + ':', e);
-                      // Continue with next level
                     }
                   }
-                  
-                  // If all levels failed, show error
                   if (!success) {
                     container.innerHTML = '<div style="color: red; text-align: center;">Error: Data too large for QR code</div>';
                   }
@@ -172,24 +196,17 @@ export const printQrCode = (title: string, subtitle: string, value: string) => {
                   container.innerHTML = '<div style="color: red; text-align: center;">Failed to generate QR code</div>';
                 }
               };
-              
               script.onerror = function() {
                 container.innerHTML = '<div style="color: red; text-align: center;">Failed to load QR code library</div>';
               };
-              
               document.head.appendChild(script);
             }
-            
-            // Generate QR code on window load
             window.onload = generateQRCode;
           </script>
         </body>
       </html>
     `);
-    
-    // Close the document to finish writing
     printWindow.document.close();
-    
   } catch (error) {
     console.error('Error printing QR code:', error);
     alert('Failed to print QR code. Please try again.');
@@ -198,34 +215,22 @@ export const printQrCode = (title: string, subtitle: string, value: string) => {
 
 /**
  * Prints multiple QR codes in a 3xn grid layout in a single page
- * @param items Array of items to print QR codes for, each containing title, subtitle and value
+ * @param items Array of items to print QR codes for, each containing prNo, value, logoUrl, unitName, orgName
  */
-export const printMultipleQrCodes = (items: Array<{title: string, subtitle: string, value: string}>) => {
+export const printMultipleQrCodes = (items: Array<{title: string, value: string, logoUrl: string, unitName: string, orgName: string}>) => {
   try {
     if (!items || items.length === 0) {
       console.error('No items provided for printing');
       return;
     }
-    
-    // Create a new window for printing
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       console.error('Failed to open print window');
       alert('Please allow pop-ups to print QR codes');
       return;
     }
-    
-    // QR Code dimension - slightly smaller for grid layout
-    const qrSize = 200;
+    const qrSize = 180;
     const itemsPerRow = 3;
-    
-    // Convert all values to Base64 to avoid JSON parsing issues
-    const base64Items = items.map(item => ({
-      ...item,
-      base64Value: btoa(unescape(encodeURIComponent(item.value)))
-    }));
-    
-    // Write the HTML content to the new window
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -249,6 +254,8 @@ export const printMultipleQrCodes = (items: Array<{title: string, subtitle: stri
             .print-title {
               font-size: 24px;
               font-weight: bold;
+              color: #1a237e;
+              text-shadow: 0 1px 0 #fff, 0 2px 4px #b71c1c33;
             }
             .print-subtitle {
               font-size: 16px;
@@ -264,30 +271,22 @@ export const printMultipleQrCodes = (items: Array<{title: string, subtitle: stri
               background-color: white;
               border: 1px solid #ddd;
               border-radius: 4px;
-              padding: 15px;
+              padding: 10px 8px 8px 8px;
               display: flex;
               flex-direction: column;
               align-items: center;
               page-break-inside: avoid;
               break-inside: avoid;
+              min-width: 220px;
             }
-            .qr-title {
-              font-size: 14px;
+            .prno {
+              font-size: 16px;
               font-weight: bold;
-              margin-bottom: 5px;
+              margin-bottom: 8px;
               text-align: center;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              width: 100%;
-            }
-            .qr-subtitle {
-              font-size: 12px;
-              margin-bottom: 10px;
-              text-align: center;
-              color: #666;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              width: 100%;
+              color: #1a237e;
+              letter-spacing: 1px;
+              text-shadow: 0 1px 0 #fff, 0 2px 4px #b71c1c33;
             }
             .qr-container {
               width: ${qrSize}px;
@@ -295,6 +294,40 @@ export const printMultipleQrCodes = (items: Array<{title: string, subtitle: stri
               display: flex;
               justify-content: center;
               align-items: center;
+              margin-bottom: 8px;
+            }
+            .logo-unit-row {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 10px;
+              margin-bottom: 2px;
+            }
+            .logo {
+              width: 38px;
+              height: 38px;
+              object-fit: contain;
+              display: block;
+            }
+            .unit-org-col {
+              display: flex;
+              flex-direction: column;
+              align-items: flex-start;
+              justify-content: center;
+            }
+            .unit-name {
+              font-size: 13px;
+              font-weight: 600;
+              margin-bottom: 1px;
+              text-align: left;
+              color: #b71c1c;
+              letter-spacing: 0.5px;
+            }
+            .org-name {
+              font-size: 12px;
+              color: #1a237e;
+              text-align: left;
+              font-weight: 500;
             }
             .button-container {
               display: flex;
@@ -343,76 +376,60 @@ export const printMultipleQrCodes = (items: Array<{title: string, subtitle: stri
               <div class="print-title">Multiple QR Codes</div>
               <div class="print-subtitle">Total: ${items.length} QR codes</div>
             </div>
-            
             <div class="button-container">
               <button onclick="window.print()">Print QR Codes</button>
               <button class="secondary" onclick="window.close()">Close</button>
             </div>
-            
             <div class="qr-grid">
-              ${base64Items.map((item, index) => `
+              ${items.map((item, index) => `
                 <div class="qr-item">
-                  <div class="qr-title">${item.title}</div>
-                  <div class="qr-subtitle">${item.subtitle}</div>
+                  <div class="prno">${item.title}</div>
                   <div class="qr-container" id="qrcode-${index}"></div>
+                  <div class="logo-unit-row">
+                    <img src="${item.logoUrl}" class="logo" alt="Logo" />
+                    <div class="unit-org-col">
+                      <div class="unit-name">${item.unitName}</div>
+                      <div class="org-name">${item.orgName}</div>
+                    </div>
+                  </div>
                 </div>
               `).join('')}
             </div>
-            
             <div class="button-container">
               <button onclick="window.print()">Print QR Codes</button>
               <button class="secondary" onclick="window.close()">Close</button>
             </div>
           </div>
-          
           <script>
-            // Function to generate all QR codes
             function generateQRCodes() {
-              // Load QR code library first
               const script = document.createElement('script');
               script.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js';
-              
               script.onload = function() {
-                // Process each QR code
-                const items = ${JSON.stringify(base64Items)};
-                
+                const items = ${JSON.stringify(items)};
                 items.forEach((item, index) => {
                   const container = document.getElementById('qrcode-' + index);
                   if (!container) return;
-                  
                   try {
-                    // Decode the Base64 data
-                    const qrData = decodeURIComponent(escape(window.atob(item.base64Value)));
-                    
-                    // Try various error correction levels from lowest to highest
+                    const qrData = decodeURIComponent(escape(window.atob(item.value)));
                     const errorCorrectionLevels = ['L', 'M', 'Q', 'H'];
                     let success = false;
-                    
                     for (const level of errorCorrectionLevels) {
                       try {
-                        // typeNumber 0 means auto-detect the best type
                         const qr = window.qrcode(0, level);
                         qr.addData(qrData);
                         qr.make();
-                        
-                        // If we reach here, the QR code was successfully created
                         const imgTag = document.createElement('img');
-                        imgTag.src = qr.createDataURL(8, 0); // 8px per module, 0px margin
+                        imgTag.src = qr.createDataURL(8, 0);
                         imgTag.style.width = '100%';
                         imgTag.style.height = '100%';
-                        
                         container.innerHTML = '';
                         container.appendChild(imgTag);
-                        
                         success = true;
                         break;
                       } catch (e) {
                         console.warn('Failed with error correction level ' + level + ':', e);
-                        // Continue with next level
                       }
                     }
-                    
-                    // If all levels failed, show error
                     if (!success) {
                       container.innerHTML = '<div style="color: red; text-align: center; font-size: 10px;">Error: Data too large</div>';
                     }
@@ -422,27 +439,20 @@ export const printMultipleQrCodes = (items: Array<{title: string, subtitle: stri
                   }
                 });
               };
-              
               script.onerror = function() {
                 console.error('Failed to load QR code library');
                 alert('Failed to load QR code library. Please try again.');
               };
-              
               document.head.appendChild(script);
             }
-            
-            // Generate QR codes on window load
             window.onload = generateQRCodes;
           </script>
         </body>
       </html>
     `);
-    
-    // Close the document to finish writing
     printWindow.document.close();
-    
   } catch (error) {
     console.error('Error printing multiple QR codes:', error);
     alert('Failed to print QR codes. Please try again.');
   }
-}; 
+};
