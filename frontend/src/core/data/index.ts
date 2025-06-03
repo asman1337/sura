@@ -4,6 +4,8 @@ export { ApiClient } from './api-client';
 export { StorageClient } from './storage-client';
 export { CacheManager } from './cache-manager';
 export { SyncManager } from './sync-manager';
+export { DashboardApi } from './dashboard-api';
+export type { DashboardStats, ActivityItem, DashboardResponse } from './dashboard-api';
 
 // Export data context types and components
 export { DataProvider, useData } from './data-context';

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '../../data';
+import { DashboardApi } from '../../data/dashboard-api';
 import { usePlugins } from '../../plugins';
-import { Plugin, DashboardWidget as PluginDashboardWidget } from '../../plugins/types';
+import { NavigationItem } from '../../plugins/types';
 import {
   Box,
   Card,
@@ -18,7 +20,6 @@ import {
   Divider,
   Paper,
   IconButton,
-  Tooltip,
   useTheme,
   alpha
 } from '@mui/material';
@@ -28,7 +29,11 @@ import {
   AssignmentOutlined as TaskIcon,
   DescriptionOutlined as ReportIcon,
   MoreVert as MoreIcon,
-  ArrowForward as ArrowForwardIcon
+  ArrowForward as ArrowForwardIcon,
+  DashboardOutlined as DashboardIcon,
+  EventNoteRounded as EventNoteIcon,
+  WorkHistoryRounded as RecordsIcon,
+  AccountBalanceRounded as CashRegistryIcon
 } from '@mui/icons-material';
 
 interface UserInfo {
@@ -36,24 +41,25 @@ interface UserInfo {
   role: string;
 }
 
-// Interface for our local widget representation
-interface DashboardWidgetDisplay {
+interface QuickAction {
   id: string;
   title: string;
-  description?: string;
-  width?: number;
-  pluginId: string;
-  pluginName: string;
+  path: string;
+  icon: React.ReactNode;
 }
 
 const DashboardPage: React.FC = () => {
   const theme = useTheme();
-  const { auth } = useData();
+  const navigate = useNavigate();
+  const { auth, api } = useData();
   const { enabledPlugins } = usePlugins();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [pluginWidgets, setPluginWidgets] = useState<DashboardWidgetDisplay[]>([]);
+  const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
+  const [statsData, setStatsData] = useState<any[]>([]);
+  const [activityData, setActivityData] = useState<any[]>([]);  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // In a real app, you would fetch this from your API
+  // Fetch user info
   useEffect(() => {
     // Simulate fetching user info
     setTimeout(() => {
@@ -62,104 +68,156 @@ const DashboardPage: React.FC = () => {
         role: auth.getCurrentUser()?.rank?.abbreviation || 'Officer'
       });
     }, 500);
-  }, []);
+  }, [auth]);
   
-  // Process plugin widgets
+  // Fetch dashboard data from API
   useEffect(() => {
-    // Extract dashboard widgets from enabled plugins
-    const widgets: DashboardWidgetDisplay[] = [];
-    const widgetIds = new Set<string>();
-    
-    enabledPlugins.forEach((plugin: Plugin) => {
-      const dashboardWidgets = plugin.getExtensionPoints<PluginDashboardWidget>('dashboard:widgets');
-      if (dashboardWidgets && dashboardWidgets.length > 0) {
-        dashboardWidgets.forEach(widget => {
-          // Skip duplicate widgets (based on ID)
-          if (widgetIds.has(widget.id)) {
-            console.log(`Skipping duplicate widget: ${widget.id}`);
-            return;
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Create dashboard API instance inside useEffect to avoid loop
+        const dashboardApi = new DashboardApi(api);
+        const dashboardData = await dashboardApi.getDashboardData();
+        
+        // Transform stats data for UI
+        const transformedStats = [
+          { 
+            title: 'Cases', 
+            value: dashboardData.stats.cases, 
+            subtitle: 'Active cases', 
+            icon: <CaseIcon fontSize="large" />,
+            color: theme.palette.primary.main
+          },
+          { 
+            title: 'Evidence', 
+            value: dashboardData.stats.evidence, 
+            subtitle: 'Items in Malkhana', 
+            icon: <InventoryIcon fontSize="large" />,
+            color: theme.palette.success.main
+          },
+          { 
+            title: 'Tasks', 
+            value: dashboardData.stats.tasks, 
+            subtitle: 'Pending tasks', 
+            icon: <TaskIcon fontSize="large" />,
+            color: theme.palette.warning.main
+          },
+          { 
+            title: 'Reports', 
+            value: dashboardData.stats.reports, 
+            subtitle: 'Needs review', 
+            icon: <ReportIcon fontSize="large" />,
+            color: theme.palette.info.main
           }
-          
-          widgets.push({
-            id: widget.id,
-            title: widget.data.title,
-            description: 'Widget from plugin',
-            width: widget.data.width || 6,
-            pluginId: plugin.id,
-            pluginName: plugin.manifest.name
+        ];
+        
+        // Transform activity data for UI
+        const transformedActivity = dashboardData.recentActivity.map((activity: any) => ({
+          time: new Date(activity.timestamp).toLocaleDateString(),
+          description: activity.description,
+          user: activity.title,
+          status: activity.status
+        }));
+        
+        setStatsData(transformedStats);
+        setActivityData(transformedActivity);
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err);
+        setError('Failed to load dashboard data. Using default values.');
+        
+        // Fallback to default data
+        setStatsData([
+          { 
+            title: 'Cases', 
+            value: 0, 
+            subtitle: 'Active cases', 
+            icon: <CaseIcon fontSize="large" />,
+            color: theme.palette.primary.main
+          },
+          { 
+            title: 'Evidence', 
+            value: 0, 
+            subtitle: 'Items in Malkhana', 
+            icon: <InventoryIcon fontSize="large" />,
+            color: theme.palette.success.main
+          },
+          { 
+            title: 'Tasks', 
+            value: 0, 
+            subtitle: 'Pending tasks', 
+            icon: <TaskIcon fontSize="large" />,
+            color: theme.palette.warning.main
+          },
+          { 
+            title: 'Reports', 
+            value: 0, 
+            subtitle: 'Needs review', 
+            icon: <ReportIcon fontSize="large" />,
+            color: theme.palette.info.main
+          }
+        ]);
+        setActivityData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+      fetchDashboardData();
+  }, [api, theme.palette]);
+
+  // Generate quick actions from enabled plugins
+  useEffect(() => {
+    const actions: QuickAction[] = [];
+    
+    // Helper function to render icons
+    const renderIcon = (iconName: string) => {
+      switch (iconName) {
+        case 'Inventory':
+          return <InventoryIcon />;
+        case 'EventNote':
+          return <EventNoteIcon />;
+        case 'Records':
+          return <RecordsIcon />;
+        case 'CashRegistry':
+          return <CashRegistryIcon />;
+        default:
+          return <DashboardIcon />;
+      }
+    };
+
+    // Collect navigation items from enabled plugins
+    enabledPlugins.forEach((plugin) => {
+      const navExtensions = plugin.getExtensionPoints<NavigationItem>('navigation:main');
+      if (navExtensions && navExtensions.length > 0) {
+        navExtensions.forEach(ext => {
+          actions.push({
+            id: ext.id,
+            title: ext.data.title,
+            path: ext.data.path,
+            icon: typeof ext.data.icon === 'string' ? renderIcon(ext.data.icon) : ext.data.icon || <DashboardIcon />
           });
-          
-          widgetIds.add(widget.id);
         });
       }
-    });
-    
-    console.log(`Processed ${widgets.length} unique widgets from plugins`);
-    setPluginWidgets(widgets);
+    });    setQuickActions(actions);
   }, [enabledPlugins]);
-  
-  // Stats data
-  const statsData = [
-    { 
-      title: 'Cases', 
-      value: 24, 
-      subtitle: 'Active cases', 
-      icon: <CaseIcon fontSize="large" />,
-      color: theme.palette.primary.main
-    },
-    { 
-      title: 'Evidence', 
-      value: 128, 
-      subtitle: 'Items in Malkhana', 
-      icon: <InventoryIcon fontSize="large" />,
-      color: theme.palette.success.main
-    },
-    { 
-      title: 'Tasks', 
-      value: 12, 
-      subtitle: 'Pending tasks', 
-      icon: <TaskIcon fontSize="large" />,
-      color: theme.palette.warning.main
-    },
-    { 
-      title: 'Reports', 
-      value: 8, 
-      subtitle: 'Needs review', 
-      icon: <ReportIcon fontSize="large" />,
-      color: theme.palette.info.main
-    }
-  ];
-  
-  // Activity data
-  const activityData = [
-    {
-      time: '9:45 AM',
-      description: 'New evidence item added to case #4872',
-      user: 'Officer Singh'
-    },
-    {
-      time: 'Yesterday',
-      description: 'You were assigned to case #4983',
-      user: 'Inspector Sharma'
-    },
-    {
-      time: '3 days ago',
-      description: 'Report #38 was approved',
-      user: 'DSP Kumar'
-    }
-  ];
-  
-  // Quick actions
-  const quickActions = [
-    { title: 'New Case', icon: <CaseIcon /> },
-    { title: 'Add Evidence', icon: <InventoryIcon /> },
-    { title: 'Create Report', icon: <ReportIcon /> },
-    { title: 'Assign Task', icon: <TaskIcon /> }
-  ];
-  
+
+  // Handle navigation to quick actions
+  const handleQuickActionClick = (path: string) => {
+    navigate(path);
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Box sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
+        <Typography>Loading dashboard...</Typography>
+      </Box>
+    );
+  }
+
   return (
-    <Box sx={{ py: 0 }}>
-      {/* Welcome section */}
+    <Box sx={{ py: 0 }}>      {/* Welcome section */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" fontWeight="500" gutterBottom>
           Welcome back, {userInfo ? userInfo.username : 'Officer'}
@@ -167,6 +225,11 @@ const DashboardPage: React.FC = () => {
         <Typography variant="body1" color="text.secondary">
           Here's what's happening in your department today.
         </Typography>
+        {error && (
+          <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+            {error}
+          </Typography>
+        )}
       </Box>
       
       {/* Stats cards */}
@@ -298,12 +361,12 @@ const DashboardPage: React.FC = () => {
           >
             <CardHeader title="Quick Actions" />
             <Divider />
-            <CardContent>
-              <Grid container spacing={2}>
-                {quickActions.map((action, index) => (
-                  <Grid size={{ xs: 6 }} key={index}>
+            <CardContent>              <Grid container spacing={2}>
+                {quickActions.map((action) => (
+                  <Grid size={{ xs: 6 }} key={action.id}>
                     <Paper
                       elevation={0}
+                      onClick={() => handleQuickActionClick(action.path)}
                       sx={{
                         p: 2,
                         display: 'flex',
@@ -338,47 +401,8 @@ const DashboardPage: React.FC = () => {
                   </Grid>
                 ))}
               </Grid>
-            </CardContent>
-          </Card>
+            </CardContent>          </Card>
         </Grid>
-        
-        {/* Plugin widgets */}
-        {pluginWidgets.map((widget) => (
-          <Grid 
-            size={{ xs: 12, md: widget.width }} 
-            key={widget.id}
-          >
-            <Card 
-              elevation={0}
-              sx={{ 
-                height: '100%',
-                borderRadius: 2,
-                border: `1px solid ${theme.palette.divider}`
-              }}
-            >
-              <CardHeader 
-                title={widget.title} 
-                subheader={`Provided by ${widget.pluginName}`}
-                action={
-                  <Tooltip title="More options">
-                    <IconButton>
-                      <MoreIcon />
-                    </IconButton>
-                  </Tooltip>
-                }
-              />
-              <Divider />
-              <CardContent>
-                {/* Widget content would be rendered here */}
-                <Box sx={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Typography color="text.secondary">
-                    {widget.description || 'Widget content'}
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
       </Grid>
     </Box>
   );

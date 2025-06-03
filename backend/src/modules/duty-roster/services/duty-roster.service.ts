@@ -69,7 +69,6 @@ export class DutyRosterService {
     dutyRoster.status = DutyRosterStatus.PUBLISHED;
     return this.dutyRosterRepository.save(dutyRoster);
   }
-
   async remove(id: string): Promise<void> {
     const dutyRoster = await this.findOne(id);
     
@@ -80,4 +79,31 @@ export class DutyRosterService {
     
     await this.dutyRosterRepository.remove(dutyRoster);
   }
-} 
+
+  // Dashboard helper methods
+  async getPendingDutiesCount(unitId: string): Promise<number> {
+    try {
+      return await this.dutyRosterRepository.count({
+        where: { 
+          unitId,
+          status: DutyRosterStatus.DRAFT
+        }
+      });
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  async getRecentDuties(unitId: string, limit: number = 5): Promise<DutyRoster[]> {
+    try {
+      return await this.dutyRosterRepository.find({
+        where: { unitId },
+        relations: ['unit', 'createdBy'],
+        order: { createdAt: 'DESC' },
+        take: limit
+      });
+    } catch (error) {
+      return [];
+    }
+  }
+}

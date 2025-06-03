@@ -15,6 +15,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
 import { DutyRosterModule } from './modules/duty-roster/duty-roster.module';
 import { RecordsModule } from './modules/records/records.module';
 import { CashRegistryModule } from './modules/cash-registry/cash-registry.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -28,8 +29,8 @@ import { CashRegistryModule } from './modules/cash-registry/cash-registry.module
         type: 'postgres',
         host: configService.get('DATABASE_HOST', 'localhost'),
         port: +configService.get('DATABASE_PORT', 5432),
-        username: configService.get('DATABASE_USER', 'postgres'),
-        password: configService.get('DATABASE_PASSWORD', 'postgres'),
+        username: configService.get('DATABASE_USER', 'briefly'),
+        password: configService.get('DATABASE_PASSWORD', 'briefly123'),
         database: configService.get('DATABASE_NAME', 'sura'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: configService.get('NODE_ENV', 'development') !== 'production',
@@ -43,10 +44,11 @@ import { CashRegistryModule } from './modules/cash-registry/cash-registry.module
     UnitsModule, 
     AuthModule,
     SeederModule,
-    MalkhanaModule,
+    MalkhanaModule,    
     DutyRosterModule,
     RecordsModule,
     CashRegistryModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

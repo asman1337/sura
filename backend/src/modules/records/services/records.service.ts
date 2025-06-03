@@ -10,7 +10,7 @@ export class RecordsService {
   constructor(
     @InjectRepository(BaseRecord)
     private recordsRepository: Repository<BaseRecord>
-  ) {}
+  ) { }
 
   /**
    * Find all records with optional filters
@@ -23,35 +23,35 @@ export class RecordsService {
     take?: number;
   }): Promise<{ records: BaseRecord[]; total: number }> {
     const { type, unitId, status, skip = 0, take = 10 } = options || {};
-    
+
     const queryBuilder = this.recordsRepository
       .createQueryBuilder('record')
       .leftJoinAndSelect('record.unit', 'unit')
       .where('record.isActive = :isActive', { isActive: true });
-      
+
     // Apply filters if provided
     if (type) {
       queryBuilder.andWhere('record.type = :type', { type });
     }
-    
+
     if (unitId) {
       queryBuilder.andWhere('record.unitId = :unitId', { unitId });
     }
-    
+
     if (status) {
       queryBuilder.andWhere('record.status = :status', { status });
     }
-    
+
     // Count total records for pagination
     const total = await queryBuilder.getCount();
-    
+
     // Get paginated records
     const records = await queryBuilder
       .orderBy('record.createdAt', 'DESC')
       .skip(skip)
       .take(take)
       .getMany();
-      
+
     return { records, total };
   }
 
@@ -59,15 +59,15 @@ export class RecordsService {
    * Find record by ID
    */
   async findOne(id: string): Promise<BaseRecord> {
-    const record = await this.recordsRepository.findOne({ 
+    const record = await this.recordsRepository.findOne({
       where: { id },
       relations: ['createdBy', 'lastModifiedBy', 'unit']
     });
-    
+
     if (!record) {
       throw new NotFoundException(`Record with ID ${id} not found`);
     }
-    
+
     return record;
   }
 
@@ -76,10 +76,10 @@ export class RecordsService {
    */
   async update(id: string, updateRecordDto: UpdateRecordDto): Promise<BaseRecord> {
     const record = await this.findOne(id);
-    
+
     // Update record with dto values
     Object.assign(record, updateRecordDto);
-    
+
     return this.recordsRepository.save(record);
   }
 
@@ -88,15 +88,15 @@ export class RecordsService {
    */
   async remove(id: string): Promise<{ success: boolean }> {
     const record = await this.findOne(id);
-    
+
     record.status = 'deleted';
     record.isActive = false;
-    
+
     await this.recordsRepository.save(record);
-    
+
     return { success: true };
   }
-  
+
   /**
    * Get statistics about records
    */
@@ -111,17 +111,17 @@ export class RecordsService {
     if (unitId) {
       baseQuery.where('record.unitId = :unitId', { unitId });
     }
-    
+
     // Get total count
     const totalRecords = await baseQuery.clone().getCount();
-    
+
     // Get count by type
     const typeCounts = await baseQuery
       .clone()
       .select('record.type, COUNT(*) as count')
       .groupBy('record.type')
       .getRawMany();
-    
+
     // Fix: Properly extract the record type from the query results
     const recordsByType = typeCounts.reduce((acc, curr) => {
       // The column name might be 'record_type' due to SQL naming conventions
@@ -131,22 +131,22 @@ export class RecordsService {
       }
       return acc;
     }, {});
-    
+
     // Get recently added count (last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
+
     const recentlyAdded = await baseQuery
       .clone()
       .where('record.createdAt >= :sevenDaysAgo', { sevenDaysAgo })
       .getCount();
-    
+
     // Get archived records count
     const archivedRecords = await baseQuery
       .clone()
       .where('record.status = :status', { status: 'archived' })
       .getCount();
-    
+      
     return {
       totalRecords,
       recordsByType,
@@ -154,4 +154,18 @@ export class RecordsService {
       archivedRecords,
     };
   }
-} 
+
+  // Dashboard helper method
+  async getRecordsCount(unitId: string): Promise<number> {
+    try {
+      return await this.recordsRepository.count({
+        where: {
+          unitId,
+          isActive: true
+        }
+      });
+    } catch (error) {
+      return 0;
+    }
+  }
+}

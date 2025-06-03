@@ -464,4 +464,25 @@ export class MalkhanaService {
       unitId
     };
   }
-} 
+
+  /**
+   * Get count of all items for a specific unit
+   */
+  async getItemCount(unitId: string): Promise<number> {
+    return this.malkhanaItemRepository.count({
+      where: { unitId }
+    });
+  }
+
+  /**
+   * Get recent items for a specific unit
+   */
+  async getRecentItems(unitId: string, limit: number = 5) {
+    return this.malkhanaItemRepository.find({
+      where: { unitId },
+      order: { createdAt: 'DESC' },
+      take: limit,
+      select: ['id', 'description', 'createdAt', 'createdBy']
+    });
+  }
+}
