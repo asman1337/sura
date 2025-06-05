@@ -307,7 +307,8 @@ const DashboardPage: React.FC = () => {
                     <ListItem alignItems="flex-start" sx={{ px: 0 }}>
                       <ListItemAvatar>
                         <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
-                          {activity?.user?.charAt(0) || 'X'}
+                          {/* {activity?.user?.charAt(0) || 'X'} */}
+                          {'X'} {/* Placeholder for user avatar */}
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
