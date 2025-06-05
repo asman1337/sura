@@ -1,0 +1,9 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#f44336"/>
+  <rect x="50" y="50" width="700" height="500" fill="#ffffff" opacity="0.1"/>
+  <polygon points="400,120 450,200 350,200" fill="#ffffff" opacity="0.3"/>
+  <rect x="300" y="250" width="200" height="100" fill="#ffffff" opacity="0.2"/>
+  <rect x="150" y="380" width="500" height="20" fill="#ffffff" opacity="0.3"/>
+  <text x="400" y="450" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="24" font-weight="bold">Independence Day Parade</text>
+  <text x="400" y="480" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="16" opacity="0.8">National Pride</text>
+</svg>

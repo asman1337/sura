@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#techGradient)"/>
+  
+  <!-- Gradient Definitions -->
+  <defs>
+    <linearGradient id="techGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3498db;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2980b9;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Conference Room -->
+  <rect x="30" y="150" width="340" height="120" fill="#ecf0f1" rx="10"/>
+  <rect x="40" y="160" width="320" height="100" fill="#ffffff" rx="5"/>
+  
+  <!-- Projection Screen -->
+  <rect x="60" y="80" width="120" height="80" fill="#2c3e50" rx="5"/>
+  <rect x="70" y="90" width="100" height="60" fill="#34495e"/>
+  
+  <!-- Screen Content - Technology Icons -->
+  <g transform="translate(120, 120)">
+    <!-- Laptop Icon -->
+    <rect x="-15" y="-8" width="30" height="16" fill="#95a5a6" rx="2"/>
+    <rect x="-12" y="-5" width="24" height="10" fill="#ecf0f1"/>
+    <circle cx="0" cy="12" r="2" fill="#bdc3c7"/>
+  </g>
+  
+  <!-- Officers/Participants -->
+  <g transform="translate(220, 180)">
+    <!-- Officer 1 -->
+    <circle cx="0" cy="0" r="12" fill="#fdbcb4"/>
+    <rect x="-8" y="8" width="16" height="20" fill="#2c3e50" rx="2"/>
+    <circle cx="-4" cy="-2" r="1" fill="#333"/>
+    <circle cx="4" cy="-2" r="1" fill="#333"/>
+    <!-- Laptop -->
+    <rect x="-10" y="25" width="20" height="12" fill="#95a5a6" rx="1"/>
+    <rect x="-8" y="27" width="16" height="8" fill="#ecf0f1"/>
+  </g>
+  
+  <g transform="translate(260, 185)">
+    <!-- Officer 2 -->
+    <circle cx="0" cy="0" r="12" fill="#fdbcb4"/>
+    <rect x="-8" y="8" width="16" height="20" fill="#2c3e50" rx="2"/>
+    <circle cx="-4" cy="-2" r="1" fill="#333"/>
+    <circle cx="4" cy="-2" r="1" fill="#333"/>
+    <!-- Tablet -->
+    <rect x="-6" y="25" width="12" height="16" fill="#34495e" rx="2"/>
+    <rect x="-4" y="27" width="8" height="12" fill="#3498db"/>
+  </g>
+  
+  <g transform="translate(300, 175)">
+    <!-- Officer 3 -->
+    <circle cx="0" cy="0" r="12" fill="#fdbcb4"/>
+    <rect x="-8" y="8" width="16" height="20" fill="#2c3e50" rx="2"/>
+    <circle cx="-4" cy="-2" r="1" fill="#333"/>
+    <circle cx="4" cy="-2" r="1" fill="#333"/>
+    <!-- Smartphone -->
+    <rect x="-3" y="25" width="6" height="12" fill="#2c3e50" rx="2"/>
+    <rect x="-2" y="27" width="4" height="8" fill="#3498db"/>
+  </g>
+  
+  <!-- Instructor -->
+  <g transform="translate(140, 170)">
+    <circle cx="0" cy="0" r="12" fill="#fdbcb4"/>
+    <rect x="-8" y="8" width="16" height="20" fill="#27ae60" rx="2"/>
+    <circle cx="-4" cy="-2" r="1" fill="#333"/>
+    <circle cx="4" cy="-2" r="1" fill="#333"/>
+    <!-- Pointer -->
+    <rect x="12" y="-5" width="20" height="2" fill="#e67e22"/>
+    <polygon points="32,-5 37,0 32,5" fill="#e67e22"/>
+  </g>
+  
+  <!-- Tech Equipment -->
+  <g transform="translate(320, 120)">
+    <!-- Server/Equipment Rack -->
+    <rect x="0" y="0" width="40" height="60" fill="#34495e" rx="3"/>
+    <rect x="5" y="5" width="30" height="8" fill="#2ecc71"/>
+    <rect x="5" y="18" width="30" height="8" fill="#e74c3c"/>
+    <rect x="5" y="31" width="30" height="8" fill="#f39c12"/>
+    <rect x="5" y="44" width="30" height="8" fill="#3498db"/>
+    <!-- LED Indicators -->
+    <circle cx="8" cy="9" r="1" fill="#ffffff"/>
+    <circle cx="8" cy="22" r="1" fill="#ffffff"/>
+    <circle cx="8" cy="35" r="1" fill="#ffffff"/>
+    <circle cx="8" cy="48" r="1" fill="#ffffff"/>
+  </g>
+  
+  <!-- WiFi Signal -->
+  <g transform="translate(50, 50)">
+    <path d="M 0 20 Q 10 10 20 20" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+    <path d="M -5 25 Q 10 5 25 25" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.5"/>
+    <path d="M -10 30 Q 10 0 30 30" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.3"/>
+    <circle cx="10" cy="22" r="2" fill="#ffffff"/>
+  </g>
+  
+  <!-- Title -->
+  <text x="200" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">
+    Technology Workshop
+  </text>
+  <text x="200" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" opacity="0.9">
+    Latest Law Enforcement Technology
+  </text>
+</svg>

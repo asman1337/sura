@@ -12,7 +12,8 @@ import './App.css'
 import MalkhanaPlugin from './plugins/malkhana'
 import DutyRosterPlugin from './plugins/duty-roster'
 import RecordsPlugin from './plugins/records'
-import CashRegistryPlugin from './plugins/cash-registry';
+import CashRegistryPlugin from './plugins/cash-registry'
+import GalleryPlugin from './plugins/gallery';
 
 // Create the store
 const store = createAppStore()
@@ -36,13 +37,13 @@ const dataConfig = {
 // App Shell handles app layout after plugins are loaded
 function AppShell() {
   const [pluginsReady, setPluginsReady] = useState(false)
-  
-  // Memoize plugins to prevent re-registration on re-renders
+    // Memoize plugins to prevent re-registration on re-renders
   const pluginsToLoad = useMemo(() => [
     RecordsPlugin,
     MalkhanaPlugin,
     DutyRosterPlugin,
     CashRegistryPlugin,
+    GalleryPlugin,
     // Add more plugins here
   ], []); // Empty dependency array ensures this is only computed once
 

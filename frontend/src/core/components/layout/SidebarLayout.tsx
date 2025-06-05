@@ -21,7 +21,7 @@ import {
   useTheme,
   Avatar
 } from '@mui/material';
-import { 
+import {
   Menu as MenuIcon,
   ChevronLeft as ChevronLeftIcon,
   Dashboard as DashboardIcon,
@@ -31,12 +31,12 @@ import {
   ExpandLess as ExpandLessIcon,
   ExpandMore as ExpandMoreIcon,
   Home as HomeIcon,
-  Login as LoginIcon,
-  Inventory as InventoryIcon,
+  Login as LoginIcon, Inventory as InventoryIcon,
   EventNoteRounded,
   WorkHistoryRounded,
   AccountBalanceRounded,
-  GroupOutlined
+  GroupOutlined,
+  PhotoLibrary as PhotoLibraryIcon
 } from '@mui/icons-material';
 
 // Sidebar width
@@ -63,13 +63,13 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
   const { enabledPlugins } = usePlugins();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [userProfile, setUserProfile] = useState<OfficerInfo | null>(null);
-  
+
   const isLoggedIn = !!auth.getToken();
-  
+
   // Load user profile
   useEffect(() => {
     if (isInitialized && isLoggedIn) {
@@ -86,25 +86,25 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       }
     }
   }, [auth, isInitialized, isLoggedIn]);
-  
+
   // Handle sidebar toggle
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
-  
+
   // Close sidebar on navigation change when on mobile
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     }
   }, [location.pathname, isMobile]);
-  
+
   // Handle logout
   const handleLogout = async () => {
     await auth.logout();
     navigate('/login');
   };
-  
+
   // Toggle nested menu items
   const toggleNestedItem = (id: string) => {
     setExpandedItems(prev => ({
@@ -112,48 +112,48 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       [id]: !prev[id]
     }));
   };
-  
+
   // Check if a path is active
   const isPathActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
-  
+
   // Core navigation items with groups
   const coreNavItems: CoreNavItem[] = [
-    { 
-      title: 'Dashboard', 
-      path: '/dashboard', 
-      icon: <DashboardIcon />, 
+    {
+      title: 'Dashboard',
+      path: '/dashboard',
+      icon: <DashboardIcon />,
       requiresAuth: true,
       group: 'Core'
     },
-    { 
-      title: 'Officers', 
-      path: '/officers', 
-      icon: <GroupOutlined />, 
+    {
+      title: 'Officers',
+      path: '/officers',
+      icon: <GroupOutlined />,
       requiresAuth: true,
       group: 'Core'
     },
-    { 
-      title: 'Profile', 
-      path: '/profile', 
-      icon: <PersonIcon />, 
+    {
+      title: 'Profile',
+      path: '/profile',
+      icon: <PersonIcon />,
       requiresAuth: true,
       group: 'Core'
     },
   ];
-  
+
   // Public navigation items
   const publicNavItems: CoreNavItem[] = [
     { title: 'Home', path: '/', icon: <HomeIcon /> },
     { title: 'Login', path: '/login', icon: <LoginIcon /> }
   ];
-  
+
   // Filter navigation items based on auth status
-  const navItems = isLoggedIn 
+  const navItems = isLoggedIn
     ? coreNavItems.filter(item => !item.requiresAuth || isLoggedIn)
     : publicNavItems;
-    
+
   // Group navigation items
   const groupedNavItems = navItems.reduce<Record<string, CoreNavItem[]>>((acc, item) => {
     const group = item.group || 'Other';
@@ -163,10 +163,10 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
     acc[group].push(item);
     return acc;
   }, {});
-  
+
   // Plugin navigation items
   const pluginNavItems: NavigationItem[] = [];
-  
+
   // Collect navigation items from plugins
   enabledPlugins.forEach((plugin: Plugin) => {
     const navExtensions = plugin.getExtensionPoints<NavigationItem>('navigation:main');
@@ -179,7 +179,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       });
     }
   });
-  
+
   // Group plugin nav items
   const pluginNavItemsByGroup = pluginNavItems.reduce<Record<string, NavigationItem[]>>((acc, item) => {
     const group = item.group || 'Plugins';
@@ -189,7 +189,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
     acc[group].push(item);
     return acc;
   }, {});
-  
+
   // Add this function to render icons from string names
   const renderIcon = (icon: React.ReactNode | string) => {
     if (typeof icon === 'string') {
@@ -213,22 +213,24 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
           return <WorkHistoryRounded />;
         case 'CashRegistry':
           return <AccountBalanceRounded />;
+        case 'PhotoLibrary':
+          return <PhotoLibraryIcon />;
         default:
           return <DashboardIcon />; // Default icon
       }
     }
-    
+
     return icon || <DashboardIcon />; // Return the icon or a default
   };
-  
+
   // Sidebar content
   const sidebarContent = (
     <Box sx={{ overflow: 'auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Logo and brand with toggle */}
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'space-between',
           p: 2,
           backgroundColor: theme.palette.primary.main,
@@ -237,13 +239,13 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       >
         {sidebarOpen && (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography 
-              variant="h6" 
-              component={RouterLink} 
+            <Typography
+              variant="h6"
+              component={RouterLink}
               to="/"
-              sx={{ 
-                fontWeight: 700, 
-                textDecoration: 'none', 
+              sx={{
+                fontWeight: 700,
+                textDecoration: 'none',
                 color: 'inherit',
                 display: 'flex',
                 alignItems: 'center'
@@ -253,65 +255,65 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
             </Typography>
           </Box>
         )}
-        
-        <IconButton 
-          onClick={toggleSidebar} 
+
+        <IconButton
+          onClick={toggleSidebar}
           sx={{ color: 'inherit' }}
           size="small"
         >
           {sidebarOpen ? <ChevronLeftIcon /> : <MenuIcon />}
         </IconButton>
       </Box>
-      
+
       <Divider />
-      
+
       {/* User profile section (if logged in) */}
       {isLoggedIn && sidebarOpen && (
         <>
-          <Box 
-            sx={{ 
-              p: 2, 
-              display: 'flex', 
+          <Box
+            sx={{
+              p: 2,
+              display: 'flex',
               alignItems: 'center',
               backgroundColor: theme.palette.background.default
             }}
           >
-            <Avatar 
-              src={userProfile?.profilePhotoUrl} 
+            <Avatar
+              src={userProfile?.profilePhotoUrl}
               alt={userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'User'}
-              sx={{ 
-                width: 40, 
+              sx={{
+                width: 40,
                 height: 40,
                 bgcolor: theme.palette.primary.main
               }}
             >
               {userProfile?.firstName?.charAt(0) || 'U'}
             </Avatar>
-            
+
             <Box sx={{ ml: 1.5, overflow: 'hidden' }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                 {userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'Loading...'}
               </Typography>
-              
+
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                 {userProfile?.rank?.name || userProfile?.userType || 'Officer'}
                 {userProfile?.primaryUnit && ` • ${userProfile.primaryUnit.name}`}
               </Typography>
             </Box>
           </Box>
-          
+
           <Divider />
         </>
       )}
-      
+
       {/* Icons-only view when collapsed */}
       {!sidebarOpen && isLoggedIn && (
         <Box sx={{ pt: 2, pb: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Avatar 
-            src={userProfile?.profilePhotoUrl} 
+          <Avatar
+            src={userProfile?.profilePhotoUrl}
             alt={userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : 'User'}
-            sx={{ 
-              width: 40, 
+            sx={{
+              width: 40,
               height: 40,
               mb: 1,
               bgcolor: theme.palette.primary.main
@@ -322,7 +324,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
           <Divider sx={{ width: '100%', mt: 1 }} />
         </Box>
       )}
-      
+
       {/* Navigation items */}
       <List sx={{ px: 1, flex: 1 }}>
         {/* Core navigation items by group */}
@@ -331,13 +333,13 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
             <React.Fragment key={group}>
               {/* Group header - only show in expanded mode */}
               {sidebarOpen && (
-                <Typography 
-                  variant="overline" 
-                  sx={{ 
-                    px: 2, 
-                    pt: 2, 
-                    pb: 1, 
-                    display: 'block', 
+                <Typography
+                  variant="overline"
+                  sx={{
+                    px: 2,
+                    pt: 2,
+                    pb: 1,
+                    display: 'block',
                     color: 'text.secondary',
                     fontWeight: 500
                   }}
@@ -345,7 +347,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                   {group}
                 </Typography>
               )}
-              
+
               {/* Group items */}
               {items.map((item) => (
                 <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
@@ -364,8 +366,8 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                       }
                     }}
                   >
-                    <ListItemIcon 
-                      sx={{ 
+                    <ListItemIcon
+                      sx={{
                         color: isPathActive(item.path) ? 'primary.main' : 'inherit',
                         minWidth: sidebarOpen ? 36 : 'auto',
                         mr: sidebarOpen ? 2 : 0
@@ -380,22 +382,22 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
             </React.Fragment>
           )
         ))}
-        
+
         {/* Plugin navigation items by group */}
         {isLoggedIn && Object.entries(pluginNavItemsByGroup).map(([group, items]) => (
           items.length > 0 && (
             <React.Fragment key={group}>
               <Divider sx={{ my: 1 }} />
-              
+
               {/* Group header - only show in expanded mode */}
               {sidebarOpen && (
-                <Typography 
-                  variant="overline" 
-                  sx={{ 
-                    px: 2, 
-                    pt: 2, 
-                    pb: 1, 
-                    display: 'block', 
+                <Typography
+                  variant="overline"
+                  sx={{
+                    px: 2,
+                    pt: 2,
+                    pb: 1,
+                    display: 'block',
                     color: 'text.secondary',
                     fontWeight: 500
                   }}
@@ -403,7 +405,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                   {group}
                 </Typography>
               )}
-              
+
               {/* Group items */}
               {items.map((item) => (
                 <React.Fragment key={item.id}>
@@ -429,16 +431,16 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                           {expandedItems[item.id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                         </ListItemButton>
                       </ListItem>
-                      
+
                       <Collapse in={expandedItems[item.id]} timeout="auto" unmountOnExit>
                         <List component="div" disablePadding>
                           {item.children.map((child: NavigationChildItem) => (
                             <ListItem key={child.path} disablePadding sx={{ mb: 0.5 }}>
-                              <ListItemButton 
+                              <ListItemButton
                                 component={RouterLink}
                                 to={child.path}
                                 selected={isPathActive(child.path)}
-                                sx={{ 
+                                sx={{
                                   pl: 4,
                                   borderRadius: 1,
                                   color: isPathActive(child.path) ? 'primary.main' : 'text.primary',
@@ -476,8 +478,8 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                           }
                         }}
                       >
-                        <ListItemIcon 
-                          sx={{ 
+                        <ListItemIcon
+                          sx={{
                             color: isPathActive(item.path) ? 'primary.main' : 'inherit',
                             minWidth: sidebarOpen ? 36 : 'auto',
                             mr: sidebarOpen ? 2 : 0
@@ -495,7 +497,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
           )
         ))}
       </List>
-      
+
       {/* Bottom actions */}
       {isLoggedIn && (
         <>
@@ -513,8 +515,8 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
                   }
                 }}
               >
-                <ListItemIcon 
-                  sx={{ 
+                <ListItemIcon
+                  sx={{
                     color: 'error.main',
                     minWidth: sidebarOpen ? 36 : 'auto',
                     mr: sidebarOpen ? 2 : 0
@@ -530,7 +532,7 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       )}
     </Box>
   );
-  
+
   // Mobile toggle button that appears when sidebar is collapsed
   const mobileToggleButton = isMobile && !sidebarOpen && (
     <Box
@@ -561,9 +563,9 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       <MenuIcon fontSize="medium" />
     </Box>
   );
-  
+
   return (
-    <Box sx={{ 
+    <Box sx={{
       display: 'flex',
       position: 'fixed',
       top: 0,
@@ -576,15 +578,15 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
       zIndex: 1000
     }}>
       <CssBaseline />
-      
+
       {/* Mobile toggle button */}
       {mobileToggleButton}
-      
+
       {/* Sidebar */}
       <Box
         component="nav"
-        sx={{ 
-          width: { md: sidebarOpen ? drawerWidth : collapsedDrawerWidth }, 
+        sx={{
+          width: { md: sidebarOpen ? drawerWidth : collapsedDrawerWidth },
           flexShrink: { md: 0 },
           height: '100%'
         }}
@@ -604,15 +606,15 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
         >
           {sidebarContent}
         </Drawer>
-        
+
         {/* Desktop drawer */}
         <Drawer
           variant="permanent"
           open={sidebarOpen}
           sx={{
             display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { 
-              boxSizing: 'border-box', 
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
               width: sidebarOpen ? drawerWidth : collapsedDrawerWidth,
               borderRight: `1px solid ${theme.palette.divider}`,
               overflowX: 'hidden',
@@ -626,18 +628,18 @@ const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
           {sidebarContent}
         </Drawer>
       </Box>
-      
+
       {/* Main content */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           p: 3,
-          width: { 
-            xs: '100%', 
-            md: sidebarOpen 
-              ? `calc(100% - ${drawerWidth}px)` 
-              : `calc(100% - ${collapsedDrawerWidth}px)` 
+          width: {
+            xs: '100%',
+            md: sidebarOpen
+              ? `calc(100% - ${drawerWidth}px)`
+              : `calc(100% - ${collapsedDrawerWidth}px)`
           },
           overflow: 'auto',
           height: '100%'

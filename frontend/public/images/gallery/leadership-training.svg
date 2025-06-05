@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" style="background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);">
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#leadershipGradient)"/>
+  
+  <!-- Gradient Definitions -->
+  <defs>
+    <linearGradient id="leadershipGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8e44ad;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9b59b6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Conference Room -->
+  <rect x="20" y="180" width="360" height="100" fill="#ecf0f1" rx="10"/>
+  
+  <!-- Meeting Table -->
+  <ellipse cx="200" cy="220" rx="120" ry="40" fill="#8b4513"/>
+  <ellipse cx="200" cy="215" rx="120" ry="40" fill="#a0522d"/>
+  
+  <!-- Leader/Instructor at front -->
+  <g transform="translate(200, 140)">
+    <circle cx="0" cy="0" r="18" fill="#fdbcb4"/>
+    <rect x="-12" y="12" width="24" height="30" fill="#2c3e50" rx="3"/>
+    <rect x="-15" y="5" width="30" height="12" fill="#34495e" rx="15"/>
+    <circle cx="-6" cy="-3" r="2" fill="#333"/>
+    <circle cx="6" cy="-3" r="2" fill="#333"/>
+    <path d="M -4 5 Q 0 8 4 5" fill="none" stroke="#333" stroke-width="2"/>
+    <!-- Leadership Badge -->
+    <polygon points="0,-25 -5,-15 5,-15" fill="#f39c12"/>
+    <circle cx="0" cy="-20" r="3" fill="#f39c12"/>
+  </g>
+  
+  <!-- Participants around table -->
+  <g transform="translate(140, 200)">
+    <!-- Participant 1 -->
+    <circle cx="0" cy="0" r="12" fill="#fdbcb4"/>
+    <rect x="-8" y="8" width="16" height="20" fill="#2c3e50" rx="2"/>
+    <circle cx="-4" cy="-2" r="1" fill="#333"/>
+    <circle cx="4" cy="-2" r="1" fill="#333"/>
+  </g>
+  
+  <g transform="translate(180, 210)">
+    <!-- Participant 2 -->
+    <circle cx="0" cy="0" r="12" fill="#fdbcb4"/>
+    <rect x="-8" y="8" width="16" height="20" fill="#2c3e50" rx="2"/>
+    <circle cx="-4" cy="-2" r="1" fill="#333"/>
+    <circle cx="4" cy="-2" r="1" fill="#333"/>
+  </g>
+  
+  <g transform="translate(220, 210)">
+    <!-- Participant 3 -->
+    <circle cx="0" cy="0" r="12" fill="#fdbcb4"/>
+    <rect x="-8" y="8" width="16" height="20" fill="#2c3e50" rx="2"/>
+    <circle cx="-4" cy="-2" r="1" fill="#333"/>
+    <circle cx="4" cy="-2" r="1" fill="#333"/>
+  </g>
+  
+  <g transform="translate(260, 200)">
+    <!-- Participant 4 -->
+    <circle cx="0" cy="0" r="12" fill="#fdbcb4"/>
+    <rect x="-8" y="8" width="16" height="20" fill="#2c3e50" rx="2"/>
+    <circle cx="-4" cy="-2" r="1" fill="#333"/>
+    <circle cx="4" cy="-2" r="1" fill="#333"/>
+  </g>
+  
+  <!-- Documents/Notebooks on table -->
+  <rect x="170" y="210" width="15" height="20" fill="#ffffff" rx="1"/>
+  <rect x="190" y="215" width="15" height="20" fill="#ffffff" rx="1"/>
+  <rect x="210" y="212" width="15" height="20" fill="#ffffff" rx="1"/>
+  <rect x="230" y="218" width="15" height="20" fill="#ffffff" rx="1"/>
+  
+  <!-- Presentation Board -->
+  <rect x="300" y="120" width="80" height="60" fill="#ffffff" rx="5"/>
+  <rect x="310" y="130" width="60" height="40" fill="#ecf0f1"/>
+  
+  <!-- Leadership Hierarchy Chart on board -->
+  <g transform="translate(340, 150)">
+    <!-- Top Level -->
+    <rect x="-10" y="-15" width="20" height="8" fill="#e74c3c" rx="2"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="Arial" font-size="6" fill="#fff">Chief</text>
+    
+    <!-- Second Level -->
+    <rect x="-25" y="0" width="15" height="6" fill="#f39c12" rx="1"/>
+    <rect x="10" y="0" width="15" height="6" fill="#f39c12" rx="1"/>
+    <text x="-17" y="4" text-anchor="middle" font-family="Arial" font-size="4" fill="#fff">Insp</text>
+    <text x="17" y="4" text-anchor="middle" font-family="Arial" font-size="4" fill="#fff">Insp</text>
+    
+    <!-- Lines connecting hierarchy -->
+    <line x1="0" y1="-7" x2="-17" y2="-2" stroke="#34495e" stroke-width="1"/>
+    <line x1="0" y1="-7" x2="17" y2="-2" stroke="#34495e" stroke-width="1"/>
+  </g>
+  
+  <!-- Leadership qualities text bubbles -->
+  <g transform="translate(80, 100)">
+    <ellipse cx="0" cy="0" rx="35" ry="15" fill="#ffffff" opacity="0.9"/>
+    <text x="0" y="-4" text-anchor="middle" font-family="Arial" font-size="8" fill="#333">VISION</text>
+    <text x="0" y="4" text-anchor="middle" font-family="Arial" font-size="6" fill="#666">Strategic Thinking</text>
+  </g>
+  
+  <g transform="translate(320, 80)">
+    <ellipse cx="0" cy="0" rx="30" ry="12" fill="#ffffff" opacity="0.9"/>
+    <text x="0" y="-2" text-anchor="middle" font-family="Arial" font-size="8" fill="#333">INTEGRITY</text>
+    <text x="0" y="4" text-anchor="middle" font-family="Arial" font-size="6" fill="#666">Ethics</text>
+  </g>
+  
+  <!-- Title -->
+  <text x="200" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">
+    Leadership Development
+  </text>
+  <text x="200" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" opacity="0.9">
+    Building Future Leaders in Law Enforcement
+  </text>
+</svg>

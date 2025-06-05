@@ -1,0 +1,11 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#795548"/>
+  <rect x="50" y="50" width="700" height="500" fill="#ffffff" opacity="0.1"/>
+  <rect x="200" y="150" width="400" height="250" fill="#ffffff" opacity="0.15"/>
+  <circle cx="300" cy="200" r="25" fill="#ffffff" opacity="0.3"/>
+  <circle cx="400" cy="200" r="25" fill="#ffffff" opacity="0.3"/>
+  <circle cx="500" cy="200" r="25" fill="#ffffff" opacity="0.3"/>
+  <rect x="250" y="280" width="300" height="80" fill="#ffffff" opacity="0.2"/>
+  <text x="400" y="450" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="24" font-weight="bold">School Safety Program</text>
+  <text x="400" y="480" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="16" opacity="0.8">Educating Future Citizens</text>
+</svg>
