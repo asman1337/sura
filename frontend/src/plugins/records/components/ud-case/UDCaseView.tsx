@@ -434,13 +434,30 @@ const UDCaseView: React.FC = () => {
             <div class="print-field">
               <div class="print-field-label">Nationality</div>
               <div class="print-field-value">${udCase?.deceasedNationality || 'Unknown'}</div>
-            </div>
-            <div class="print-field">
+            </div>            <div class="print-field">
               <div class="print-field-label">Identification Status</div>
               <div class="print-field-value">
                 <span class="print-chip print-chip-${udCase?.identificationStatus || 'unidentified'}">${udCase?.identificationStatus || 'unidentified'}</span>
               </div>
             </div>
+            ${udCase?.ageCategory ? `
+            <div class="print-field">
+              <div class="print-field-label">Age Category</div>
+              <div class="print-field-value">${udCase.ageCategory}</div>
+            </div>
+            ` : ''}
+            ${udCase?.deceasedReligion ? `
+            <div class="print-field">
+              <div class="print-field-label">Religion</div>
+              <div class="print-field-value">${udCase.deceasedReligion}</div>
+            </div>
+            ` : ''}
+            ${udCase?.deceasedCaste ? `
+            <div class="print-field">
+              <div class="print-field-label">Caste</div>
+              <div class="print-field-value">${udCase.deceasedCaste}</div>
+            </div>
+            ` : ''}
           </div>
           
           <div class="print-section" style="width: calc(50% - 6px);">
@@ -456,8 +473,37 @@ const UDCaseView: React.FC = () => {
             <div class="print-field">
               <div class="print-field-label">Contact</div>
               <div class="print-field-value">${udCase?.informantContact || 'Not provided'}</div>
+            </div>          </div>
+          
+          ${udCase?.identifiedByName || udCase?.identifiedByMobile || udCase?.identifiedByRelation || udCase?.identifiedByAddress ? `
+          <div class="print-section" style="width: calc(50% - 6px);">
+            <div class="print-section-title">Identified By Information</div>
+            ${udCase?.identifiedByName ? `
+            <div class="print-field">
+              <div class="print-field-label">Name</div>
+              <div class="print-field-value">${udCase.identifiedByName}</div>
             </div>
+            ` : ''}
+            ${udCase?.identifiedByMobile ? `
+            <div class="print-field">
+              <div class="print-field-label">Mobile</div>
+              <div class="print-field-value">${udCase.identifiedByMobile}</div>
+            </div>
+            ` : ''}
+            ${udCase?.identifiedByRelation ? `
+            <div class="print-field">
+              <div class="print-field-label">Relation</div>
+              <div class="print-field-value">${udCase.identifiedByRelation}</div>
+            </div>
+            ` : ''}
+            ${udCase?.identifiedByAddress ? `
+            <div class="print-field">
+              <div class="print-field-label">Address</div>
+              <div class="print-field-value">${udCase.identifiedByAddress}</div>
+            </div>
+            ` : ''}
           </div>
+          ` : ''}
           
           <div class="print-section" style="width: calc(50% - 6px);">
             <div class="print-section-title">Post Mortem Details</div>
@@ -1306,12 +1352,31 @@ const UDCaseView: React.FC = () => {
                   label="Occupation"
                   value={udCase.deceasedOccupation || 'Unknown'}
                 />
+              </Grid>              <Grid size={{ xs: 6 }}>
+                <FieldDisplay
+                  label="Nationality"
+                  value={udCase.deceasedNationality || 'Unknown'}
+                />
               </Grid>
 
               <Grid size={{ xs: 6 }}>
                 <FieldDisplay
-                  label="Nationality"
-                  value={udCase.deceasedNationality || 'Unknown'}
+                  label="Age Category"
+                  value={udCase.ageCategory || 'Unknown'}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 6 }}>
+                <FieldDisplay
+                  label="Religion"
+                  value={udCase.deceasedReligion || 'Unknown'}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 6 }}>
+                <FieldDisplay
+                  label="Caste"
+                  value={udCase.deceasedCaste || 'Unknown'}
                 />
               </Grid>
             </Grid>
@@ -1360,9 +1425,66 @@ const UDCaseView: React.FC = () => {
                   label="Contact"
                   value={udCase.informantContact || 'Not provided'}
                 />
-              </Grid>
-            </Grid>
+              </Grid>            </Grid>
           </Card>
+
+          {/* Identified By Information */}
+          {(udCase.identifiedByName || udCase.identifiedByAddress || udCase.identifiedByMobile || udCase.identifiedByRelation) && (
+            <Card 
+              elevation={0} 
+              sx={{ 
+                p: 3,
+                borderRadius: 4,
+                boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+                mt: 3,
+                background: `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.02)} 0%, ${alpha(theme.palette.secondary.main, 0.06)} 100%)`
+              }}
+            >
+              <SectionHeader 
+                icon={<PersonIcon />} 
+                title="Identified By Information" 
+                color={theme.palette.secondary.main}
+              />
+              
+              <Grid container spacing={2}>
+                {udCase.identifiedByName && (
+                  <Grid size={{ xs: 12 }}>
+                    <FieldDisplay
+                      label="Name"
+                      value={udCase.identifiedByName}
+                    />
+                  </Grid>
+                )}
+                
+                {udCase.identifiedByRelation && (
+                  <Grid size={{ xs: 12 }}>
+                    <FieldDisplay
+                      label="Relation to Deceased"
+                      value={udCase.identifiedByRelation}
+                    />
+                  </Grid>
+                )}
+                
+                {udCase.identifiedByMobile && (
+                  <Grid size={{ xs: 12 }}>
+                    <FieldDisplay
+                      label="Mobile Number"
+                      value={udCase.identifiedByMobile}
+                    />
+                  </Grid>
+                )}
+                
+                {udCase.identifiedByAddress && (
+                  <Grid size={{ xs: 12 }}>
+                    <FieldDisplay
+                      label="Address"
+                      value={udCase.identifiedByAddress}
+                    />
+                  </Grid>
+                )}
+              </Grid>
+            </Card>
+          )}
         </Box>
 
         {/* Right Column - Location & Administrative Information */}

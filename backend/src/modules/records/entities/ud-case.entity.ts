@@ -114,7 +114,6 @@ export class UDCaseRecord extends BaseRecord {
 
   @Column({ length: 100, nullable: true })
   finalFormApprovedBy: string;
-
   // Additional deceased information
   @Column({ length: 25, nullable: true })
   deceasedAge: string;
@@ -122,11 +121,33 @@ export class UDCaseRecord extends BaseRecord {
   @Column({ type: 'enum', enum: ['male', 'female', 'other', 'unknown'], nullable: true })
   deceasedGender: string;
 
+  @Column({ type: 'enum', enum: ['adult', 'child', 'unknown'], nullable: true })
+  ageCategory: string;
+
   @Column({ length: 100, nullable: true })
   deceasedOccupation: string;
 
   @Column({ length: 100, nullable: true })
   deceasedNationality: string;
+
+  @Column({ length: 100, nullable: true })
+  deceasedReligion: string;
+
+  @Column({ length: 100, nullable: true })
+  deceasedCaste: string;
+
+  // Identification details (separate from informant)
+  @Column({ length: 150, nullable: true })
+  identifiedByName: string;
+
+  @Column({ length: 500, nullable: true })
+  identifiedByAddress: string;
+
+  @Column({ length: 15, nullable: true })
+  identifiedByMobile: string;
+
+  @Column({ length: 100, nullable: true })
+  identifiedByRelation: string;
 
   // Enhanced location details
   @Column({ length: 500, nullable: true })

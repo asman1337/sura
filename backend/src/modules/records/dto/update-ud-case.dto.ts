@@ -29,6 +29,12 @@ enum DeceasedGender {
   UNKNOWN = 'unknown'
 }
 
+enum AgeCategory {
+  ADULT = 'adult',
+  CHILD = 'child',
+  UNKNOWN = 'unknown'
+}
+
 enum MannerOfDeath {
   NATURAL = 'natural',
   ACCIDENT = 'accident',
@@ -229,10 +235,13 @@ export class UpdateUDCaseDto extends UpdateRecordDto {
   @IsNumber()
   @IsOptional()
   deceasedAge?: number;
-
   @IsEnum(DeceasedGender)
   @IsOptional()
   deceasedGender?: DeceasedGender;
+
+  @IsEnum(AgeCategory)
+  @IsOptional()
+  ageCategory?: AgeCategory;
 
   @IsString()
   @MaxLength(100)
@@ -243,6 +252,37 @@ export class UpdateUDCaseDto extends UpdateRecordDto {
   @MaxLength(100)
   @IsOptional()
   deceasedNationality?: string;
+
+  @IsString()
+  @MaxLength(100)
+  @IsOptional()
+  deceasedReligion?: string;
+
+  @IsString()
+  @MaxLength(100)
+  @IsOptional()
+  deceasedCaste?: string;
+
+  // Identification details (separate from informant)
+  @IsString()
+  @MaxLength(150)
+  @IsOptional()
+  identifiedByName?: string;
+
+  @IsString()
+  @MaxLength(500)
+  @IsOptional()
+  identifiedByAddress?: string;
+
+  @IsString()
+  @MaxLength(15)
+  @IsOptional()
+  identifiedByMobile?: string;
+
+  @IsString()
+  @MaxLength(100)
+  @IsOptional()
+  identifiedByRelation?: string;
 
   @IsString()
   @MaxLength(500)

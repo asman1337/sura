@@ -121,12 +121,20 @@ export interface UDCaseRecord extends BaseRecord {
   finalFormSubmissionDate?: string;
   finalFormReviewedBy?: string;
   finalFormApprovedBy?: string;
-  
-  // Additional deceased information
+    // Additional deceased information
   deceasedAge?: number;
   deceasedGender?: 'male' | 'female' | 'other' | 'unknown';
+  ageCategory?: 'adult' | 'child' | 'unknown';
   deceasedOccupation?: string;
   deceasedNationality?: string;
+  deceasedReligion?: string;
+  deceasedCaste?: string;
+  
+  // Identification details (separate from informant)
+  identifiedByName?: string;
+  identifiedByAddress?: string;
+  identifiedByMobile?: string;
+  identifiedByRelation?: string;
   
   // Enhanced location details
   exactLocation?: string; // More specific location within the area
@@ -249,11 +257,19 @@ export interface CreateUDCase extends CreateRecordBase {
   finalFormStatus?: 'draft' | 'submitted' | 'reviewed' | 'approved' | 'closed';
   finalFormSubmissionDate?: string;
   finalFormReviewedBy?: string;
-  finalFormApprovedBy?: string;
-  deceasedAge?: number;
+  finalFormApprovedBy?: string;  deceasedAge?: number;
   deceasedGender?: 'male' | 'female' | 'other' | 'unknown';
+  ageCategory?: 'adult' | 'child' | 'unknown';
   deceasedOccupation?: string;
   deceasedNationality?: string;
+  deceasedReligion?: string;
+  deceasedCaste?: string;
+  
+  // Identification details (separate from informant)
+  identifiedByName?: string;
+  identifiedByAddress?: string;
+  identifiedByMobile?: string;
+  identifiedByRelation?: string;
   exactLocation?: string;
   nearestLandmark?: string;
   coordinates?: {

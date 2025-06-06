@@ -62,7 +62,17 @@ const UDCaseForm: React.FC = () => {
     photoUrls: [],
     investigationStatus: 'pending',
     description: '',
-    // New fields for sample data compatibility
+    
+    // New fields
+    ageCategory: 'unknown',
+    deceasedReligion: '',
+    deceasedCaste: '',
+    identifiedByName: '',
+    identifiedByAddress: '',
+    identifiedByMobile: '',
+    identifiedByRelation: '',
+    
+    // Other fields for compatibility
     serialNumber: '',
     policeStationCode: '',
     policeStationName: '',
@@ -236,11 +246,14 @@ const UDCaseForm: React.FC = () => {
         
         <Paper component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
           <Grid container spacing={3}>
-            {/* Case Information */}
+            
+            {/* Section 1: Basic Case Information */}
             <Grid size={{ xs: 12 }}>
-              <Typography variant="h6" gutterBottom>
-                Case Information
-              </Typography>
+              <Paper sx={{ p: 2, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+                <Typography variant="h6" gutterBottom>
+                  📋 Basic Case Information
+                </Typography>
+              </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
             
@@ -248,7 +261,7 @@ const UDCaseForm: React.FC = () => {
               <TextField
                 required
                 fullWidth
-                label="Case Number"
+                label="Case/GD Number"
                 name="caseNumber"
                 value={formData.caseNumber}
                 onChange={handleChange}
@@ -284,7 +297,7 @@ const UDCaseForm: React.FC = () => {
             </Grid>
             
             <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth required>
+              <FormControl fullWidth>
                 <InputLabel>Investigation Status</InputLabel>
                 <Select
                   name="investigationStatus"
@@ -294,17 +307,358 @@ const UDCaseForm: React.FC = () => {
                   label="Investigation Status"
                 >
                   <MenuItem value="pending">Pending</MenuItem>
-                  <MenuItem value="investigation">Under Investigation</MenuItem>
+                  <MenuItem value="ongoing">Ongoing</MenuItem>
+                  <MenuItem value="completed">Completed</MenuItem>
                   <MenuItem value="closed">Closed</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             
-            {/* Assigned Officer Information Section */}
+            {/* Section 2: Deceased Information */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Assigned Officer Information (Optional)
-              </Typography>
+              <Paper sx={{ p: 2, bgcolor: 'warning.light', color: 'warning.contrastText' }}>
+                <Typography variant="h6" gutterBottom>
+                  👤 Deceased Information
+                </Typography>
+              </Paper>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Deceased Name"
+                name="deceasedName"
+                value={formData.deceasedName}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel>Age Category</InputLabel>
+                <Select
+                  name="ageCategory"
+                  value={formData.ageCategory || 'unknown'}
+                  onChange={handleSelectChange}
+                  disabled={isSubmitting}
+                  label="Age Category"
+                >
+                  <MenuItem value="adult">Adult</MenuItem>
+                  <MenuItem value="child">Child</MenuItem>
+                  <MenuItem value="unknown">Unknown</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Deceased Address"
+                name="deceasedAddress"
+                value={formData.deceasedAddress}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                multiline
+                rows={2}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Religion"
+                name="deceasedReligion"
+                value={formData.deceasedReligion || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Caste"
+                name="deceasedCaste"
+                value={formData.deceasedCaste || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                required
+                fullWidth
+                label="Apparent Cause of Death"
+                name="apparentCauseOfDeath"
+                value={formData.apparentCauseOfDeath}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel>Identification Status</InputLabel>
+                <Select
+                  name="identificationStatus"
+                  value={formData.identificationStatus}
+                  onChange={handleSelectChange}
+                  disabled={isSubmitting}
+                  label="Identification Status"
+                >
+                  <MenuItem value="identified">Identified</MenuItem>
+                  <MenuItem value="unidentified">Unidentified</MenuItem>
+                  <MenuItem value="partially_identified">Partially Identified</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            {/* Section 3: Informant Information */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Paper sx={{ p: 2, bgcolor: 'success.light', color: 'success.contrastText' }}>
+                <Typography variant="h6" gutterBottom>
+                  📞 Informant Information
+                </Typography>
+              </Paper>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                required
+                fullWidth
+                label="Informant Name"
+                name="informantName"
+                value={formData.informantName}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Informant Contact"
+                name="informantContact"
+                value={formData.informantContact}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                required
+                fullWidth
+                label="Informant Address"
+                name="informantAddress"
+                value={formData.informantAddress}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                multiline
+                rows={2}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Relation to Deceased"
+                name="informantRelation"
+                value={formData.informantRelation}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </Grid>
+            
+            {/* Section 4: Identified By Information */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Paper sx={{ p: 2, bgcolor: 'secondary.light', color: 'secondary.contrastText' }}>
+                <Typography variant="h6" gutterBottom>
+                  🔍 Identified By Information
+                </Typography>
+              </Paper>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Identified By Name"
+                name="identifiedByName"
+                value={formData.identifiedByName || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                placeholder="Person who identified the deceased"
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Identifier Mobile"
+                name="identifiedByMobile"
+                value={formData.identifiedByMobile || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                placeholder="Mobile number of identifier"
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Identifier Address"
+                name="identifiedByAddress"
+                value={formData.identifiedByAddress || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                multiline
+                rows={2}
+                placeholder="Address of person who identified"
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Identifier Relation"
+                name="identifiedByRelation"
+                value={formData.identifiedByRelation || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                placeholder="Relation to deceased"
+              />
+            </Grid>
+            
+            {/* Section 5: Location Details */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Paper sx={{ p: 2, bgcolor: 'info.light', color: 'info.contrastText' }}>
+                <Typography variant="h6" gutterBottom>
+                  📍 Location Details
+                </Typography>
+              </Paper>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+            
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Exact Location"
+                name="exactLocation"
+                value={formData.exactLocation || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                multiline
+                rows={2}
+                placeholder="More specific location details"
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Nearest Landmark"
+                name="nearestLandmark"
+                value={formData.nearestLandmark || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 3 }}>
+              <TextField
+                fullWidth
+                label="Latitude"
+                name="coordinates.latitude"
+                type="number"
+                value={formData.coordinates?.latitude || ''}
+                onChange={(e) => {
+                  const value = e.target.value ? parseFloat(e.target.value) : undefined;
+                  setFormData(prev => ({
+                    ...prev,
+                    coordinates: { ...prev.coordinates, latitude: value }
+                  }));
+                }}
+                disabled={isSubmitting}
+                inputProps={{ step: "any" }}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 3 }}>
+              <TextField
+                fullWidth
+                label="Longitude"
+                name="coordinates.longitude"
+                type="number"
+                value={formData.coordinates?.longitude || ''}
+                onChange={(e) => {
+                  const value = e.target.value ? parseFloat(e.target.value) : undefined;
+                  setFormData(prev => ({
+                    ...prev,
+                    coordinates: { ...prev.coordinates, longitude: value }
+                  }));
+                }}
+                disabled={isSubmitting}
+                inputProps={{ step: "any" }}
+              />
+            </Grid>
+            
+            {/* Section 6: Police Station Information */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Paper sx={{ p: 2, bgcolor: 'grey.600', color: 'white' }}>
+                <Typography variant="h6" gutterBottom>
+                  🏢 Police Station Information
+                </Typography>
+              </Paper>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                fullWidth
+                label="Serial Number"
+                name="serialNumber"
+                value={formData.serialNumber || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                placeholder="SL NO"
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                fullWidth
+                label="Police Station Code"
+                name="policeStationCode"
+                value={formData.policeStationCode || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                placeholder="e.g., AUSGRAM PS"
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                fullWidth
+                label="Police Station Name"
+                name="policeStationName"
+                value={formData.policeStationName || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </Grid>
+            
+            {/* Section 7: Assigned Officer Information */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Paper sx={{ p: 2, bgcolor: 'warning.dark', color: 'warning.contrastText' }}>
+                <Typography variant="h6" gutterBottom>
+                  👮 Assigned Officer Information
+                </Typography>
+              </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
             
@@ -368,128 +722,13 @@ const UDCaseForm: React.FC = () => {
               />
             </Grid>
             
-            {/* Deceased Information */}
+            {/* Section 8: Post Mortem Information */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Deceased Information
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-            </Grid>
-            
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                fullWidth
-                label="Deceased Name"
-                name="deceasedName"
-                value={formData.deceasedName}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              />
-            </Grid>
-            
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth>
-                <InputLabel>Identification Status</InputLabel>
-                <Select
-                  name="identificationStatus"
-                  value={formData.identificationStatus}
-                  onChange={handleSelectChange}
-                  disabled={isSubmitting}
-                  label="Identification Status"
-                >
-                  <MenuItem value="identified">Identified</MenuItem>
-                  <MenuItem value="unidentified">Unidentified</MenuItem>
-                  <MenuItem value="partial">Partially Identified</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Deceased Address"
-                name="deceasedAddress"
-                value={formData.deceasedAddress}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                multiline
-                rows={2}
-              />
-            </Grid>
-            
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                required
-                fullWidth
-                label="Apparent Cause of Death"
-                name="apparentCauseOfDeath"
-                value={formData.apparentCauseOfDeath}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              />
-            </Grid>
-            
-            {/* Informant Information */}
-            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Informant Information
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-            </Grid>
-            
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                required
-                fullWidth
-                label="Informant Name"
-                name="informantName"
-                value={formData.informantName}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              />
-            </Grid>
-            
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                fullWidth
-                label="Informant Contact"
-                name="informantContact"
-                value={formData.informantContact}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              />
-            </Grid>
-            
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                required
-                fullWidth
-                label="Informant Address"
-                name="informantAddress"
-                value={formData.informantAddress}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                multiline
-                rows={2}
-              />
-            </Grid>
-            
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                fullWidth
-                label="Relation to Deceased"
-                name="informantRelation"
-                value={formData.informantRelation}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              />
-            </Grid>
-            
-            {/* Post Mortem Information */}
-            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Post Mortem Information (Optional)
-              </Typography>
+              <Paper sx={{ p: 2, bgcolor: 'grey.500', color: 'white' }}>
+                <Typography variant="h6" gutterBottom>
+                  🏥 Post Mortem Information
+                </Typography>
+              </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
             
@@ -499,7 +738,11 @@ const UDCaseForm: React.FC = () => {
                 value={formData.postMortemDate ? new Date(formData.postMortemDate) : null}
                 onChange={(date) => handleDateChange('postMortemDate', date)}
                 disabled={isSubmitting}
-                slotProps={{ textField: { fullWidth: true } }}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                  }
+                }}
               />
             </Grid>
             
@@ -525,222 +768,16 @@ const UDCaseForm: React.FC = () => {
               />
             </Grid>
             
-            {/* Additional Information */}
+            {/* Section 9: Autopsy Results */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Additional Information (Optional)
-              </Typography>
+              <Paper sx={{ p: 2, bgcolor: 'purple', color: 'white' }}>
+                <Typography variant="h6" gutterBottom>
+                  🔬 Autopsy Results
+                </Typography>
+              </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
             
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                multiline
-                rows={4}
-              />
-            </Grid>
-            
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Remarks"
-                name="remarks"
-                value={formData.remarks || ''}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                multiline
-                rows={2}
-              />
-            </Grid>
-
-            {/* Police Station Information */}
-            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Police Station Information (Optional)
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <TextField
-                fullWidth
-                label="Serial Number"
-                name="serialNumber"
-                value={formData.serialNumber || ''}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                placeholder="SL NO"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <TextField
-                fullWidth
-                label="Police Station Code"
-                name="policeStationCode"
-                value={formData.policeStationCode || ''}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                placeholder="e.g., AUSGRAM PS"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <TextField
-                fullWidth
-                label="Police Station Name"
-                name="policeStationName"
-                value={formData.policeStationName || ''}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              />
-            </Grid>
-
-            {/* Enhanced Deceased Information */}
-            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Enhanced Deceased Information (Optional)
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                fullWidth
-                label="Age"
-                name="deceasedAge"
-                type="number"
-                value={formData.deceasedAge || ''}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth>
-                <InputLabel>Gender</InputLabel>
-                <Select
-                  name="deceasedGender"
-                  value={formData.deceasedGender || 'unknown'}
-                  onChange={handleSelectChange}
-                  disabled={isSubmitting}
-                  label="Gender"
-                >
-                  <MenuItem value="male">Male</MenuItem>
-                  <MenuItem value="female">Female</MenuItem>
-                  <MenuItem value="other">Other</MenuItem>
-                  <MenuItem value="unknown">Unknown</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                fullWidth
-                label="Occupation"
-                name="deceasedOccupation"
-                value={formData.deceasedOccupation || ''}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                fullWidth
-                label="Nationality"
-                name="deceasedNationality"
-                value={formData.deceasedNationality || ''}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              />
-            </Grid>
-
-            {/* Enhanced Location Information */}
-            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Enhanced Location Information (Optional)
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Exact Location"
-                name="exactLocation"
-                value={formData.exactLocation || ''}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                multiline
-                rows={2}
-                placeholder="More specific location details"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                fullWidth
-                label="Nearest Landmark"
-                name="nearestLandmark"
-                value={formData.nearestLandmark || ''}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 3 }}>
-              <TextField
-                fullWidth
-                label="Latitude"
-                name="coordinates.latitude"
-                type="number"
-                value={formData.coordinates?.latitude || ''}
-                onChange={(e) => {
-                  const value = e.target.value ? parseFloat(e.target.value) : undefined;
-                  setFormData(prev => ({
-                    ...prev,
-                    coordinates: { ...prev.coordinates, latitude: value }
-                  }));
-                }}
-                disabled={isSubmitting}
-                inputProps={{ step: "any" }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 3 }}>
-              <TextField
-                fullWidth
-                label="Longitude"
-                name="coordinates.longitude"
-                type="number"
-                value={formData.coordinates?.longitude || ''}
-                onChange={(e) => {
-                  const value = e.target.value ? parseFloat(e.target.value) : undefined;
-                  setFormData(prev => ({
-                    ...prev,
-                    coordinates: { ...prev.coordinates, longitude: value }
-                  }));
-                }}
-                disabled={isSubmitting}
-                inputProps={{ step: "any" }}
-              />
-            </Grid>
-
-            {/* Enhanced Autopsy Results */}
-            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Detailed Autopsy Results (Optional)
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-            </Grid>
-
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -756,7 +793,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-
+            
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Manner of Death</InputLabel>
@@ -780,7 +817,7 @@ const UDCaseForm: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-
+            
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -798,7 +835,7 @@ const UDCaseForm: React.FC = () => {
                 rows={3}
               />
             </Grid>
-
+            
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -814,7 +851,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-
+            
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -830,7 +867,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-
+            
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -848,15 +885,92 @@ const UDCaseForm: React.FC = () => {
                 rows={3}
               />
             </Grid>
-
-            {/* Final Form Status */}
+            
+            {/* Section 10: Additional Information */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Final Form Status (Optional)
-              </Typography>
+              <Paper sx={{ p: 2, bgcolor: 'success.dark', color: 'success.contrastText' }}>
+                <Typography variant="h6" gutterBottom>
+                  📝 Additional Information
+                </Typography>
+              </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
-
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Age"
+                name="deceasedAge"
+                type="number"
+                value={formData.deceasedAge || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel>Gender</InputLabel>
+                <Select
+                  name="deceasedGender"
+                  value={formData.deceasedGender || 'unknown'}
+                  onChange={handleSelectChange}
+                  disabled={isSubmitting}
+                  label="Gender"
+                >
+                  <MenuItem value="male">Male</MenuItem>
+                  <MenuItem value="female">Female</MenuItem>
+                  <MenuItem value="other">Other</MenuItem>
+                  <MenuItem value="unknown">Unknown</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Occupation"
+                name="deceasedOccupation"
+                value={formData.deceasedOccupation || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Nationality"
+                name="deceasedNationality"
+                value={formData.deceasedNationality || ''}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            </Grid>
+            
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                multiline
+                rows={4}
+              />
+            </Grid>
+            
+            {/* Section 11: Final Form Status */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Paper sx={{ p: 2, bgcolor: 'error.light', color: 'error.contrastText' }}>
+                <Typography variant="h6" gutterBottom>
+                  ✅ Final Form Status
+                </Typography>
+              </Paper>
+              <Divider sx={{ mb: 2 }} />
+            </Grid>
+            
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Final Form Status</InputLabel>
@@ -871,21 +985,25 @@ const UDCaseForm: React.FC = () => {
                   <MenuItem value="submitted">Submitted</MenuItem>
                   <MenuItem value="reviewed">Reviewed</MenuItem>
                   <MenuItem value="approved">Approved</MenuItem>
-                  <MenuItem value="closed">Closed</MenuItem>
+                  <MenuItem value="rejected">Rejected</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-
+            
             <Grid size={{ xs: 12, md: 6 }}>
               <DatePicker
                 label="Submission Date"
                 value={formData.finalFormSubmissionDate ? new Date(formData.finalFormSubmissionDate) : null}
                 onChange={(date) => handleDateChange('finalFormSubmissionDate', date)}
                 disabled={isSubmitting}
-                slotProps={{ textField: { fullWidth: true } }}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                  }
+                }}
               />
             </Grid>
-
+            
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -896,7 +1014,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-
+            
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -908,24 +1026,31 @@ const UDCaseForm: React.FC = () => {
               />
             </Grid>
             
-            {/* Form Actions */}
-            <Grid size={{ xs: 12 }} sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
-              <Button
-                variant="outlined"
-                onClick={() => navigate(-1)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={isSubmitting}
-                startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
-              >
-                {isSubmitting ? 'Saving...' : id ? 'Update UD Case' : 'Create UD Case'}
-              </Button>
+            {/* Submit Button */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 3 }}>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate(-1)}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={isSubmitting}
+                  sx={{ minWidth: 120 }}
+                >
+                  {isSubmitting ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : id ? (
+                    'Update UD Case'
+                  ) : (
+                    'Create UD Case'
+                  )}
+                </Button>
+              </Box>
             </Grid>
           </Grid>
         </Paper>
