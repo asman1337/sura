@@ -151,7 +151,73 @@ const UDCaseForm: React.FC = () => {
       setFormData(prev => ({ ...prev, [name]: formattedDate }));
     }
   };
-  
+    const cleanFormData = (data: CreateUDCase) => {
+    const cleaned = { ...data };
+    
+    // Clean date fields - convert empty strings to undefined
+    if (!cleaned.postMortemDate || cleaned.postMortemDate.trim() === '') {
+      delete cleaned.postMortemDate;
+    }
+    if (!cleaned.finalFormSubmissionDate || cleaned.finalFormSubmissionDate.trim() === '') {
+      delete cleaned.finalFormSubmissionDate;
+    }
+      // Clean optional string fields - convert empty strings to undefined
+    const optionalStringFields = [
+      'deceasedReligion', 'deceasedCaste', 'identifiedByName', 'identifiedByAddress', 
+      'identifiedByMobile', 'identifiedByRelation', 'serialNumber', 'policeStationCode', 
+      'policeStationName', 'assignedOfficerName', 'assignedOfficerBadgeNumber', 
+      'assignedOfficerContact', 'assignedOfficerRank', 'assignedOfficerDepartment',
+      'postMortemDoctor', 'postMortemHospital', 'finalFormReviewedBy', 'finalFormApprovedBy',
+      'deceasedOccupation', 'deceasedNationality', 'exactLocation', 'nearestLandmark', 'description'
+    ];
+    
+    optionalStringFields.forEach(field => {
+      if (cleaned[field as keyof CreateUDCase] === '') {
+        delete cleaned[field as keyof CreateUDCase];
+      }
+    });// Clean optional number fields
+    if (cleaned.deceasedAge === undefined || cleaned.deceasedAge === null || cleaned.deceasedAge === 0) {
+      delete cleaned.deceasedAge;
+    }
+    
+    // Clean coordinates if empty
+    if (cleaned.coordinates) {
+      if (cleaned.coordinates.latitude === undefined || cleaned.coordinates.latitude === null) {
+        delete cleaned.coordinates.latitude;
+      }
+      if (cleaned.coordinates.longitude === undefined || cleaned.coordinates.longitude === null) {
+        delete cleaned.coordinates.longitude;
+      }
+      // If both coordinates are empty, remove the coordinates object
+      if (!cleaned.coordinates.latitude && !cleaned.coordinates.longitude) {
+        delete cleaned.coordinates;
+      }
+    }
+      // Clean autopsy results if all fields are empty
+    if (cleaned.autopsyResults) {
+      const autopsyFields = Object.values(cleaned.autopsyResults);
+      const hasContent = autopsyFields.some(value => value && value.trim() !== '');
+      if (!hasContent) {
+        delete cleaned.autopsyResults;
+      } else {
+        // Clean individual autopsy fields
+        Object.keys(cleaned.autopsyResults).forEach(key => {
+          const value = cleaned.autopsyResults![key as keyof typeof cleaned.autopsyResults];
+          if (typeof value === 'string' && value.trim() === '') {
+            delete cleaned.autopsyResults![key as keyof typeof cleaned.autopsyResults];
+          }
+        });
+      }
+    }
+    
+    // Clean photoUrls if empty
+    if (cleaned.photoUrls && cleaned.photoUrls.length === 0) {
+      delete cleaned.photoUrls;
+    }
+    
+    return cleaned;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -179,15 +245,17 @@ const UDCaseForm: React.FC = () => {
         throw new Error('Location is required');
       }
       
-      // Submit form data
+      // Clean form data before submission
+      const cleanedData = cleanFormData(formData);
+        // Submit form data
       if (id) {
         // Update existing record
-        await updateRecord(id, formData);
+        await updateRecord(id, cleanedData);
         setFormSuccess('UD case updated successfully');
         setTimeout(() => navigate(`/records/ud-case/${id}`), 1000);
       } else {
         // Create new record
-        const result = await createRecord(formData);
+        const result = await createRecord(cleanedData);
         console.log('UD case created:', result);
         setFormSuccess('UD case created successfully');
         if (result && result?.id) {
@@ -216,8 +284,7 @@ const UDCaseForm: React.FC = () => {
   
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <PageContainer>
-        <Box mb={3}>
+      <PageContainer>        <Box mb={3}>
           <Typography variant="h4">
             {id ? 'Edit UD Case' : 'Create New UD Case'}
           </Typography>
@@ -225,24 +292,6 @@ const UDCaseForm: React.FC = () => {
             {id ? `Editing case ${formData.caseNumber}` : 'Enter details for the new UD case'}
           </Typography>
         </Box>
-        
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-        
-        {formError && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {formError}
-          </Alert>
-        )}
-        
-        {formSuccess && (
-          <Alert severity="success" sx={{ mb: 3 }}>
-            {formSuccess}
-          </Alert>
-        )}
         
         <Paper component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
           <Grid container spacing={3}>
@@ -1025,9 +1074,27 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
-            {/* Submit Button */}
+              {/* Submit Button */}
             <Grid size={{ xs: 12 }} sx={{ mt: 3 }}>
+              {/* Error and Success Messages */}
+              {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {error}
+                </Alert>
+              )}
+              
+              {formError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {formError}
+                </Alert>
+              )}
+              
+              {formSuccess && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                  {formSuccess}
+                </Alert>
+              )}
+              
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Button
                   variant="outlined"
