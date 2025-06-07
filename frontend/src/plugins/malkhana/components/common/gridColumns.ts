@@ -49,12 +49,6 @@ export const commonItemColumns: GridColDef[] = [
 export const blackInkColumns: GridColDef[] = [
   ...commonItemColumns,
   {
-    field: 'prNumber',
-    headerName: 'PR Number',
-    width: 120,
-    valueFormatter: (value) => value || '-',
-  },
-  {
     field: 'gdeNumber',
     headerName: 'GDE Number',
     width: 120,

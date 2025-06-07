@@ -48,14 +48,10 @@ export class MalkhanaItem {
   @ManyToOne(() => Unit)
   @JoinColumn({ name: 'unitId' })
   unit: Unit;
-
   @Column({ length: 100, nullable: true })
   caseNumber: string;
 
   // Additional case-related fields
-  @Column({ length: 50, nullable: true })
-  prNumber: string;
-
   @Column({ length: 50, nullable: true })
   gdeNumber: string;
 

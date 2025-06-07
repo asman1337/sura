@@ -22,7 +22,7 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { useData } from '../../../core/data';
 import { useMalkhanaApi } from '../hooks';
 import { setGlobalApiInstance } from '../services';
-import { ShelfInfo, PropertyNature } from '../types';
+import { ShelfInfo, PropertyNature, RegistryType } from '../types';
 
 // Item categories
 const itemCategories = [
@@ -58,16 +58,17 @@ const itemConditions = [
   'Unknown'
 ];
 
-const AddItemForm: React.FC = () => {
+interface AddItemFormProps {
+  registryType?: 'BLACK_INK' | 'RED_INK';
+}
+
+const AddItemForm: React.FC<AddItemFormProps> = ({ registryType = 'BLACK_INK' }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { api } = useData();
-  const malkhanaApi = useMalkhanaApi();
-  
-  // Form state
+  const malkhanaApi = useMalkhanaApi();  // Form state
   const [formData, setFormData] = useState({
     caseNumber: '',
-    prNumber: '',
     gdeNumber: '',
     description: '',
     category: '',
@@ -81,30 +82,33 @@ const AddItemForm: React.FC = () => {
     investigatingOfficerUnit: '',
     condition: '',
     notes: '',
-    shelfId: ''
+    shelfId: '',
+    // For Red Ink items
+    motherNumber: '',
+    registryYear: new Date().getFullYear().toString()
   });
-  
+
   // Available shelves
   const [shelves, setShelves] = useState<ShelfInfo[]>([]);
   const [loadingShelves, setLoadingShelves] = useState(false);
-  
+
   // Validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Set global API instance on component mount
   useEffect(() => {
     if (api) {
       setGlobalApiInstance(api);
     }
   }, [api]);
-  
+
   // Load available shelves
   useEffect(() => {
     const loadShelves = async () => {
       if (!malkhanaApi.isReady) return;
-      
+
       try {
         setLoadingShelves(true);
         const availableShelves = await malkhanaApi.getAllShelves();
@@ -116,97 +120,108 @@ const AddItemForm: React.FC = () => {
         setLoadingShelves(false);
       }
     };
-    
+
     loadShelves();
   }, [malkhanaApi.isReady]);
-  
+
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear error when field is edited
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
-  
+
   // Handle select changes
   const handleSelectChange = (e: any) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear error when field is edited
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
-  
+
   // Handle date change
   const handleDateChange = (date: Date | null) => {
     if (date) {
       setFormData(prev => ({ ...prev, dateReceived: date }));
-      
+
       // Clear error when field is edited
       if (errors.dateReceived) {
         setErrors(prev => ({ ...prev, dateReceived: '' }));
       }
     }
   };
-  
   // Validate form
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.caseNumber.trim()) {
       newErrors.caseNumber = 'Case number is required';
     }
-    
+
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required';
     }
-    
+
     if (!formData.category) {
       newErrors.category = 'Category is required';
     }
-    
+
     if (!formData.receivedFrom.trim()) {
       newErrors.receivedFrom = 'Received from is required';
     }
-    
+
     if (!formData.dateReceived) {
       newErrors.dateReceived = 'Date received is required';
     }
-    
+
     if (!formData.condition) {
       newErrors.condition = 'Condition is required';
     }
-    
+
+    // Red Ink specific validation
+    if (registryType === 'RED_INK') {
+      if (!formData.motherNumber.trim()) {
+        newErrors.motherNumber = 'Mother number is required for Red Ink items';
+      } else if (isNaN(Number(formData.motherNumber)) || Number(formData.motherNumber) <= 0) {
+        newErrors.motherNumber = 'Mother number must be a positive number';
+      }
+
+      if (!formData.registryYear.trim()) {
+        newErrors.registryYear = 'Registry year is required for Red Ink items';
+      } else if (isNaN(Number(formData.registryYear)) || Number(formData.registryYear) < 1900 || Number(formData.registryYear) > new Date().getFullYear()) {
+        newErrors.registryYear = 'Please enter a valid year';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
       // Check if malkhanaApi is ready
       if (!malkhanaApi.isReady) {
         throw new Error('API service is not initialized');
-      }
-      
-      // Add item using the real API
-      const result = await malkhanaApi.createItem({
+      }      // Add item using the real API
+      const createData: any = {
         caseNumber: formData.caseNumber,
-        prNumber: formData.prNumber,
         gdeNumber: formData.gdeNumber,
         description: formData.description,
         category: formData.category,
@@ -220,12 +235,22 @@ const AddItemForm: React.FC = () => {
         investigatingOfficerUnit: formData.investigatingOfficerUnit,
         condition: formData.condition,
         notes: formData.notes,
-        shelfId: formData.shelfId || undefined
-      });
-      
+        shelfId: formData.shelfId || undefined,
+        registryType: registryType as RegistryType
+      };
+
+      // Add manual fields for Red Ink items
+      if (registryType === 'RED_INK') {
+        createData.motherNumber = Number(formData.motherNumber);
+        createData.registryYear = Number(formData.registryYear);
+      }
+
+      const result = await malkhanaApi.createItem(createData);
+
       if (result) {
-        // Navigate to Black Ink registry
-        navigate('/malkhana/black-ink', { state: { success: true, message: 'Item added successfully' } });
+        // Navigate to appropriate registry based on type
+        const targetRegistry = registryType === 'RED_INK' ? '/malkhana/red-ink' : '/malkhana/black-ink';
+        navigate(targetRegistry, { state: { success: true, message: 'Item added successfully' } });
       } else {
         setError('Failed to add item. Please try again.');
       }
@@ -236,7 +261,7 @@ const AddItemForm: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-  
+
   // Show initialization progress
   if (!api) {
     return (
@@ -248,7 +273,7 @@ const AddItemForm: React.FC = () => {
       </Box>
     );
   }
-  
+
   // Show loading state while Malkhana API initializes
   if (!malkhanaApi.isReady) {
     return (
@@ -260,27 +285,26 @@ const AddItemForm: React.FC = () => {
       </Box>
     );
   }
-  
+
   return (
-    <Box>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" fontWeight="500">
-          Add New Malkhana Item
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Add a new item to the Black Ink Registry for the current year.
-        </Typography>
-      </Box>
-      
+    <Box>      <Box sx={{ mb: 3 }}>
+      <Typography variant="h4" fontWeight="500">
+        Add New {registryType === 'RED_INK' ? 'Red Ink' : 'Black Ink'} Item
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        Add a new item to the {registryType === 'RED_INK' ? 'Red Ink (Historical)' : 'Black Ink'} Registry {registryType === 'BLACK_INK' ? 'for the current year' : ''}.
+      </Typography>
+    </Box>
+
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
-      
+
       <Card
         elevation={0}
-        sx={{ 
+        sx={{
           borderRadius: 2,
           border: `1px solid ${theme.palette.divider}`,
           mb: 3
@@ -291,7 +315,7 @@ const AddItemForm: React.FC = () => {
             Item Details
           </Typography>
           <Divider sx={{ mb: 3 }} />
-          
+
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 6 }}>
@@ -304,21 +328,7 @@ const AddItemForm: React.FC = () => {
                   error={!!errors.caseNumber}
                   helperText={errors.caseNumber}
                   required
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="PR Number"
-                  name="prNumber"
-                  value={formData.prNumber}
-                  onChange={handleChange}
-                  helperText="Police Report Number (optional)"
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6 }}>
+                />              </Grid>              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   label="GDE Number"
@@ -328,7 +338,39 @@ const AddItemForm: React.FC = () => {
                   helperText="General Diary Entry Number (optional)"
                 />
               </Grid>
-              
+
+              {registryType === 'RED_INK' && (
+                <>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Mother Number"
+                      name="motherNumber"
+                      value={formData.motherNumber}
+                      onChange={handleChange}
+                      error={!!errors.motherNumber}
+                      helperText={errors.motherNumber || "Enter the historical mother number"}
+                      required
+                      type="number"
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Registry Year"
+                      name="registryYear"
+                      value={formData.registryYear}
+                      onChange={handleChange}
+                      error={!!errors.registryYear}
+                      helperText={errors.registryYear || "Year when item was originally registered"}
+                      required
+                      type="number"
+                    />
+                  </Grid>
+                </>
+              )}
+
               <Grid size={{ xs: 12, md: 6 }}>
                 <DateTimePicker
                   label="Date & Time Received *"
@@ -344,7 +386,7 @@ const AddItemForm: React.FC = () => {
                   }}
                 />
               </Grid>
-              
+
               <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
@@ -359,7 +401,7 @@ const AddItemForm: React.FC = () => {
                   rows={2}
                 />
               </Grid>
-              
+
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth error={!!errors.category} required>
                   <InputLabel>Category</InputLabel>
@@ -399,7 +441,7 @@ const AddItemForm: React.FC = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              
+
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth error={!!errors.condition} required>
                   <InputLabel>Condition</InputLabel>
@@ -418,7 +460,7 @@ const AddItemForm: React.FC = () => {
                   {errors.condition && <FormHelperText>{errors.condition}</FormHelperText>}
                 </FormControl>
               </Grid>
-              
+
               <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
@@ -494,7 +536,7 @@ const AddItemForm: React.FC = () => {
                   helperText="Investigating Officer Unit (optional)"
                 />
               </Grid>
-              
+
               <Grid size={{ xs: 12 }}>
                 <FormControl fullWidth>
                   <InputLabel>Assign to Shelf (Optional)</InputLabel>
@@ -515,13 +557,13 @@ const AddItemForm: React.FC = () => {
                     ))}
                   </Select>
                   <FormHelperText>
-                    {loadingShelves ? 'Loading shelves...' : 
-                     shelves.length === 0 ? 'No shelves available. Create shelves in Shelf Management.' : 
-                     'Select a shelf to store this item or leave empty to assign later.'}
+                    {loadingShelves ? 'Loading shelves...' :
+                      shelves.length === 0 ? 'No shelves available. Create shelves in Shelf Management.' :
+                        'Select a shelf to store this item or leave empty to assign later.'}
                   </FormHelperText>
                 </FormControl>
               </Grid>
-              
+
               <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
@@ -533,19 +575,19 @@ const AddItemForm: React.FC = () => {
                   rows={3}
                 />
               </Grid>
-              
+
               <Grid size={{ xs: 12 }}>
                 <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button 
-                    variant="outlined" 
+                  <Button
+                    variant="outlined"
                     sx={{ mr: 2 }}
                     onClick={() => navigate(-1)}
                     disabled={isSubmitting}
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     variant="contained"
                     disabled={isSubmitting}
                   >
@@ -556,15 +598,15 @@ const AddItemForm: React.FC = () => {
             </Grid>
           </form>
         </Box>
-      </Card>
-      
-      <Box sx={{ mt: 4, p: 3, bgcolor: 'rgba(25, 118, 210, 0.1)', borderRadius: 2, border: '1px solid rgba(25, 118, 210, 0.3)' }}>
+      </Card>      <Box sx={{ mt: 4, p: 3, bgcolor: 'rgba(25, 118, 210, 0.1)', borderRadius: 2, border: '1px solid rgba(25, 118, 210, 0.3)' }}>
         <Typography variant="h6" color="primary.main" gutterBottom>
-          About Black Ink Registry
+          About {registryType === 'RED_INK' ? 'Red Ink Registry' : 'Black Ink Registry'}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          New items are always added to the Black Ink Registry for the current year.
-          When a new year begins, all active items will be automatically transferred to the Red Ink Registry.
+          {registryType === 'RED_INK' 
+            ? 'Red Ink Registry contains historical items from previous years. You must manually enter the mother number and original registry year for these items.'
+            : 'New items are always added to the Black Ink Registry for the current year. When a new year begins, all active items will be automatically transferred to the Red Ink Registry.'
+          }
         </Typography>
       </Box>
     </Box>

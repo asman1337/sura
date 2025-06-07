@@ -27,8 +27,7 @@ export class MalkhanaService {
 
   /**
    * Create a new item in the Black Ink registry
-   */
-  async createItem(createItemDto: CreateMalkhanaItemDto, unitId: string | null, userId?: string): Promise<MalkhanaItem> {
+   */  async createItem(createItemDto: CreateMalkhanaItemDto, unitId: string | null, userId?: string): Promise<MalkhanaItem> {
     // For admin users without a unit, use the unitId from the DTO
     // For regular users, use their unitId
     const effectiveUnitId = unitId || createItemDto.unitId;
@@ -38,22 +37,52 @@ export class MalkhanaService {
     }
     
     const currentYear = new Date().getFullYear();
+    const registryType = createItemDto.registryType || RegistryType.BLACK_INK;
     
-    // Get the last registry number used for Black Ink in the current year for THIS UNIT
-    const lastItem = await this.malkhanaItemRepository.findOne({
-      where: {
-        unitId: effectiveUnitId,
-        registryType: RegistryType.BLACK_INK,
-        registryYear: currentYear
-      },
-      order: { registryNumber: 'DESC' }
-    });
-    
-    const newRegistryNumber = lastItem ? lastItem.registryNumber + 1 : 1;
-    
-    // Generate motherNumber (permanent ID)
-    // Format: YYYY-UNITCODE-NNNNN (where UNITCODE is extracted from the unit)
-    const motherNumber = `${currentYear}-${newRegistryNumber.toString().padStart(5, '0')}`;
+    let newRegistryNumber: number;
+    let motherNumber: string;
+    let registryYear: number;
+      if (registryType === RegistryType.RED_INK) {
+      // For Red Ink items, use manual entry if provided
+      if (createItemDto.motherNumber && createItemDto.registryYear) {
+        // Check if this motherNumber already exists ANYWHERE (across all registry types and units)
+        const motherNumberToCheck = `${createItemDto.registryYear}-${createItemDto.motherNumber.toString().padStart(5, '0')}`;
+        const existingItem = await this.malkhanaItemRepository.findOne({
+          where: {
+            motherNumber: motherNumberToCheck
+          }
+        });
+        
+        if (existingItem) {
+          throw new BadRequestException(`Mother number ${motherNumberToCheck} already exists in the system`);
+        }
+        
+        newRegistryNumber = createItemDto.motherNumber;
+        registryYear = createItemDto.registryYear;
+        motherNumber = motherNumberToCheck;
+      } else {
+        throw new BadRequestException('Mother number and registry year are required for Red Ink items');
+      }
+    } else {
+      // For Black Ink items, auto-generate by finding the highest existing number across ALL types for the current year
+      // This ensures we don't conflict with existing mother numbers
+      const lastItemAnyType = await this.malkhanaItemRepository
+        .createQueryBuilder('item')
+        .where('item.unitId = :unitId', { unitId: effectiveUnitId })
+        .andWhere('item.motherNumber LIKE :pattern', { pattern: `${currentYear}-%` })
+        .orderBy('CAST(SUBSTRING(item.motherNumber FROM 6) AS INTEGER)', 'DESC')
+        .getOne();
+        let nextNumber = 1;
+      if (lastItemAnyType) {
+        // Extract the number part from the mother number (e.g., "2025-00003" -> 3)
+        const numberPart = lastItemAnyType.motherNumber.split('-')[1];
+        nextNumber = parseInt(numberPart, 10) + 1;
+      }
+      
+      newRegistryNumber = nextNumber;
+      registryYear = currentYear;
+      motherNumber = `${registryYear}-${newRegistryNumber.toString().padStart(5, '0')}`;
+    }
     
     // Create new item
     const newItem = this.malkhanaItemRepository.create({
@@ -61,8 +90,8 @@ export class MalkhanaService {
       unitId: effectiveUnitId, // Set the unitId from the parameter or DTO
       motherNumber,
       registryNumber: newRegistryNumber,
-      registryType: RegistryType.BLACK_INK,
-      registryYear: currentYear,
+      registryType: registryType,
+      registryYear: registryYear,
       status: MalkhanaItemStatus.ACTIVE,
       createdBy: userId
     });
@@ -323,20 +352,22 @@ export class MalkhanaService {
   /**
    * Perform the year-end transition from Black Ink to Red Ink for a specific unit
    * This will be manually triggered rather than automatic
-   */
-  async performYearTransition(unitId: string, newYear: number, userId?: string): Promise<YearTransitionResponseDto> {
+   */  async performYearTransition(unitId: string, newYear: number, userId?: string): Promise<YearTransitionResponseDto> {
     const currentYear = new Date().getFullYear();
+    const transitionYear = newYear - 1; // The year we're transitioning FROM
     
-    // Validate the new year
-    if (newYear <= currentYear) {
-      throw new BadRequestException('New year must be greater than the current year');
+    // Validate the transition - we're transitioning FROM transitionYear TO Red Ink
+    // The transition year should be <= current year (we can transition current or past years)
+    if (transitionYear > currentYear) {
+      throw new BadRequestException('Cannot transition items from a future year');
     }
     
-    // Find all active items in the Black Ink registry FOR THIS UNIT
+    // Find all active items in the Black Ink registry FOR THIS UNIT from the transition year
     const blackInkItems = await this.malkhanaItemRepository.find({
       where: {
         unitId,
         registryType: RegistryType.BLACK_INK,
+        registryYear: transitionYear,
         status: MalkhanaItemStatus.ACTIVE
       }
     });
@@ -346,7 +377,7 @@ export class MalkhanaService {
         success: true,
         message: 'No active items to transition',
         itemsTransitioned: 0,
-        previousYear: currentYear,
+        previousYear: transitionYear,
         newYear
       };
     }
@@ -379,13 +410,11 @@ export class MalkhanaService {
       item.registryType = RegistryType.RED_INK;
       item.registryNumber = nextRedInkNumber++;
       await this.malkhanaItemRepository.save(item);
-    }
-    
-    return {
+    }    return {
       success: true,
       message: `Transitioned ${blackInkItems.length} items from Black Ink to Red Ink`,
       itemsTransitioned: blackInkItems.length,
-      previousYear: currentYear,
+      previousYear: transitionYear,
       newYear
     };
   }

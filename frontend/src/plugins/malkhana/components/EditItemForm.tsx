@@ -71,9 +71,7 @@ const EditItemForm: React.FC = () => {
     receivedFrom: '',
     dateReceived: new Date().toISOString(),
     condition: '',
-    notes: '',
-    shelfId: '',
-    prNumber: '',
+    notes: '',    shelfId: '',
     gdeNumber: '',
     propertyNature: undefined,
     receivedFromAddress: '',
@@ -256,9 +254,7 @@ const EditItemForm: React.FC = () => {
         category: formData.category,
         receivedFrom: formData.receivedFrom,
         condition: formData.condition,
-        notes: formData.notes,
-        shelfId: formData.shelfId === '' ? undefined : formData.shelfId,
-        prNumber: formData.prNumber || undefined,
+        notes: formData.notes,        shelfId: formData.shelfId === '' ? undefined : formData.shelfId,
         gdeNumber: formData.gdeNumber || undefined,
         propertyNature: formData.propertyNature,
         receivedFromAddress: formData.receivedFromAddress || undefined,
@@ -369,8 +365,7 @@ const EditItemForm: React.FC = () => {
               Case Information
             </Typography>
             
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 6 }}>
+            <Grid container spacing={3}>              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   label="Case Number"
@@ -381,18 +376,6 @@ const EditItemForm: React.FC = () => {
                   helperText={validationErrors.caseNumber}
                   disabled={submitting}
                   required
-                />
-              </Grid>
-              
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="PR Number"
-                  name="prNumber"
-                  value={formData.prNumber || ''}
-                  onChange={handleInputChange}
-                  disabled={submitting}
-                  helperText="Police Report Number"
                 />
               </Grid>
               

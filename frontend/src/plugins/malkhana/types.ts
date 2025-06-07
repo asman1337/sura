@@ -43,9 +43,7 @@ export interface MalkhanaItem {
   registryNumber: number;
   // The permanent mother number that never changes (format: YYYY-NNNNN)
   motherNumber: string;
-  caseNumber: string;
-  // Additional case-related fields
-  prNumber?: string;
+  caseNumber: string;  // Additional case-related fields
   gdeNumber?: string;
   description: string;
   category: string;
@@ -84,7 +82,6 @@ export interface MalkhanaItem {
 // Create Malkhana Item DTO for API requests
 export interface CreateMalkhanaItemDto {
   caseNumber?: string;
-  prNumber?: string;
   gdeNumber?: string;
   description?: string;
   category: string;
@@ -100,12 +97,15 @@ export interface CreateMalkhanaItemDto {
   notes?: string;
   photos?: string[];
   shelfId?: string;
+  registryType?: RegistryType;
+  // For Red Ink items - manual entry
+  motherNumber?: number;
+  registryYear?: number;
 }
 
 // Update Malkhana Item DTO for API requests
 export interface UpdateMalkhanaItemDto {
   caseNumber?: string;
-  prNumber?: string;
   gdeNumber?: string;
   description?: string;
   category?: string;
@@ -157,8 +157,11 @@ export interface YearTransitionDto {
 
 // Year Transition Response DTO from API
 export interface YearTransitionResponseDto {
-  transitionedCount: number;
-  newRedInkItems: MalkhanaItem[];
+  success: boolean;
+  message: string;
+  itemsTransitioned: number;
+  previousYear: number;
+  newYear: number;
 }
 
 // Interface for Malkhana Dashboard stats

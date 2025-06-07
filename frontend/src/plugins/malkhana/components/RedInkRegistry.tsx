@@ -4,7 +4,9 @@ import {
   Box,
   Button,
   Typography,
-  CircularProgress
+  CircularProgress,
+  Snackbar,
+  Alert
 } from '@mui/material';
 
 import { MalkhanaItem } from '../types';
@@ -25,6 +27,8 @@ const RedInkRegistry: React.FC = () => {
   const [items, setItems] = useState<MalkhanaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [yearTransitionLoading, setYearTransitionLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   // Set global API instance on component mount
   useEffect(() => {
@@ -32,8 +36,7 @@ const RedInkRegistry: React.FC = () => {
       setGlobalApiInstance(api);
     }
   }, [api]);
-  
-  useEffect(() => {
+    useEffect(() => {
     const loadRedInkRegistry = async () => {
       if (!malkhanaApi.isReady) return;
       
@@ -49,9 +52,38 @@ const RedInkRegistry: React.FC = () => {
         setLoading(false);
       }
     };
-    
+
     loadRedInkRegistry();
   }, [malkhanaApi.isReady]);
+  // Function to handle year transition
+  const handleYearTransition = async () => {
+    if (!malkhanaApi.isReady) return;
+
+    // Show confirmation dialog first
+    const confirmed = window.confirm(
+      `Are you sure you want to transition all active Black Ink items from ${new Date().getFullYear()} to Red Ink Registry? This action cannot be undone.`
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      setYearTransitionLoading(true);
+      const currentYear = new Date().getFullYear();
+      // We're transitioning TO the next year (current year + 1)
+      const result = await malkhanaApi.performYearTransition({ newYear: currentYear + 1 });
+        if (result) {
+        setSuccessMessage(`Year transition completed! ${result.itemsTransitioned} items moved from ${result.previousYear} Black Ink to Red Ink Registry.`);
+        // Reload the Red Ink Registry to show new items
+        const updatedRedInkItems = await malkhanaApi.getRedInkItems();
+        setItems(updatedRedInkItems);
+      }
+    } catch (err) {
+      console.error('Error performing year transition:', err);
+      setError('Failed to perform year transition. Please try again.');
+    } finally {
+      setYearTransitionLoading(false);
+    }
+  };
   
   // Create action column
   const actionColumn = createActionsColumn((params: GridRenderCellParams) => {
@@ -92,11 +124,28 @@ const RedInkRegistry: React.FC = () => {
   }
   
   return (
-    <PageContainer>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <PageContainer>      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" fontWeight="500">
           Red Ink Registry (Historical)
         </Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            component={RouterLink}
+            to="/malkhana/add-red-ink-item"
+          >
+            Add Red Ink Item
+          </Button>
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={handleYearTransition}
+            disabled={yearTransitionLoading}
+          >
+            {yearTransitionLoading ? <CircularProgress size={20} color="inherit" /> : 'Year Transition'}
+          </Button>
+        </Box>
       </Box>
       
       {error && (
@@ -135,8 +184,7 @@ const RedInkRegistry: React.FC = () => {
           View Black Ink Registry
         </Button>
       </Box>
-      
-      <Box sx={{ mt: 4, p: 3, bgcolor: 'rgba(255, 193, 7, 0.1)', borderRadius: 2, border: '1px solid rgba(255, 193, 7, 0.3)' }}>
+        <Box sx={{ mt: 4, p: 3, bgcolor: 'rgba(255, 193, 7, 0.1)', borderRadius: 2, border: '1px solid rgba(255, 193, 7, 0.3)' }}>
         <Typography variant="h6" color="warning.dark" gutterBottom>
           About Red Ink Registry
         </Typography>
@@ -146,6 +194,18 @@ const RedInkRegistry: React.FC = () => {
           If an item in the Red Ink Registry is disposed of, all subsequent items are automatically renumbered.
         </Typography>
       </Box>
+
+      {/* Success Message Snackbar */}
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={6000}
+        onClose={() => setSuccessMessage(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{ width: '100%' }}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </PageContainer>
   );
 };

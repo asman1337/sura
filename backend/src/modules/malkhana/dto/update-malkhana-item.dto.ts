@@ -1,14 +1,9 @@
 import { IsOptional, IsString, IsArray, IsEnum } from 'class-validator';
 import { MalkhanaItemStatus, PropertyNature } from '../entities/malkhana-item.entity';
 
-export class UpdateMalkhanaItemDto {
-  @IsOptional()
+export class UpdateMalkhanaItemDto {  @IsOptional()
   @IsString()
   caseNumber?: string;
-
-  @IsOptional()
-  @IsString()
-  prNumber?: string;
 
   @IsOptional()
   @IsString()

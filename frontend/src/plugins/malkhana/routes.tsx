@@ -35,10 +35,13 @@ const MalkhanaRoutes: RouteObject[] = [
   {
     path: '/malkhana/red-ink',
     element: <RedInkRegistry />
-  },
-  {
+  },  {
     path: '/malkhana/add-item',
     element: <AddItemForm />
+  },
+  {
+    path: '/malkhana/add-red-ink-item',
+    element: <AddItemForm registryType={'RED_INK'} />
   },
   {
     path: '/malkhana/item/:id',
