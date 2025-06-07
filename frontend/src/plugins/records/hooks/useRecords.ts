@@ -38,7 +38,6 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
         setRecords(result);
         setError(null);
       } catch (err) {
-        console.error('Error loading records:', err);
         setError('Failed to load records');
       } finally {
         setLoading(false);
@@ -54,15 +53,13 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
       if (!recordsApi.isReady || skipStatsFetch) return;
       
       try {
-        console.log('useRecords: Loading stats...');
         const result = await recordsApi.getStats();
-        console.log('useRecords: Stats loaded successfully:', result);
         setStats(result);
       } catch (err) {
-        console.error('Error loading record stats:', err);
+        setError('Failed to load record stats');
       }
     };
-    
+
     loadStats();
   }, [recordsApi.isReady, skipStatsFetch]);
 
@@ -75,15 +72,11 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
       
       let recordsResult;
       if (recordType) {
-        console.log(`Refreshing ${recordType} records...`);
         recordsResult = await recordsApi.getRecordsByType(recordType);
       } else {
-        console.log('Refreshing all records...');
         recordsResult = await recordsApi.getAllRecords();
       }
-      
-      console.log('Records refreshed:', recordsResult);
-      
+
       // An empty array of records is a valid response, not an error
       setRecords(recordsResult);
       
@@ -93,7 +86,6 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
       
       setError(null);
     } catch (err) {
-      console.error('Error refreshing records data:', err);
       setError('Failed to refresh records data');
     } finally {
       setLoading(false);
@@ -106,25 +98,21 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
     
     try {
       setLoading(true);
-      console.log(`Getting record by ID: ${id}, type: ${type || 'not specified'}`);
       const result = await recordsApi.getRecordById(id, type);
-      console.log('Record fetched successfully:', result);
       return result;
     } catch (err) {
-      console.error(`Error getting record ${id}:`, err);
       setError(`Failed to get record ${id}`);
       throw err;
     } finally {
       setLoading(false);
     }
-  }, [recordsApi]);
-
-  // Function to create a new record
+  }, [recordsApi]);  // Function to create a new record
   const createRecord = async (record: CreateRecord) => {
     if (!recordsApi.isReady) throw new Error('API not ready');
     
     try {
       setLoading(true);
+      setError(null); // Clear any previous errors
       const result = await recordsApi.createRecord(record);
       
       // Update local state
@@ -135,21 +123,20 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
       setStats(updatedStats);
       
       return result;
-    } catch (err) {
-      console.error('Error creating record:', err);
-      setError('Failed to create record');
-      throw err;
+    } catch (err: any) {
+      // Don't set error state here since form components handle their own error display
+      // This prevents duplicate error messages
+      throw err; // Re-throw the original error to preserve the full error structure
     } finally {
       setLoading(false);
     }
-  };
-
-  // Function to update a record
+  };  // Function to update a record
   const updateRecord = async (recordId: string, data: Partial<RecordData>) => {
     if (!recordsApi.isReady) throw new Error('API not ready');
     
     try {
       setLoading(true);
+      setError(null); // Clear any previous errors
       const result = await recordsApi.updateRecord(recordId, data);
       
       // Update local state
@@ -158,10 +145,10 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
       );
       
       return result;
-    } catch (err) {
-      console.error('Error updating record:', err);
-      setError('Failed to update record');
-      throw err;
+    } catch (err: any) {
+      // Don't set error state here since form components handle their own error display
+      // This prevents duplicate error messages
+      throw err; // Re-throw the original error to preserve the full error structure
     } finally {
       setLoading(false);
     }
@@ -173,7 +160,6 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
     
     try {
       setLoading(true);
-      console.log(`Deleting record ${recordId}${type ? ` of type ${type}` : ''}`);
       await recordsApi.deleteRecord(recordId, type);
       
       // Update local state
@@ -185,7 +171,6 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
       
       return true;
     } catch (err) {
-      console.error('Error deleting record:', err);
       setError('Failed to delete record');
       throw err;
     } finally {
@@ -212,7 +197,6 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
       
       return result;
     } catch (err) {
-      console.error(`Error marking property ${propertyId} as recovered:`, err);
       setError('Failed to mark property as recovered');
       throw err;
     } finally {
@@ -241,7 +225,6 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
       
       return result;
     } catch (err) {
-      console.error(`Error marking property ${propertyId} as sold:`, err);
       setError('Failed to mark property as sold');
       throw err;
     } finally {

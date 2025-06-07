@@ -28,12 +28,12 @@ import { useData } from '../../../../core/data';
 const UDCaseForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getRecord, createRecord, updateRecord, loading, error } = useRecords('ud_case');
+  const { getRecord, createRecord, updateRecord, loading } = useRecords('ud_case');
   const { auth } = useData();
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const initialFormState: CreateUDCase = {
     type: 'ud_case',
     unitId: '',
@@ -48,21 +48,21 @@ const UDCaseForm: React.FC = () => {
     informantRelation: '',
     apparentCauseOfDeath: '',
     location: '',
-    
+
     // Assigned Officer Information (simple fields)
     assignedOfficerName: '',
     assignedOfficerBadgeNumber: '',
     assignedOfficerContact: '',
     assignedOfficerRank: '',
     assignedOfficerDepartment: '',
-    
+
     postMortemDate: '',
     postMortemDoctor: '',
     postMortemHospital: '',
     photoUrls: [],
     investigationStatus: 'pending',
     description: '',
-    
+
     // New fields
     ageCategory: 'unknown',
     deceasedReligion: '',
@@ -71,7 +71,7 @@ const UDCaseForm: React.FC = () => {
     identifiedByAddress: '',
     identifiedByMobile: '',
     identifiedByRelation: '',
-    
+
     // Other fields for compatibility
     serialNumber: '',
     policeStationCode: '',
@@ -99,9 +99,9 @@ const UDCaseForm: React.FC = () => {
       longitude: undefined
     }
   };
-  
+
   const [formData, setFormData] = useState<CreateUDCase>(initialFormState);
-  
+
   // Set unitId from current user
   useEffect(() => {
     const currentUser = auth.getCurrentUser();
@@ -109,7 +109,7 @@ const UDCaseForm: React.FC = () => {
       setFormData(prev => ({ ...prev, unitId: currentUser.primaryUnit!.id }));
     }
   }, [auth]);
-  
+
   // Load data if editing existing record
   useEffect(() => {
     const loadRecord = async () => {
@@ -126,34 +126,33 @@ const UDCaseForm: React.FC = () => {
             });
           }
         } catch (err) {
-          console.error('Error loading UD case:', err);
           setFormError('Failed to load UD case data');
         }
       }
     };
-    
+
     loadRecord();
   }, [id, getRecord]);
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
+
   const handleSelectChange = (e: SelectChangeEvent) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name as string]: value }));
   };
-  
+
   const handleDateChange = (name: string, date: Date | null) => {
     if (date) {
       const formattedDate = date.toISOString().split('T')[0];
       setFormData(prev => ({ ...prev, [name]: formattedDate }));
     }
   };
-    const cleanFormData = (data: CreateUDCase) => {
+  const cleanFormData = (data: CreateUDCase) => {
     const cleaned = { ...data };
-    
+
     // Clean date fields - convert empty strings to undefined
     if (!cleaned.postMortemDate || cleaned.postMortemDate.trim() === '') {
       delete cleaned.postMortemDate;
@@ -161,16 +160,16 @@ const UDCaseForm: React.FC = () => {
     if (!cleaned.finalFormSubmissionDate || cleaned.finalFormSubmissionDate.trim() === '') {
       delete cleaned.finalFormSubmissionDate;
     }
-      // Clean optional string fields - convert empty strings to undefined
+    // Clean optional string fields - convert empty strings to undefined
     const optionalStringFields = [
-      'deceasedReligion', 'deceasedCaste', 'identifiedByName', 'identifiedByAddress', 
-      'identifiedByMobile', 'identifiedByRelation', 'serialNumber', 'policeStationCode', 
-      'policeStationName', 'assignedOfficerName', 'assignedOfficerBadgeNumber', 
+      'deceasedReligion', 'deceasedCaste', 'identifiedByName', 'identifiedByAddress',
+      'identifiedByMobile', 'identifiedByRelation', 'serialNumber', 'policeStationCode',
+      'policeStationName', 'assignedOfficerName', 'assignedOfficerBadgeNumber',
       'assignedOfficerContact', 'assignedOfficerRank', 'assignedOfficerDepartment',
       'postMortemDoctor', 'postMortemHospital', 'finalFormReviewedBy', 'finalFormApprovedBy',
       'deceasedOccupation', 'deceasedNationality', 'exactLocation', 'nearestLandmark', 'description'
     ];
-    
+
     optionalStringFields.forEach(field => {
       if (cleaned[field as keyof CreateUDCase] === '') {
         delete cleaned[field as keyof CreateUDCase];
@@ -179,7 +178,7 @@ const UDCaseForm: React.FC = () => {
     if (cleaned.deceasedAge === undefined || cleaned.deceasedAge === null || cleaned.deceasedAge === 0) {
       delete cleaned.deceasedAge;
     }
-    
+
     // Clean coordinates if empty
     if (cleaned.coordinates) {
       if (cleaned.coordinates.latitude === undefined || cleaned.coordinates.latitude === null) {
@@ -193,7 +192,7 @@ const UDCaseForm: React.FC = () => {
         delete cleaned.coordinates;
       }
     }
-      // Clean autopsy results if all fields are empty
+    // Clean autopsy results if all fields are empty
     if (cleaned.autopsyResults) {
       const autopsyFields = Object.values(cleaned.autopsyResults);
       const hasContent = autopsyFields.some(value => value && value.trim() !== '');
@@ -209,12 +208,12 @@ const UDCaseForm: React.FC = () => {
         });
       }
     }
-    
+
     // Clean photoUrls if empty
     if (cleaned.photoUrls && cleaned.photoUrls.length === 0) {
       delete cleaned.photoUrls;
     }
-    
+
     return cleaned;
   };
 
@@ -223,7 +222,7 @@ const UDCaseForm: React.FC = () => {
     setFormError(null);
     setFormSuccess(null);
     setIsSubmitting(true);
-    
+
     try {
       // Basic validation
       if (!formData.caseNumber) {
@@ -244,10 +243,10 @@ const UDCaseForm: React.FC = () => {
       if (!formData.location) {
         throw new Error('Location is required');
       }
-      
+
       // Clean form data before submission
       const cleanedData = cleanFormData(formData);
-        // Submit form data
+      // Submit form data
       if (id) {
         // Update existing record
         await updateRecord(id, cleanedData);
@@ -256,7 +255,6 @@ const UDCaseForm: React.FC = () => {
       } else {
         // Create new record
         const result = await createRecord(cleanedData);
-        console.log('UD case created:', result);
         setFormSuccess('UD case created successfully');
         if (result && result?.id) {
           setTimeout(() => navigate(`/records/ud-case/${result.id}`), 1000);
@@ -264,14 +262,29 @@ const UDCaseForm: React.FC = () => {
           setTimeout(() => navigate(`/records/type/ud_case`), 1000);
         }
       }
-    } catch (err) {
-      console.error('Error submitting form:', err);
-      setFormError(err instanceof Error ? err.message : 'Failed to save UD case');
+    } catch (err: any) {
+      // Extract the actual error message from the backend response
+      let errorMessage = 'Failed to save UD case';
+
+      if (err?.response?.data?.message) {
+        // Backend returned a specific error message
+        errorMessage = err.response.data.message;
+      } else if (err?.response?.data?.error) {
+        // Backend returned an error field
+        errorMessage = err.response.data.error;
+      } else if (err?.message) {
+        // Standard Error object
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        // String error
+        errorMessage = err;
+      }
+      setFormError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   if (loading && !formData.caseNumber) {
     return (
       <PageContainer>
@@ -281,21 +294,21 @@ const UDCaseForm: React.FC = () => {
       </PageContainer>
     );
   }
-  
+
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <PageContainer>        <Box mb={3}>
-          <Typography variant="h4">
-            {id ? 'Edit UD Case' : 'Create New UD Case'}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            {id ? `Editing case ${formData.caseNumber}` : 'Enter details for the new UD case'}
-          </Typography>
-        </Box>
-        
+        <Typography variant="h4">
+          {id ? 'Edit UD Case' : 'Create New UD Case'}
+        </Typography>
+        <Typography variant="body2" color="textSecondary">
+          {id ? `Editing case ${formData.caseNumber}` : 'Enter details for the new UD case'}
+        </Typography>
+      </Box>
+
         <Paper component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
           <Grid container spacing={3}>
-            
+
             {/* Section 1: Basic Case Information */}
             <Grid size={{ xs: 12 }}>
               <Paper sx={{ p: 2, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
@@ -305,7 +318,7 @@ const UDCaseForm: React.FC = () => {
               </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 required
@@ -317,7 +330,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <DatePicker
                 label="Date of Occurrence*"
@@ -332,7 +345,7 @@ const UDCaseForm: React.FC = () => {
                 }}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12 }}>
               <TextField
                 required
@@ -344,7 +357,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Investigation Status</InputLabel>
@@ -362,7 +375,7 @@ const UDCaseForm: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            
+
             {/* Section 2: Deceased Information */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Paper sx={{ p: 2, bgcolor: 'warning.light', color: 'warning.contrastText' }}>
@@ -372,7 +385,7 @@ const UDCaseForm: React.FC = () => {
               </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -383,7 +396,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Age Category</InputLabel>
@@ -400,7 +413,7 @@ const UDCaseForm: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            
+
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -413,7 +426,7 @@ const UDCaseForm: React.FC = () => {
                 rows={2}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -424,7 +437,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -435,7 +448,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12 }}>
               <TextField
                 required
@@ -447,7 +460,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Identification Status</InputLabel>
@@ -464,7 +477,7 @@ const UDCaseForm: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            
+
             {/* Section 3: Informant Information */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Paper sx={{ p: 2, bgcolor: 'success.light', color: 'success.contrastText' }}>
@@ -474,7 +487,7 @@ const UDCaseForm: React.FC = () => {
               </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 required
@@ -486,7 +499,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -497,7 +510,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12 }}>
               <TextField
                 required
@@ -511,7 +524,7 @@ const UDCaseForm: React.FC = () => {
                 rows={2}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -522,7 +535,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             {/* Section 4: Identified By Information */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Paper sx={{ p: 2, bgcolor: 'secondary.light', color: 'secondary.contrastText' }}>
@@ -532,7 +545,7 @@ const UDCaseForm: React.FC = () => {
               </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -544,7 +557,7 @@ const UDCaseForm: React.FC = () => {
                 placeholder="Person who identified the deceased"
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -556,7 +569,7 @@ const UDCaseForm: React.FC = () => {
                 placeholder="Mobile number of identifier"
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -570,7 +583,7 @@ const UDCaseForm: React.FC = () => {
                 placeholder="Address of person who identified"
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -582,7 +595,7 @@ const UDCaseForm: React.FC = () => {
                 placeholder="Relation to deceased"
               />
             </Grid>
-            
+
             {/* Section 5: Location Details */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Paper sx={{ p: 2, bgcolor: 'info.light', color: 'info.contrastText' }}>
@@ -592,7 +605,7 @@ const UDCaseForm: React.FC = () => {
               </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
-            
+
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -606,7 +619,7 @@ const UDCaseForm: React.FC = () => {
                 placeholder="More specific location details"
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -617,7 +630,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 fullWidth
@@ -636,7 +649,7 @@ const UDCaseForm: React.FC = () => {
                 inputProps={{ step: "any" }}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 fullWidth
@@ -655,7 +668,7 @@ const UDCaseForm: React.FC = () => {
                 inputProps={{ step: "any" }}
               />
             </Grid>
-            
+
             {/* Section 6: Police Station Information */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Paper sx={{ p: 2, bgcolor: 'grey.600', color: 'white' }}>
@@ -665,7 +678,7 @@ const UDCaseForm: React.FC = () => {
               </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
@@ -677,7 +690,7 @@ const UDCaseForm: React.FC = () => {
                 placeholder="SL NO"
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
@@ -689,7 +702,7 @@ const UDCaseForm: React.FC = () => {
                 placeholder="e.g., AUSGRAM PS"
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
@@ -700,7 +713,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             {/* Section 7: Assigned Officer Information */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Paper sx={{ p: 2, bgcolor: 'warning.dark', color: 'warning.contrastText' }}>
@@ -710,7 +723,7 @@ const UDCaseForm: React.FC = () => {
               </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -722,7 +735,7 @@ const UDCaseForm: React.FC = () => {
                 placeholder="Enter officer's full name"
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -734,7 +747,7 @@ const UDCaseForm: React.FC = () => {
                 placeholder="Enter badge number"
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -746,7 +759,7 @@ const UDCaseForm: React.FC = () => {
                 placeholder="Enter contact number"
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -758,7 +771,7 @@ const UDCaseForm: React.FC = () => {
                 placeholder="Enter officer rank"
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -770,7 +783,7 @@ const UDCaseForm: React.FC = () => {
                 placeholder="Enter department name"
               />
             </Grid>
-            
+
             {/* Section 8: Post Mortem Information */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Paper sx={{ p: 2, bgcolor: 'grey.500', color: 'white' }}>
@@ -780,7 +793,7 @@ const UDCaseForm: React.FC = () => {
               </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <DatePicker
                 label="Post Mortem Date"
@@ -794,7 +807,7 @@ const UDCaseForm: React.FC = () => {
                 }}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -805,7 +818,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -816,7 +829,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             {/* Section 9: Autopsy Results */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Paper sx={{ p: 2, bgcolor: 'purple', color: 'white' }}>
@@ -826,7 +839,7 @@ const UDCaseForm: React.FC = () => {
               </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -842,7 +855,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Manner of Death</InputLabel>
@@ -866,7 +879,7 @@ const UDCaseForm: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            
+
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -884,7 +897,7 @@ const UDCaseForm: React.FC = () => {
                 rows={3}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -900,7 +913,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -916,7 +929,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -934,7 +947,7 @@ const UDCaseForm: React.FC = () => {
                 rows={3}
               />
             </Grid>
-            
+
             {/* Section 10: Additional Information */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Paper sx={{ p: 2, bgcolor: 'success.dark', color: 'success.contrastText' }}>
@@ -944,7 +957,7 @@ const UDCaseForm: React.FC = () => {
               </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -956,7 +969,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Gender</InputLabel>
@@ -974,7 +987,7 @@ const UDCaseForm: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -985,7 +998,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -996,7 +1009,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -1009,7 +1022,7 @@ const UDCaseForm: React.FC = () => {
                 rows={4}
               />
             </Grid>
-            
+
             {/* Section 11: Final Form Status */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Paper sx={{ p: 2, bgcolor: 'error.light', color: 'error.contrastText' }}>
@@ -1019,7 +1032,7 @@ const UDCaseForm: React.FC = () => {
               </Paper>
               <Divider sx={{ mb: 2 }} />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Final Form Status</InputLabel>
@@ -1038,7 +1051,7 @@ const UDCaseForm: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <DatePicker
                 label="Submission Date"
@@ -1052,7 +1065,7 @@ const UDCaseForm: React.FC = () => {
                 }}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -1063,7 +1076,7 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -1074,27 +1087,21 @@ const UDCaseForm: React.FC = () => {
                 disabled={isSubmitting}
               />
             </Grid>
-              {/* Submit Button */}
+            {/* Submit Button */}
             <Grid size={{ xs: 12 }} sx={{ mt: 3 }}>
               {/* Error and Success Messages */}
-              {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {error}
-                </Alert>
-              )}
-              
               {formError && (
                 <Alert severity="error" sx={{ mb: 2 }}>
                   {formError}
                 </Alert>
               )}
-              
+
               {formSuccess && (
                 <Alert severity="success" sx={{ mb: 2 }}>
                   {formSuccess}
                 </Alert>
               )}
-              
+
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Button
                   variant="outlined"
