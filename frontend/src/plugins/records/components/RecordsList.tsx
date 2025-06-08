@@ -34,6 +34,8 @@ const getRecordTypeName = (type: RecordType): string => {
       return 'UD Case';
     case 'stolen_property':
       return 'Stolen Property';
+    case 'paper_dispatch':
+      return 'Paper Dispatch';
     case 'general_diary':
       return 'General Diary';
     case 'fir':
@@ -71,8 +73,7 @@ const RecordsList: React.FC = () => {
       // Generic fields to search
       if (record.status.toLowerCase().includes(searchLower)) return true;
       if (record.remarks?.toLowerCase().includes(searchLower)) return true;
-      
-      // Type-specific fields
+        // Type-specific fields
       if (record.type === 'ud_case') {
         const udCase = record as UDCaseRecord;
         if (udCase.caseNumber?.toLowerCase().includes(searchLower)) return true;
@@ -85,6 +86,15 @@ const RecordsList: React.FC = () => {
         if (property.propertyType?.toLowerCase().includes(searchLower)) return true;
         if (property.description?.toLowerCase().includes(searchLower)) return true;
         if (property.ownerName?.toLowerCase().includes(searchLower)) return true;
+      } else if (record.type === 'paper_dispatch') {
+        const paperDispatch = record as PaperDispatchRecord;
+        if (paperDispatch.serialNumber?.toLowerCase().includes(searchLower)) return true;
+        if (paperDispatch.fromWhom?.toLowerCase().includes(searchLower)) return true;
+        if (paperDispatch.toWhom?.toLowerCase().includes(searchLower)) return true;
+        if (paperDispatch.purpose?.toLowerCase().includes(searchLower)) return true;
+        if (paperDispatch.memoNumber?.toLowerCase().includes(searchLower)) return true;
+        if (paperDispatch.formType?.toLowerCase().includes(searchLower)) return true;
+        if (paperDispatch.registryType?.toLowerCase().includes(searchLower)) return true;
       }
       
       return false;
@@ -136,8 +146,7 @@ const RecordsList: React.FC = () => {
             />
           )
         }
-      );
-    } else if (recordType === 'stolen_property') {
+      );    } else if (recordType === 'stolen_property') {
       baseColumns.push(
         {
           field: 'propertyId',
@@ -177,6 +186,61 @@ const RecordsList: React.FC = () => {
               }}
             />
           )
+        }
+      );
+    } else if (recordType === 'paper_dispatch') {
+      baseColumns.push(
+        {
+          field: 'serialNumber',
+          headerName: 'Serial Number',
+          width: 150,
+          renderCell: (params) => params.row.serialNumber || 'N/A'
+        },
+        {
+          field: 'formType',
+          headerName: 'Form Type',
+          width: 120,
+          renderCell: (params) => {
+            const formType = params.row.formType;
+            const displayText = formType === 'part1' ? 'Part 1' : 
+                               formType === 'part2' ? 'Part 2' : 
+                               formType === 'part4' ? 'Part 4' : formType;
+            return displayText || 'N/A';
+          }
+        },
+        {
+          field: 'fromWhom',
+          headerName: 'From Whom',
+          width: 180,
+          renderCell: (params) => params.row.fromWhom || 'N/A'
+        },
+        {
+          field: 'toWhom',
+          headerName: 'To Whom',
+          width: 180,
+          renderCell: (params) => params.row.toWhom || 'N/A'
+        },
+        {
+          field: 'registryType',
+          headerName: 'Registry',
+          width: 120,
+          renderCell: (params) => (
+            <Chip
+              label={params.row.registryType === 'BLACK_INK' ? 'Black Ink' : 'Red Ink'}
+              color={params.row.registryType === 'BLACK_INK' ? 'success' : 'error'}
+              size="small"
+              sx={{ 
+                fontSize: '0.75rem',
+                fontWeight: 'medium'
+              }}
+            />
+          )
+        },
+        {
+          field: 'dateOfReceive',
+          headerName: 'Date Received',
+          width: 150,
+          renderCell: (params) => formatDate(params.row.dateOfReceive)
         }
       );
     }
