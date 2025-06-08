@@ -171,11 +171,58 @@ export interface StolenPropertyRecord extends BaseRecord {
   additionalDetails?: { [key: string]: any };
 }
 
+// Paper Dispatch Record
+export interface PaperDispatchRecord extends BaseRecord {
+  type: 'paper_dispatch';
+  serialNumber: string; // SL NO (1/2025) format: count/year
+  serialCount: number; // The count part of serial number
+  serialYear: number; // The year part of serial number
+  dateOfReceive: string; // Date of Receive
+  fromWhom: string; // From Whom
+  memoNumber?: string; // Memo No. / ORG and DR No, GD, Case no etc
+  purpose: string; // Purpose
+  toWhom?: string; // To Whom (Endorsed)
+  caseReference?: string; // Case Reference
+  dateFixed?: string; // Date Fix (Before Remark) [Court expected date]
+  remarks?: string; // Remarks
+  closedStatus: 'open' | 'closed'; // Closed status
+  attachmentUrls?: string[]; // Upload Photo/PDF attach (Receive/Sent)
+  noExpectingReport: boolean; // No expecting report flag
+  formType: 'part1' | 'part2' | 'part4'; // Form Type (Part 1, 2, 4)
+  
+  // Registry tracking (like malkhana black/red ink)
+  registryType: 'BLACK_INK' | 'RED_INK';
+  dateTransitionToRed?: string; // When it moved to red ink
+  endorsedOfficerName?: string; // Officer who received the endorsement
+  endorsedOfficerBadgeNumber?: string;
+  
+  // Additional tracking
+  isOverdue: boolean; // Auto-calculated based on 7-day rule
+  daysElapsed: number; // Days since dateOfReceive
+  
+  // Form type specific fields
+  courtDetails?: {
+    courtName?: string;
+    caseNumber?: string;
+    hearingDate?: string;
+  };
+  seniorOfficeDetails?: {
+    officeName?: string;
+    caseNumber?: string;
+    officerName?: string;
+  };
+  publicPetitionDetails?: {
+    petitionerName?: string;
+    petitionNumber?: string;
+    subject?: string;
+  };
+}
+
 // Generic Record Type
-export type RecordType = 'ud_case' | 'stolen_property' | 'general_diary' | 'fir' | 'arrest_memo';
+export type RecordType = 'ud_case' | 'stolen_property' | 'general_diary' | 'fir' | 'arrest_memo' | 'paper_dispatch';
 
 // Union type for all record types
-export type RecordData = UDCaseRecord | StolenPropertyRecord;
+export type RecordData = UDCaseRecord | StolenPropertyRecord | PaperDispatchRecord;
 
 // Record form settings
 export interface RecordFormConfig {
@@ -303,5 +350,41 @@ export interface CreateStolenProperty extends CreateRecordBase {
   disabled?: boolean;
 }
 
+export interface CreatePaperDispatch extends CreateRecordBase {
+  type: 'paper_dispatch';
+  dateOfReceive: string;
+  fromWhom: string;
+  memoNumber?: string;
+  purpose: string;
+  toWhom?: string;
+  caseReference?: string;
+  dateFixed?: string;
+  remarks?: string;
+  closedStatus?: 'open' | 'closed';
+  attachmentUrls?: string[];
+  noExpectingReport?: boolean;
+  formType: 'part1' | 'part2' | 'part4';
+  registryType?: 'BLACK_INK' | 'RED_INK';
+  endorsedOfficerName?: string;
+  endorsedOfficerBadgeNumber?: string;
+  
+  // Form type specific fields
+  courtDetails?: {
+    courtName?: string;
+    caseNumber?: string;
+    hearingDate?: string;
+  };
+  seniorOfficeDetails?: {
+    officeName?: string;
+    caseNumber?: string;
+    officerName?: string;
+  };
+  publicPetitionDetails?: {
+    petitionerName?: string;
+    petitionNumber?: string;
+    subject?: string;
+  };
+}
+
 // Creation type union
-export type CreateRecord = CreateUDCase | CreateStolenProperty;
+export type CreateRecord = CreateUDCase | CreateStolenProperty | CreatePaperDispatch;

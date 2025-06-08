@@ -60,6 +60,15 @@ export const recordTypes: RecordFormConfig[] = [
     disabled: false
   },
   {
+    id: 'paper_dispatch',
+    title: 'Paper/Doc Receive & Dispatch',
+    description: 'Track paper and document movement with black/red ink registry',
+    icon: 'FileIcon',
+    type: 'paper_dispatch',
+    fields: [],
+    disabled: false
+  },
+  {
     id: 'general_diary',
     title: 'General Diary',
     description: 'Daily station diary records (Coming soon)',
@@ -171,15 +180,6 @@ const RecordsDashboard: React.FC = () => {
             sx={{ mr: 2 }}
           >
             Refresh
-          </Button>
-          
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            component={RouterLink}
-            to="/records/create"
-          >
-            Add New Record
           </Button>
         </Box>
       </Box>

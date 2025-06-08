@@ -12,17 +12,16 @@ import { Officer } from '../../officers/entities/officer.entity';
 import { Unit } from '../../units/entities/unit.entity';
 
 export type RecordStatus = 'active' | 'archived' | 'deleted';
-export type RecordType = 'ud_case' | 'stolen_property' | 'general_diary' | 'fir' | 'arrest_memo';
+export type RecordType = 'ud_case' | 'stolen_property' | 'general_diary' | 'fir' | 'arrest_memo' | 'paper_dispatch';
 
 @Entity('records')
 @TableInheritance({ column: { type: 'varchar', name: 'type' } })
 export class BaseRecord {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
   @Column({
     type: 'enum',
-    enum: ['ud_case', 'stolen_property', 'general_diary', 'fir', 'arrest_memo'],
+    enum: ['ud_case', 'stolen_property', 'general_diary', 'fir', 'arrest_memo', 'paper_dispatch'],
     nullable: false,
   })
   type: RecordType;

@@ -10,7 +10,7 @@ export const setGlobalApiInstance = (apiInstance: any) => {
 export class RecordsService {
   private api: any;
   private isInitialized: boolean = false;
-  private baseUrl = '';  // Removed '/api' prefix
+  private baseUrl = '';
   public lastResponse: { records: RecordData[]; total: number } | null = null;
 
   constructor(api?: any) {
@@ -39,7 +39,7 @@ export class RecordsService {
       console.error('API not initialized in RecordsService');
       throw new Error('API not initialized');
     }
-    
+
     if (!this.api) {
       console.error('API instance is null/undefined in RecordsService');
       throw new Error('API instance is null');
@@ -54,13 +54,13 @@ export class RecordsService {
       console.log('Fetching all records');
       const response = await this.api.get(`${this.baseUrl}/records`);
       console.log('All records response:', response);
-      
+
       // Safely handle different response formats
       if (!response) {
         console.warn('API returned empty response');
         return [];
       }
-      
+
       // Store response metadata for pagination
       if (response.records && response.total !== undefined) {
         this.lastResponse = {
@@ -75,27 +75,27 @@ export class RecordsService {
       } else {
         this.lastResponse = null;
       }
-      
+
       // Handle case where records is a property of response
       if (response.records && Array.isArray(response.records)) {
         return response.records;
       }
-      
+
       // Handle case where records is a property of response.data
       if (response.data && response.data.records && Array.isArray(response.data.records)) {
         return response.data.records;
       }
-      
+
       // Handle case where response.data is an array directly
       if (response.data && Array.isArray(response.data)) {
         return response.data;
       }
-      
+
       // Handle case where response is an array directly
       if (Array.isArray(response)) {
         return response;
       }
-      
+
       // If we got here but don't recognize the format, log a warning and return empty array
       console.warn('Unrecognized API response format:', response);
       return [];
@@ -104,14 +104,13 @@ export class RecordsService {
       throw error;
     }
   }
-
   // Fetch records by type
   async getRecordsByType(type: RecordType): Promise<RecordData[]> {
     this.ensureReady();
 
     try {
       let endpoint = '';
-      
+
       switch (type) {
         case 'ud_case':
           endpoint = `${this.baseUrl}/ud-cases`;
@@ -119,20 +118,23 @@ export class RecordsService {
         case 'stolen_property':
           endpoint = `${this.baseUrl}/stolen-property`;
           break;
+        case 'paper_dispatch':
+          endpoint = `${this.baseUrl}/paper-dispatch`;
+          break;
         default:
           endpoint = `${this.baseUrl}/records?type=${type}`;
       }
-      
+
       console.log(`Fetching ${type} records from ${endpoint}`);
       const response = await this.api.get(endpoint);
       console.log(`API response for ${type}:`, response);
-      
+
       // Safely handle different response formats
       if (!response) {
         console.warn(`API returned empty response for ${type}`);
         return [];
       }
-      
+
       // Store response metadata for pagination
       if (response.records && response.total !== undefined) {
         console.log(`Using response.records and total: ${response.total}`);
@@ -150,27 +152,27 @@ export class RecordsService {
         console.log(`No pagination metadata found in response`);
         this.lastResponse = null;
       }
-      
+
       // Handle case where records is a property of response
       if (response.records && Array.isArray(response.records)) {
         return response.records;
       }
-      
+
       // Handle case where records is a property of response.data
       if (response.data && response.data.records && Array.isArray(response.data.records)) {
         return response.data.records;
       }
-      
+
       // Handle case where response.data is an array directly
       if (response.data && Array.isArray(response.data)) {
         return response.data;
       }
-      
+
       // Handle case where response is an array directly
       if (Array.isArray(response)) {
         return response;
       }
-      
+
       // If we got here but don't recognize the format, log a warning and return empty array
       console.warn(`Unrecognized API response format for ${type}:`, response);
       return [];
@@ -190,7 +192,7 @@ export class RecordsService {
       console.log('Fetching stats from:', `${this.baseUrl}/records/stats`);
       const response = await this.api.get(`${this.baseUrl}/records/stats`);
       console.log('Stats API raw response:', response);
-      
+
       if (!response) {
         console.warn('API returned null/undefined stats response');
         return {
@@ -203,21 +205,21 @@ export class RecordsService {
 
       // Handle different response formats
       let statsData = response;
-      
+
       // If response has a data property, use that
       if (response.data) {
         console.log('Using response.data for stats:', response.data);
         statsData = response.data;
       }
-      
+
       // If the response is wrapped in another layer, unwrap it
       if (statsData.data && typeof statsData.data === 'object') {
         console.log('Using nested data property for stats:', statsData.data);
         statsData = statsData.data;
       }
-      
+
       console.log('Final stats data being returned:', statsData);
-      
+
       // Ensure we have all required properties with defaults
       const result: RecordsStats = {
         totalRecords: statsData.totalRecords || 0,
@@ -225,7 +227,7 @@ export class RecordsService {
         recentlyAdded: statsData.recentlyAdded || 0,
         archivedRecords: statsData.archivedRecords || 0
       };
-      
+
       console.log('Processed stats result:', result);
       return result;
     } catch (error) {
@@ -248,7 +250,6 @@ export class RecordsService {
 
     try {
       let endpoint = '';
-      
       switch (record.type) {
         case 'ud_case':
           endpoint = `${this.baseUrl}/ud-cases`;
@@ -256,10 +257,13 @@ export class RecordsService {
         case 'stolen_property':
           endpoint = `${this.baseUrl}/stolen-property`;
           break;
+        case 'paper_dispatch':
+          endpoint = `${this.baseUrl}/paper-dispatch`;
+          break;
         default:
           throw new Error(`Unsupported record type: ${record.type}`);
       }
-      
+
       const response = await this.api.post(endpoint, record);
       return response.data;
     } catch (error) {
@@ -276,7 +280,7 @@ export class RecordsService {
 
     try {
       let endpoint = '';
-      
+
       if (type) {
         switch (type) {
           case 'ud_case':
@@ -285,13 +289,16 @@ export class RecordsService {
           case 'stolen_property':
             endpoint = `${this.baseUrl}/stolen-property/${id}`;
             break;
+          case 'paper_dispatch':
+            endpoint = `${this.baseUrl}/paper-dispatch/${id}`;
+            break;
           default:
             endpoint = `${this.baseUrl}/records/${id}`;
         }
       } else {
         endpoint = `${this.baseUrl}/records/${id}`;
       }
-      
+
       const response = await this.api.get(endpoint);
       return response.data || response;
     } catch (error) {
@@ -308,7 +315,6 @@ export class RecordsService {
 
     try {
       let endpoint = '';
-      
       switch (data.type) {
         case 'ud_case':
           endpoint = `${this.baseUrl}/ud-cases/${recordId}`;
@@ -316,10 +322,13 @@ export class RecordsService {
         case 'stolen_property':
           endpoint = `${this.baseUrl}/stolen-property/${recordId}`;
           break;
+        case 'paper_dispatch':
+          endpoint = `${this.baseUrl}/paper-dispatch/${recordId}`;
+          break;
         default:
           endpoint = `${this.baseUrl}/records/${recordId}`;
       }
-      
+
       const response = await this.api.patch(endpoint, data);
       return response.data;
     } catch (error) {
@@ -336,7 +345,7 @@ export class RecordsService {
 
     try {
       let endpoint = '';
-      
+
       if (type) {
         switch (type) {
           case 'ud_case':
@@ -345,13 +354,16 @@ export class RecordsService {
           case 'stolen_property':
             endpoint = `${this.baseUrl}/stolen-property/${recordId}`;
             break;
+          case 'paper_dispatch':
+            endpoint = `${this.baseUrl}/paper-dispatch/${recordId}`;
+            break;
           default:
             endpoint = `${this.baseUrl}/records/${recordId}`;
         }
       } else {
         endpoint = `${this.baseUrl}/records/${recordId}`;
       }
-      
+
       await this.api.delete(endpoint);
       return true;
     } catch (error) {
@@ -379,7 +391,6 @@ export class RecordsService {
       throw error;
     }
   }
-
   // Mark stolen property as sold
   async markPropertyAsSold(propertyId: string, saleDetails: {
     soldPrice: number;
@@ -398,6 +409,37 @@ export class RecordsService {
       return response.data;
     } catch (error) {
       console.error(`Error marking property ${propertyId} as sold:`, error);
+      throw error;
+    }
+  }
+
+  // Paper Dispatch specific methods
+  async getPaperDispatchStats(unitId?: string): Promise<any> {
+    if (!this.isReady) {
+      throw new Error('API not initialized');
+    }
+
+    try {
+      const endpoint = `${this.baseUrl}/paper-dispatch/stats${unitId ? `?unitId=${unitId}` : ''}`;
+      const response = await this.api.get(endpoint);
+      return response.data || response;
+    } catch (error) {
+      console.error('Error fetching paper dispatch stats:', error);
+      throw error;
+    }
+  }
+
+  async transitionOverduePaperDispatchRecords(): Promise<{ count: number; message: string }> {
+    if (!this.isReady) {
+      throw new Error('API not initialized');
+    }
+
+    try {
+      const endpoint = `${this.baseUrl}/paper-dispatch/transition-overdue`;
+      const response = await this.api.get(endpoint);
+      return response.data || response;
+    } catch (error) {
+      console.error('Error transitioning overdue paper dispatch records:', error);
       throw error;
     }
   }

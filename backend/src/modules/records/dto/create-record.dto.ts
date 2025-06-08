@@ -5,7 +5,8 @@ export enum RecordType {
   STOLEN_PROPERTY = 'stolen_property',
   GENERAL_DIARY = 'general_diary',
   FIR = 'fir',
-  ARREST_MEMO = 'arrest_memo'
+  ARREST_MEMO = 'arrest_memo',
+  PAPER_DISPATCH = 'paper_dispatch'
 }
 
 export enum RecordStatus {

@@ -203,8 +203,7 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
       setLoading(false);
     }
   };
-  
-  // Function to mark property as sold
+    // Function to mark property as sold
   const markAsSold = async (propertyId: string, saleDetails: {
     soldPrice: number;
     dateOfRemittance: string;
@@ -232,6 +231,41 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
     }
   };
 
+  // Paper Dispatch specific functions
+  const getPaperDispatchStats = async (unitId?: string) => {
+    if (!recordsApi.isReady) throw new Error('API not ready');
+    
+    try {
+      setLoading(true);
+      const result = await recordsApi.getPaperDispatchStats(unitId);
+      return result;
+    } catch (err) {
+      setError('Failed to get paper dispatch stats');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const transitionOverduePaperDispatch = async () => {
+    if (!recordsApi.isReady) throw new Error('API not ready');
+    
+    try {
+      setLoading(true);
+      const result = await recordsApi.transitionOverduePaperDispatchRecords();
+      
+      // Refresh data after transition
+      await refreshData();
+      
+      return result;
+    } catch (err) {
+      setError('Failed to transition overdue paper dispatch records');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     records,
     stats,
@@ -244,6 +278,8 @@ export const useRecords = (recordType?: RecordType, options: UseRecordsOptions =
     deleteRecord,
     markAsRecovered,
     markAsSold,
+    getPaperDispatchStats,
+    transitionOverduePaperDispatch,
     isReady: recordsApi.isReady
   };
 }; 

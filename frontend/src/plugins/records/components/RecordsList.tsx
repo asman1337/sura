@@ -23,7 +23,7 @@ import {
 import { DataGrid, GridColDef, GridActionsCellItem, GridRowParams } from '@mui/x-data-grid';
 import { useRecordsApi } from '../hooks';
 import { useRecords } from '../hooks/useRecords';
-import { RecordType, UDCaseRecord, StolenPropertyRecord } from '../types';
+import { RecordType, UDCaseRecord, StolenPropertyRecord, PaperDispatchRecord } from '../types';
 import { PageContainer } from './common';
 import { formatDate } from '../utils/formatters';
 
@@ -277,20 +277,22 @@ const RecordsList: React.FC = () => {
       }
     }
   };
-
-  const handleViewRecord = (record: UDCaseRecord | StolenPropertyRecord) => {
+  const handleViewRecord = (record: UDCaseRecord | StolenPropertyRecord | PaperDispatchRecord) => {
     if (record.type === 'ud_case') {
       navigate(`/records/ud-case/${record.id}`);
     } else if (record.type === 'stolen_property') {
       navigate(`/records/stolen-property/${record.id}`);
+    } else if (record.type === 'paper_dispatch') {
+      navigate(`/records/paper-dispatch/${record.id}`);
     }
   };
-
-  const handleEditRecord = (record: UDCaseRecord | StolenPropertyRecord) => {
+  const handleEditRecord = (record: UDCaseRecord | StolenPropertyRecord | PaperDispatchRecord) => {
     if (record.type === 'ud_case') {
       navigate(`/records/edit/ud-case/${record.id}`);
     } else if (record.type === 'stolen_property') {
       navigate(`/records/edit/stolen-property/${record.id}`);
+    } else if (record.type === 'paper_dispatch') {
+      navigate(`/records/edit/paper-dispatch/${record.id}`);
     }
   };
 
@@ -299,6 +301,8 @@ const RecordsList: React.FC = () => {
       navigate('/records/create/ud-case');
     } else if (recordType === 'stolen_property') {
       navigate('/records/create/stolen-property');
+    } else if(recordType === 'paper_dispatch') {
+      navigate('/records/create/paper-dispatch');
     } else {
       navigate('/records/create');
     }

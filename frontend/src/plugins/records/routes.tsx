@@ -5,9 +5,11 @@ import { Plugin } from '../../core/plugins';
 import RecordsDashboard from './components/RecordsDashboard';
 import UDCaseView from './components/ud-case/UDCaseView';
 import StolenPropertyView from './components/stolen-property/StolenPropertyView';
+import PaperDispatchView from './components/paper-dispatch/PaperDispatchView';
 import RecordsList from './components/RecordsList';
 import UDCaseForm from './components/ud-case/UDCaseForm';
 import StolenPropertyForm from './components/stolen-property/StolenPropertyForm';
+import PaperDispatchForm from './components/paper-dispatch/PaperDispatchForm';
 
 /**
  * Route extension point data interface
@@ -38,6 +40,10 @@ const RecordsRoutes: RouteObject[] = [
     element: <StolenPropertyForm />
   },
   {
+    path: '/records/create/paper-dispatch',
+    element: <PaperDispatchForm />
+  },
+  {
     path: '/records/type/:recordType',
     element: <RecordsList />
   },
@@ -54,6 +60,10 @@ const RecordsRoutes: RouteObject[] = [
     element: <StolenPropertyView />
   },
   {
+    path: '/records/paper-dispatch/:id',
+    element: <PaperDispatchView />
+  },
+  {
     path: '/records/edit/:id',
     element: <RecordsDashboard />
   },
@@ -64,6 +74,10 @@ const RecordsRoutes: RouteObject[] = [
   {
     path: '/records/edit/stolen-property/:id',
     element: <StolenPropertyForm />
+  },
+  {
+    path: '/records/edit/paper-dispatch/:id',
+    element: <PaperDispatchForm />
   }
 ];
 
