@@ -170,7 +170,7 @@ const ShelfItems: React.FC = () => {
   const handlePrintQrCode = () => {
     if (!selectedItem) return;
     try {
-      const title = `PR NO - ${selectedItem.prNumber}` || `Mother NO - ${selectedItem.motherNumber}`;
+      const title = `PR NO - ${selectedItem.motherNumber}`;
       const value = getCompactQrCodeData(selectedItem);
       const logoUrl = '/images/logo/wbp_logo.svg';
       const currentUser = auth.getCurrentUser();

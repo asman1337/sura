@@ -125,7 +125,7 @@ const ItemDetail: React.FC = () => {
   const handlePrintQrCode = () => {
     if (!item) return;
     try {
-      const title = `PR NO - ${item.prNumber}` || `Mother NO - ${item.motherNumber}`;
+      const title = `PR NO - ${item.motherNumber}`;
       const value = getCompactQrCodeData(item);
       const logoUrl = '/images/logo/wbp_logo.svg';
       const currentUser = auth.getCurrentUser();
@@ -366,14 +366,6 @@ const ItemDetail: React.FC = () => {
               </Typography>
               <Typography variant="body1">
                 {item.caseNumber}
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                PR Number
-              </Typography>
-              <Typography variant="body1">
-                {item.prNumber || 'N/A'}
               </Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>

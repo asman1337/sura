@@ -85,7 +85,7 @@ const BlackInkRegistry: React.FC = () => {
           id: item.id,
           timestamp: new Date().toISOString()
         };
-        const title = `PR NO - ${item.prNumber}` || `Mother NO - ${item.motherNumber}`;
+        const title = `PR NO - ${item.motherNumber}`;
         const value = btoa(unescape(encodeURIComponent(JSON.stringify(qrData))));
         const logoUrl = '/images/logo/wbp_logo.svg';
         const currentUser = auth.getCurrentUser();
