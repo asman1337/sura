@@ -539,7 +539,7 @@ const AssignmentForm: React.FC = () => {
                     >
                       {filteredShifts.map(shift => (
                         <MenuItem key={shift.id} value={shift.id}>
-                          {shift.name || `${shift.startTime}-${shift.endTime}`} ({shift.type})
+                          {shift.name} ({shift.startTime}-{shift.endTime})
                         </MenuItem>
                       ))}
                     </Select>
