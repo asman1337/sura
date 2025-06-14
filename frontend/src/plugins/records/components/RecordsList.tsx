@@ -23,7 +23,7 @@ import {
 import { DataGrid, GridColDef, GridActionsCellItem, GridRowParams } from '@mui/x-data-grid';
 import { useRecordsApi } from '../hooks';
 import { useRecords } from '../hooks/useRecords';
-import { RecordType, UDCaseRecord, StolenPropertyRecord, PaperDispatchRecord } from '../types';
+import { RecordType, UDCaseRecord, StolenPropertyRecord, PaperDispatchRecord, ArrestRecord } from '../types';
 import { PageContainer } from './common';
 import { formatDate } from '../utils/formatters';
 
@@ -36,6 +36,8 @@ const getRecordTypeName = (type: RecordType): string => {
       return 'Stolen Property';
     case 'paper_dispatch':
       return 'Paper Dispatch';
+    case 'arrest_record':
+      return 'Arrest Record';
     case 'general_diary':
       return 'General Diary';
     case 'fir':
@@ -85,8 +87,7 @@ const RecordsList: React.FC = () => {
         if (property.propertyId?.toLowerCase().includes(searchLower)) return true;
         if (property.propertyType?.toLowerCase().includes(searchLower)) return true;
         if (property.description?.toLowerCase().includes(searchLower)) return true;
-        if (property.ownerName?.toLowerCase().includes(searchLower)) return true;
-      } else if (record.type === 'paper_dispatch') {
+        if (property.ownerName?.toLowerCase().includes(searchLower)) return true;      } else if (record.type === 'paper_dispatch') {
         const paperDispatch = record as PaperDispatchRecord;
         if (paperDispatch.serialNumber?.toLowerCase().includes(searchLower)) return true;
         if (paperDispatch.fromWhom?.toLowerCase().includes(searchLower)) return true;
@@ -95,6 +96,16 @@ const RecordsList: React.FC = () => {
         if (paperDispatch.memoNumber?.toLowerCase().includes(searchLower)) return true;
         if (paperDispatch.formType?.toLowerCase().includes(searchLower)) return true;
         if (paperDispatch.registryType?.toLowerCase().includes(searchLower)) return true;
+      } else if (record.type === 'arrest_record') {
+        const arrestRecord = record as ArrestRecord;
+        if (arrestRecord.serialNumber?.toLowerCase().includes(searchLower)) return true;
+        if (arrestRecord.accusedName?.toLowerCase().includes(searchLower)) return true;
+        if (arrestRecord.arrestingOfficerName?.toLowerCase().includes(searchLower)) return true;
+        if (arrestRecord.caseReference?.toLowerCase().includes(searchLower)) return true;
+        if (arrestRecord.accusedPCN?.toLowerCase().includes(searchLower)) return true;
+        if (arrestRecord.partType?.toLowerCase().includes(searchLower)) return true;
+        if (arrestRecord.courtName?.toLowerCase().includes(searchLower)) return true;
+        if (arrestRecord.arrestLocation?.toLowerCase().includes(searchLower)) return true;
       }
       
       return false;
@@ -235,12 +246,60 @@ const RecordsList: React.FC = () => {
               }}
             />
           )
-        },
-        {
+        },        {
           field: 'dateOfReceive',
           headerName: 'Date Received',
           width: 150,
           renderCell: (params) => formatDate(params.row.dateOfReceive)
+        }
+      );
+    } else if (recordType === 'arrest_record') {
+      baseColumns.push(
+        {
+          field: 'serialNumber',
+          headerName: 'Serial Number',
+          width: 150,
+          renderCell: (params) => params.row.serialNumber || 'N/A'
+        },
+        {
+          field: 'partType',
+          headerName: 'Part Type',
+          width: 120,
+          renderCell: (params) => (
+            <Chip
+              label={params.row.partType?.toUpperCase() || 'N/A'}
+              color={params.row.partType === 'part1' ? 'primary' : 'secondary'}
+              size="small"
+              sx={{ 
+                fontSize: '0.75rem',
+                fontWeight: 'medium'
+              }}
+            />
+          )
+        },
+        {
+          field: 'accusedName',
+          headerName: 'Accused Name',
+          width: 180,
+          renderCell: (params) => params.row.accusedName || 'N/A'
+        },
+        {
+          field: 'arrestingOfficerName',
+          headerName: 'Arresting Officer',
+          width: 180,
+          renderCell: (params) => params.row.arrestingOfficerName || 'N/A'
+        },
+        {
+          field: 'dateOfArrest',
+          headerName: 'Date of Arrest',
+          width: 150,
+          renderCell: (params) => formatDate(params.row.dateOfArrest)
+        },
+        {
+          field: 'caseReference',
+          headerName: 'Case Reference',
+          width: 150,
+          renderCell: (params) => params.row.caseReference || 'N/A'
         }
       );
     }
@@ -340,23 +399,25 @@ const RecordsList: React.FC = () => {
         setIsDeleting(false);
       }
     }
-  };
-  const handleViewRecord = (record: UDCaseRecord | StolenPropertyRecord | PaperDispatchRecord) => {
+  };  const handleViewRecord = (record: UDCaseRecord | StolenPropertyRecord | PaperDispatchRecord | ArrestRecord) => {
     if (record.type === 'ud_case') {
       navigate(`/records/ud-case/${record.id}`);
     } else if (record.type === 'stolen_property') {
       navigate(`/records/stolen-property/${record.id}`);
     } else if (record.type === 'paper_dispatch') {
       navigate(`/records/paper-dispatch/${record.id}`);
+    } else if (record.type === 'arrest_record') {
+      navigate(`/records/arrest-record/${record.id}`);
     }
-  };
-  const handleEditRecord = (record: UDCaseRecord | StolenPropertyRecord | PaperDispatchRecord) => {
+  };  const handleEditRecord = (record: UDCaseRecord | StolenPropertyRecord | PaperDispatchRecord | ArrestRecord) => {
     if (record.type === 'ud_case') {
       navigate(`/records/edit/ud-case/${record.id}`);
     } else if (record.type === 'stolen_property') {
       navigate(`/records/edit/stolen-property/${record.id}`);
     } else if (record.type === 'paper_dispatch') {
       navigate(`/records/edit/paper-dispatch/${record.id}`);
+    } else if (record.type === 'arrest_record') {
+      navigate(`/records/edit/arrest-record/${record.id}`);
     }
   };
   const handleCreateRecord = () => {
