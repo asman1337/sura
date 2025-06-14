@@ -12,7 +12,14 @@ import { Officer } from '../../officers/entities/officer.entity';
 import { Unit } from '../../units/entities/unit.entity';
 
 export type RecordStatus = 'active' | 'archived' | 'deleted';
-export type RecordType = 'ud_case' | 'stolen_property' | 'general_diary' | 'fir' | 'arrest_memo' | 'paper_dispatch';
+export type RecordType =
+  | 'ud_case'
+  | 'stolen_property'
+  | 'general_diary'
+  | 'fir'
+  | 'arrest_memo'
+  | 'paper_dispatch'
+  | 'arrest_record';
 
 @Entity('records')
 @TableInheritance({ column: { type: 'varchar', name: 'type' } })
@@ -21,12 +28,24 @@ export class BaseRecord {
   id: string;
   @Column({
     type: 'enum',
-    enum: ['ud_case', 'stolen_property', 'general_diary', 'fir', 'arrest_memo', 'paper_dispatch'],
+    enum: [
+      'ud_case',
+      'stolen_property',
+      'general_diary',
+      'fir',
+      'arrest_memo',
+      'paper_dispatch',
+      'arrest_record',
+    ],
     nullable: false,
   })
   type: RecordType;
 
-  @Column({ type: 'enum', enum: ['active', 'archived', 'deleted'], default: 'active' })
+  @Column({
+    type: 'enum',
+    enum: ['active', 'archived', 'deleted'],
+    default: 'active',
+  })
   status: RecordStatus;
 
   @Column({ type: 'uuid' })
@@ -65,4 +84,4 @@ export class BaseRecord {
   @ManyToOne(() => Officer)
   @JoinColumn({ name: 'lastModifiedById' })
   lastModifiedBy: Officer;
-} 
+}

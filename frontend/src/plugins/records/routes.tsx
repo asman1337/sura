@@ -10,6 +10,7 @@ import RecordsList from './components/RecordsList';
 import UDCaseForm from './components/ud-case/UDCaseForm';
 import StolenPropertyForm from './components/stolen-property/StolenPropertyForm';
 import PaperDispatchForm from './components/paper-dispatch/PaperDispatchForm';
+import { ArrestRecordForm, ArrestRecordView, ArrestRecordList } from './components/arrest-record';
 
 /**
  * Route extension point data interface
@@ -38,10 +39,16 @@ const RecordsRoutes: RouteObject[] = [
   {
     path: '/records/create/stolen-property',
     element: <StolenPropertyForm />
-  },
-  {
+  },  {
     path: '/records/create/paper-dispatch',
     element: <PaperDispatchForm />
+  },  {
+    path: '/records/create/arrest-record',
+    element: <ArrestRecordForm />
+  },
+  {
+    path: '/records/arrest-record/list',
+    element: <ArrestRecordList />
   },
   {
     path: '/records/type/:recordType',
@@ -58,10 +65,13 @@ const RecordsRoutes: RouteObject[] = [
   {
     path: '/records/stolen-property/:id',
     element: <StolenPropertyView />
-  },
-  {
+  },  {
     path: '/records/paper-dispatch/:id',
     element: <PaperDispatchView />
+  },
+  {
+    path: '/records/arrest-record/:id',
+    element: <ArrestRecordView />
   },
   {
     path: '/records/edit/:id',
@@ -74,10 +84,12 @@ const RecordsRoutes: RouteObject[] = [
   {
     path: '/records/edit/stolen-property/:id',
     element: <StolenPropertyForm />
-  },
-  {
+  },  {
     path: '/records/edit/paper-dispatch/:id',
     element: <PaperDispatchForm />
+  },  {
+    path: '/records/edit/arrest-record/:id',
+    element: <ArrestRecordForm />
   }
 ];
 

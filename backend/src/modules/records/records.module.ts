@@ -6,18 +6,21 @@ import { RecordsController } from './controllers/records.controller';
 import { UDCaseController } from './controllers/ud-case.controller';
 import { StolenPropertyController } from './controllers/stolen-property.controller';
 import { PaperDispatchController } from './controllers/paper-dispatch.controller';
+import { ArrestRecordController } from './controllers/arrest-record.controller';
 
 // Services
 import { RecordsService } from './services/records.service';
 import { UDCaseService } from './services/ud-case.service';
 import { StolenPropertyService } from './services/stolen-property.service';
 import { PaperDispatchService } from './services/paper-dispatch.service';
+import { ArrestRecordService } from './services/arrest-record.service';
 
 // Entities
 import { BaseRecord } from './entities/base-record.entity';
 import { UDCaseRecord } from './entities/ud-case.entity';
 import { StolenPropertyRecord } from './entities/stolen-property.entity';
 import { PaperDispatchRecord } from './entities/paper-dispatch.entity';
+import { ArrestRecord } from './entities/arrest-record.entity';
 
 // Import related modules
 import { OfficersModule } from '../officers/officers.module';
@@ -31,6 +34,7 @@ import { OrganizationsModule } from '../organizations/organizations.module';
       UDCaseRecord,
       StolenPropertyRecord,
       PaperDispatchRecord,
+      ArrestRecord,
     ]),
     OfficersModule,
     UnitsModule,
@@ -41,18 +45,21 @@ import { OrganizationsModule } from '../organizations/organizations.module';
     UDCaseController,
     StolenPropertyController,
     PaperDispatchController,
+    ArrestRecordController,
   ],
   providers: [
     RecordsService,
     UDCaseService,
     StolenPropertyService,
     PaperDispatchService,
+    ArrestRecordService,
   ],
   exports: [
     RecordsService,
-    UDCaseService, 
+    UDCaseService,
     StolenPropertyService,
     PaperDispatchService,
+    ArrestRecordService,
   ],
 })
 export class RecordsModule {}

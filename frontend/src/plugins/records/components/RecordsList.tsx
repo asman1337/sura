@@ -359,7 +359,6 @@ const RecordsList: React.FC = () => {
       navigate(`/records/edit/paper-dispatch/${record.id}`);
     }
   };
-
   const handleCreateRecord = () => {
     if (recordType === 'ud_case') {
       navigate('/records/create/ud-case');
@@ -367,6 +366,8 @@ const RecordsList: React.FC = () => {
       navigate('/records/create/stolen-property');
     } else if(recordType === 'paper_dispatch') {
       navigate('/records/create/paper-dispatch');
+    } else if(recordType === 'arrest_record') {
+      navigate('/records/create/arrest-record');
     } else {
       navigate('/records/create');
     }

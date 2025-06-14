@@ -28,6 +28,7 @@ import {
   Assignment as FormIcon,
   ArrowForward as ArrowForwardIcon,
   Info as InfoIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { useRecordsApi } from '../hooks';
 import { useRecords } from '../hooks/useRecords';
@@ -58,13 +59,21 @@ export const recordTypes: RecordFormConfig[] = [
     type: 'stolen_property',
     fields: [],
     disabled: false
-  },
-  {
+  },  {
     id: 'paper_dispatch',
     title: 'Paper/Doc Receive & Dispatch',
     description: 'Track paper and document movement with black/red ink registry',
     icon: 'FileIcon',
     type: 'paper_dispatch',
+    fields: [],
+    disabled: false
+  },
+  {
+    id: 'arrest_record',
+    title: 'Arrest Record',
+    description: 'Record details of arrests made including Part 1 and Part 2 forms',
+    icon: 'PersonIcon',
+    type: 'arrest_record',
     fields: [],
     disabled: false
   },
@@ -107,6 +116,8 @@ const getIconComponent = (iconName: string) => {
       return <FileIcon />;
     case 'FormIcon':
       return <FormIcon />;
+    case 'PersonIcon':
+      return <PersonIcon />;
     default:
       return <FileIcon />;
   }

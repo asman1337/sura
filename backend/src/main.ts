@@ -12,11 +12,15 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Enable CORS
-  const corsOrigin = configService.get('CORS_ORIGIN');
-  const corsOrigins = corsOrigin 
-    ? corsOrigin.split(',').map(origin => origin.trim())
-    : ['http://localhost:3000', 'http://localhost:5567', 'https://sura.otmalse.in'];
-  
+  const corsOrigin = configService.get<string>('CORS_ORIGIN');
+  const corsOrigins: string[] = corsOrigin
+    ? corsOrigin.split(',').map((origin) => origin.trim())
+    : [
+        'http://localhost:3000',
+        'http://localhost:5567',
+        'https://sura.otmalse.in',
+      ];
+
   app.enableCors({
     origin: corsOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
@@ -35,8 +39,8 @@ async function bootstrap() {
     }),
   );
 
-  const port = configService.get('PORT', 3000);
+  const port = configService.get<number>('PORT', 3000) ?? 3000;
   await app.listen(port);
 }
 
-bootstrap();
+void bootstrap();

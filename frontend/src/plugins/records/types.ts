@@ -218,11 +218,108 @@ export interface PaperDispatchRecord extends BaseRecord {
   };
 }
 
+// Arrest Record interface
+export interface ArrestRecord extends BaseRecord {
+  type: 'arrest_record';
+  
+  // Serial Number tracking
+  serialNumber: string;
+  serialCount: number;
+  serialYear: number;
+  serialMonth: number;
+  
+  // Record type
+  partType: 'part1' | 'part2';
+  
+  // Accused Person Details
+  accusedName: string;
+  accusedAddress: string;
+  accusedPhone?: string;
+  accusedPCN?: string;
+  
+  // Arrest Details
+  dateOfArrest: string;
+  arrestingOfficerName: string;
+  dateForwardedToCourt?: string;
+  
+  // Court Details
+  courtName?: string;
+  courtAddress?: string;
+  judgeNameOrCourtNumber?: string;
+  
+  // Case Reference
+  caseReference?: string;
+  trialResult?: string;
+  
+  // Criminal Identification Fields (mainly for Part 1)
+  age?: number;
+  identifyingMarks?: string;
+  height?: number;
+  weight?: number;
+  eyeColor?: string;
+  hairColor?: string;
+  complexion?: string;
+  otherPhysicalFeatures?: string;
+  
+  // Photo attachments
+  photoUrls?: string[];
+  
+  // Additional fields
+  arrestCircumstances?: string;
+  arrestLocation?: string;
+  recordDate: string;
+  isIdentificationRequired: boolean;
+}
+
+export interface CreateArrestRecord extends CreateRecordBase {
+  type: 'arrest_record';
+  partType: 'part1' | 'part2';
+  
+  // Accused Person Details
+  accusedName: string;
+  accusedAddress: string;
+  accusedPhone?: string;
+  accusedPCN?: string;
+  
+  // Arrest Details
+  dateOfArrest: string;
+  arrestingOfficerName: string;
+  dateForwardedToCourt?: string;
+  
+  // Court Details
+  courtName?: string;
+  courtAddress?: string;
+  judgeNameOrCourtNumber?: string;
+  
+  // Case Reference
+  caseReference?: string;
+  trialResult?: string;
+  
+  // Criminal Identification Fields
+  age?: number;
+  identifyingMarks?: string;
+  height?: number;
+  weight?: number;
+  eyeColor?: string;
+  hairColor?: string;
+  complexion?: string;
+  otherPhysicalFeatures?: string;
+  
+  // Photo attachments
+  photoUrls?: string[];
+  
+  // Additional fields
+  arrestCircumstances?: string;
+  arrestLocation?: string;
+  recordDate: string;
+  isIdentificationRequired?: boolean;
+}
+
 // Generic Record Type
-export type RecordType = 'ud_case' | 'stolen_property' | 'general_diary' | 'fir' | 'arrest_memo' | 'paper_dispatch';
+export type RecordType = 'ud_case' | 'stolen_property' | 'general_diary' | 'fir' | 'arrest_memo' | 'paper_dispatch' | 'arrest_record';
 
 // Union type for all record types
-export type RecordData = UDCaseRecord | StolenPropertyRecord | PaperDispatchRecord;
+export type RecordData = UDCaseRecord | StolenPropertyRecord | PaperDispatchRecord | ArrestRecord;
 
 // Record form settings
 export interface RecordFormConfig {
@@ -386,5 +483,58 @@ export interface CreatePaperDispatch extends CreateRecordBase {
   };
 }
 
+export interface CreateArrestRecord extends CreateRecordBase {
+  type: 'arrest_record';
+  partType: 'part1' | 'part2';
+  
+  // Accused Person Details
+  accusedName: string;
+  accusedAddress: string;
+  accusedPhone?: string;
+  accusedPCN?: string;
+  
+  // Arrest Details
+  dateOfArrest: string;
+  arrestingOfficerName: string;
+  dateForwardedToCourt?: string;
+  
+  // Court Details
+  courtName?: string;
+  courtAddress?: string;
+  judgeNameOrCourtNumber?: string;
+  
+  // Case Reference
+  caseReference?: string;
+  trialResult?: string;
+  
+  // Criminal Identification Fields
+  age?: number;
+  identifyingMarks?: string;
+  height?: number;
+  weight?: number;
+  eyeColor?: string;
+  hairColor?: string;
+  complexion?: string;
+  otherPhysicalFeatures?: string;
+  
+  // Photo attachments
+  photoUrls?: string[];
+  
+  // Additional fields
+  arrestCircumstances?: string;
+  arrestLocation?: string;
+  recordDate: string;
+  isIdentificationRequired?: boolean;
+}
+
+// Arrest record statistics
+export interface ArrestRecordStats {
+  totalRecords: number;
+  part1Records: number;
+  part2Records: number;
+  monthlyRecords: number;
+  pendingCourt: number;
+}
+
 // Creation type union
-export type CreateRecord = CreateUDCase | CreateStolenProperty | CreatePaperDispatch;
+export type CreateRecord = CreateUDCase | CreateStolenProperty | CreatePaperDispatch | CreateArrestRecord;
