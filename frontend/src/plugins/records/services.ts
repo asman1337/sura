@@ -281,12 +281,18 @@ export class RecordsService {
       switch (record.type) {
         case "ud_case":
           endpoint = `${this.baseUrl}/ud-cases`;
+          // Filter the data to only include DTO fields
+          payload = this.filterCreateUDCaseData(record);
           break;
         case "stolen_property":
           endpoint = `${this.baseUrl}/stolen-property`;
+          // Filter the data to only include DTO fields
+          payload = this.filterCreateStolenPropertyData(record);
           break;
         case "paper_dispatch":
           endpoint = `${this.baseUrl}/paper-dispatch`;
+          // Filter the data to only include DTO fields
+          payload = this.filterCreatePaperDispatchData(record);
           break;
         case "arrest_record":
           endpoint = `${this.baseUrl}/arrests`;
@@ -357,12 +363,18 @@ export class RecordsService {
       switch (data.type) {
         case "ud_case":
           endpoint = `${this.baseUrl}/ud-cases/${recordId}`;
+          // Filter the data to only include DTO fields
+          payload = this.filterUpdateUDCaseData(data);
           break;
         case "stolen_property":
           endpoint = `${this.baseUrl}/stolen-property/${recordId}`;
+          // Filter the data to only include DTO fields
+          payload = this.filterUpdateStolenPropertyData(data);
           break;
         case "paper_dispatch":
           endpoint = `${this.baseUrl}/paper-dispatch/${recordId}`;
+          // Filter the data to only include DTO fields
+          payload = this.filterUpdatePaperDispatchData(data);
           break;
         case "arrest_record":
           endpoint = `${this.baseUrl}/arrests/${recordId}`;
@@ -564,9 +576,9 @@ export class RecordsService {
       accusedAddress: record.accusedAddress,
       accusedPhone: record.accusedPhone,
       accusedPCN: record.accusedPCN,
-      dateOfArrest: record.dateOfArrest,
+      dateOfArrest: this.formatDateForBackend(record.dateOfArrest),
       arrestingOfficerName: record.arrestingOfficerName,
-      dateForwardedToCourt: record.dateForwardedToCourt,
+      dateForwardedToCourt: this.formatDateForBackend(record.dateForwardedToCourt),
       courtName: record.courtName,
       courtAddress: record.courtAddress,
       judgeNameOrCourtNumber: record.judgeNameOrCourtNumber,
@@ -583,7 +595,7 @@ export class RecordsService {
       photoUrls: record.photoUrls,
       arrestCircumstances: record.arrestCircumstances,
       arrestLocation: record.arrestLocation,
-      recordDate: record.recordDate,
+      recordDate: this.formatDateForBackend(record.recordDate),
       isIdentificationRequired: record.isIdentificationRequired,
       remarks: record.remarks,
       notes: record.notes,
@@ -603,6 +615,226 @@ export class RecordsService {
     // UpdateArrestRecordDto extends PartialType(CreateArrestRecordDto)
     // so it accepts the same fields but all are optional
     const filtered = this.filterCreateArrestRecordData(record);
+    
+    // Remove undefined values to avoid sending them
+    Object.keys(filtered).forEach(key => {
+      if (filtered[key] === undefined) {
+        delete filtered[key];
+      }
+    });
+    
+    return filtered;
+  }
+  // Helper function to filter UD case data for create DTO
+  private filterCreateUDCaseData(record: any): any {
+    // Only include fields that are expected by CreateUDCaseDto
+    const filtered: any = {
+      caseNumber: record.caseNumber,
+      dateOfOccurrence: this.formatDateForBackend(record.dateOfOccurrence),
+      deceasedName: record.deceasedName,
+      deceasedAddress: record.deceasedAddress,
+      identificationStatus: record.identificationStatus,
+      informantName: record.informantName,
+      informantAddress: record.informantAddress,
+      informantContact: record.informantContact,
+      informantRelation: record.informantRelation,
+      apparentCauseOfDeath: record.apparentCauseOfDeath,
+      location: record.location,
+      assignedOfficerName: record.assignedOfficerName,
+      assignedOfficerBadgeNumber: record.assignedOfficerBadgeNumber,
+      assignedOfficerContact: record.assignedOfficerContact,
+      assignedOfficerRank: record.assignedOfficerRank,
+      assignedOfficerDepartment: record.assignedOfficerDepartment,
+      postMortemDate: this.formatDateForBackend(record.postMortemDate),
+      postMortemDoctor: record.postMortemDoctor,
+      postMortemHospital: record.postMortemHospital,
+      photoUrls: record.photoUrls,
+      investigationStatus: record.investigationStatus,
+      description: record.description,
+      additionalDetails: record.additionalDetails,
+      serialNumber: record.serialNumber,
+      policeStationCode: record.policeStationCode,
+      policeStationName: record.policeStationName,
+      autopsyResults: record.autopsyResults,
+      finalFormStatus: record.finalFormStatus,
+      finalFormSubmissionDate: this.formatDateForBackend(record.finalFormSubmissionDate),
+      finalFormReviewedBy: record.finalFormReviewedBy,
+      finalFormApprovedBy: record.finalFormApprovedBy,
+      deceasedAge: record.deceasedAge,
+      deceasedGender: record.deceasedGender,
+      ageCategory: record.ageCategory,
+      deceasedOccupation: record.deceasedOccupation,
+      deceasedNationality: record.deceasedNationality,
+      deceasedReligion: record.deceasedReligion,
+      deceasedCaste: record.deceasedCaste,
+      identifiedByName: record.identifiedByName,
+      identifiedByAddress: record.identifiedByAddress,
+      identifiedByMobile: record.identifiedByMobile,
+      identifiedByRelation: record.identifiedByRelation,
+      exactLocation: record.exactLocation,
+      nearestLandmark: record.nearestLandmark,
+      coordinates: record.coordinates,
+      remarks: record.remarks,
+      notes: record.notes,
+    };
+
+    // unitId is required by the DTO
+    if (!record.unitId || record.unitId.trim() === '') {
+      throw new Error('Unit ID is required. Please ensure you are logged in and have a valid unit assigned.');
+    }
+    filtered.unitId = record.unitId;
+
+    return filtered;
+  }
+
+  // Helper function to format date for backend (ensures proper ISO 8601 format)
+  private formatDateForBackend(dateValue: any): string | undefined {
+    if (!dateValue) return undefined;
+    
+    try {
+      // If it's already a full ISO string, return as is
+      if (typeof dateValue === 'string' && dateValue.includes('T')) {
+        return dateValue;
+      }
+      
+      // If it's a date string in YYYY-MM-DD format, convert to full ISO
+      if (typeof dateValue === 'string' && dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return new Date(dateValue + 'T00:00:00.000Z').toISOString();
+      }
+      
+      // If it's a Date object, convert to ISO string
+      if (dateValue instanceof Date) {
+        return dateValue.toISOString();
+      }
+      
+      // Try to parse as date and convert
+      const parsedDate = new Date(dateValue);
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate.toISOString();
+      }
+      
+      return undefined;
+    } catch (error) {
+      console.warn('Error formatting date for backend:', dateValue, error);
+      return undefined;
+    }
+  }
+  // Helper function to filter UD case data for update DTO
+  private filterUpdateUDCaseData(record: any): any {
+    // UpdateUDCaseDto extends PartialType(CreateUDCaseDto) but has some type differences
+    const filtered = this.filterCreateUDCaseData(record);
+    
+    // Convert deceasedAge to number for update DTO (it expects number while create expects string)
+    if (filtered.deceasedAge !== undefined && filtered.deceasedAge !== null && filtered.deceasedAge !== '') {
+      const ageNumber = Number(filtered.deceasedAge);
+      if (!isNaN(ageNumber)) {
+        filtered.deceasedAge = ageNumber;
+      } else {
+        // If conversion fails, remove the field to avoid validation error
+        delete filtered.deceasedAge;
+      }
+    }
+    
+    // Remove undefined values to avoid sending them
+    Object.keys(filtered).forEach(key => {
+      if (filtered[key] === undefined) {
+        delete filtered[key];
+      }
+    });
+    
+    return filtered;
+  }// Helper function to filter stolen property data for create DTO
+  private filterCreateStolenPropertyData(record: any): any {
+    // Only include fields that are expected by CreateStolenPropertyDto
+    const filtered: any = {
+      propertyId: record.propertyId,
+      propertySource: record.propertySource,
+      propertyType: record.propertyType,
+      description: record.description,
+      estimatedValue: record.estimatedValue,
+      foundBy: record.foundBy,
+      dateOfTheft: this.formatDateForBackend(record.dateOfTheft),
+      location: record.location,
+      ownerName: record.ownerName,
+      ownerContact: record.ownerContact,
+      linkedCaseNumber: record.linkedCaseNumber,
+      dateOfReceipt: this.formatDateForBackend(record.dateOfReceipt),
+      receivedBy: record.receivedBy,
+      recoveryStatus: record.recoveryStatus,
+      recoveryDate: this.formatDateForBackend(record.recoveryDate),
+      isSold: record.isSold,
+      soldPrice: record.soldPrice,
+      dateOfRemittance: this.formatDateForBackend(record.dateOfRemittance),
+      disposalMethod: record.disposalMethod,
+      photoUrls: record.photoUrls,
+      additionalDetails: record.additionalDetails,
+      remarks: record.remarks,
+      notes: record.notes,
+    };
+
+    // unitId is required by the DTO
+    if (!record.unitId || record.unitId.trim() === '') {
+      throw new Error('Unit ID is required. Please ensure you are logged in and have a valid unit assigned.');
+    }
+    filtered.unitId = record.unitId;
+
+    return filtered;
+  }
+
+  // Helper function to filter stolen property data for update DTO
+  private filterUpdateStolenPropertyData(record: any): any {
+    // UpdateStolenPropertyDto extends PartialType(CreateStolenPropertyDto)
+    // so it accepts the same fields but all are optional
+    const filtered = this.filterCreateStolenPropertyData(record);
+    
+    // Remove undefined values to avoid sending them
+    Object.keys(filtered).forEach(key => {
+      if (filtered[key] === undefined) {
+        delete filtered[key];
+      }
+    });
+    
+    return filtered;
+  }  // Helper function to filter paper dispatch data for create DTO
+  private filterCreatePaperDispatchData(record: any): any {
+    // Only include fields that are expected by CreatePaperDispatchDto
+    const filtered: any = {
+      type: record.type,
+      dateOfReceive: this.formatDateForBackend(record.dateOfReceive),
+      fromWhom: record.fromWhom,
+      memoNumber: record.memoNumber,
+      purpose: record.purpose,
+      toWhom: record.toWhom,
+      caseReference: record.caseReference,
+      dateFixed: this.formatDateForBackend(record.dateFixed),
+      remarks: record.remarks,
+      closedStatus: record.closedStatus,
+      attachmentUrls: record.attachmentUrls,
+      noExpectingReport: record.noExpectingReport,
+      formType: record.formType,
+      registryType: record.registryType,
+      endorsedOfficerName: record.endorsedOfficerName,
+      endorsedOfficerBadgeNumber: record.endorsedOfficerBadgeNumber,
+      courtDetails: record.courtDetails,
+      seniorOfficeDetails: record.seniorOfficeDetails,
+      publicPetitionDetails: record.publicPetitionDetails,
+      notes: record.notes,
+    };
+
+    // unitId is required by the DTO
+    if (!record.unitId || record.unitId.trim() === '') {
+      throw new Error('Unit ID is required. Please ensure you are logged in and have a valid unit assigned.');
+    }
+    filtered.unitId = record.unitId;
+
+    return filtered;
+  }
+
+  // Helper function to filter paper dispatch data for update DTO
+  private filterUpdatePaperDispatchData(record: any): any {
+    // UpdatePaperDispatchDto extends PartialType(CreatePaperDispatchDto)
+    // so it accepts the same fields but all are optional
+    const filtered = this.filterCreatePaperDispatchData(record);
     
     // Remove undefined values to avoid sending them
     Object.keys(filtered).forEach(key => {
